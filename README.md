@@ -65,6 +65,7 @@ npm run dev
 2. `rsg_engine_rpc.sql` (RPC-Wrapper, von RSG)
 3. `supabase/rsg_crm_schema.sql` (CRM-Tabellen + RLS + `v_segments`)
 4. `supabase/rsg_email_schema.sql` (E-Mail-Tracking: `partner_inbox`, `email_activities`)
+5. `supabase/rsg_notes_schema.sql` (Notizen je Account: `account_notes`)
 
 ### Environment
 

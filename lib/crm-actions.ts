@@ -287,6 +287,39 @@ export async function deleteKiProject(id: string): Promise<ActionResult> {
   return remove("ki_projects", id, "/cockpit/projekte/ki");
 }
 
+// ---------- Notizen je Account --------------------------------------
+
+export async function addNote(
+  accountId: string,
+  body: string
+): Promise<ActionResult> {
+  if (!body.trim()) return { ok: false, error: "Leere Notiz." };
+  if (useMockData) return DEMO;
+  const { id, error } = await currentPartnerId();
+  if (!id) return { ok: false, error };
+  const supabase = createClient();
+  const { error: insErr } = await supabase.from("account_notes").insert({
+    partner_id: id,
+    account_id: accountId,
+    body: body.trim(),
+  });
+  if (insErr) return { ok: false, error: insErr.message };
+  revalidatePath(`/cockpit/kunden/${accountId}`);
+  return { ok: true };
+}
+
+export async function deleteNote(
+  id: string,
+  accountId: string
+): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const supabase = createClient();
+  const { error } = await supabase.from("account_notes").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/cockpit/kunden/${accountId}`);
+  return { ok: true };
+}
+
 // ---------- Update der übrigen Entitäten ----------------------------
 
 export async function updateCandidate(

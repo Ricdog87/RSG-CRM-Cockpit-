@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAccountDetail } from "@/lib/crm-data";
 import { getEmailActivitiesForAccount } from "@/lib/email-data";
+import { getNotesForAccount } from "@/lib/notes-data";
 import { EmailTimeline } from "@/components/cockpit/EmailTimeline";
+import { AccountNotes } from "@/components/cockpit/AccountNotes";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { LineBadge } from "@/components/cockpit/LineBadge";
@@ -53,7 +55,10 @@ export default async function AccountDetailPage({
   const detail = await getAccountDetail(params.id);
   if (!detail) notFound();
   const { account, opportunities, kiProjects, mandates, candidates } = detail;
-  const emails = await getEmailActivitiesForAccount(account.id, account.name);
+  const [emails, notes] = await Promise.all([
+    getEmailActivitiesForAccount(account.id, account.name),
+    getNotesForAccount(account.id),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -111,6 +116,9 @@ export default async function AccountDetailPage({
           .filter(Boolean)
           .join(" · ")}
       />
+
+      {/* Notizen */}
+      <AccountNotes accountId={account.id} notes={notes} />
 
       {/* Korrespondenz (BCC-getrackte E-Mails) */}
       <Card>
