@@ -197,6 +197,13 @@ export const IconFolder = (p: IconProps) => (
   </Base>
 );
 
+export const IconTasks = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M10 6h10M10 12h10M10 18h10" />
+    <path d="m3 6 1.4 1.4L7 4.5M3 12l1.4 1.4L7 10.5M3 18l1.4 1.4L7 16.5" />
+  </Base>
+);
+
 export const IconMail = (p: IconProps) => (
   <Base {...p}>
     <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" />

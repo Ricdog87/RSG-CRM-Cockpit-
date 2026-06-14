@@ -320,6 +320,60 @@ export async function deleteNote(
   return { ok: true };
 }
 
+// ---------- Aufgaben je Account -------------------------------------
+
+export async function addTask(
+  accountId: string,
+  title: string,
+  dueDate?: string
+): Promise<ActionResult> {
+  if (!title.trim()) return { ok: false, error: "Titel erforderlich." };
+  if (useMockData) return DEMO;
+  const { id, error } = await currentPartnerId();
+  if (!id) return { ok: false, error };
+  const supabase = createClient();
+  const { error: insErr } = await supabase.from("account_tasks").insert({
+    partner_id: id,
+    account_id: accountId,
+    title: title.trim(),
+    due_date: dueDate || null,
+  });
+  if (insErr) return { ok: false, error: insErr.message };
+  revalidatePath(`/cockpit/kunden/${accountId}`);
+  revalidatePath("/cockpit/aufgaben");
+  return { ok: true };
+}
+
+export async function setTaskDone(
+  id: string,
+  done: boolean,
+  accountId?: string
+): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("account_tasks")
+    .update({ done })
+    .eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  if (accountId) revalidatePath(`/cockpit/kunden/${accountId}`);
+  revalidatePath("/cockpit/aufgaben");
+  return { ok: true };
+}
+
+export async function deleteTask(
+  id: string,
+  accountId?: string
+): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const supabase = createClient();
+  const { error } = await supabase.from("account_tasks").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  if (accountId) revalidatePath(`/cockpit/kunden/${accountId}`);
+  revalidatePath("/cockpit/aufgaben");
+  return { ok: true };
+}
+
 // ---------- Update der übrigen Entitäten ----------------------------
 
 export async function updateCandidate(

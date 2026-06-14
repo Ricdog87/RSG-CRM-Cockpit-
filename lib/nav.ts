@@ -1,6 +1,7 @@
 import {
   IconDashboard,
   IconSpark,
+  IconTasks,
   IconTarget,
   IconUsers,
   IconMail,
@@ -40,6 +41,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Lead Intelligence",
         icon: IconSpark,
         description: "KI-Bewertung neuer B2B-Leads",
+      },
+      {
+        href: "/cockpit/aufgaben",
+        label: "Aufgaben",
+        icon: IconTasks,
+        description: "Alle offenen Aufgaben nach Fälligkeit",
       },
     ],
   },

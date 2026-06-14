@@ -66,6 +66,7 @@ npm run dev
 3. `supabase/rsg_crm_schema.sql` (CRM-Tabellen + RLS + `v_segments`)
 4. `supabase/rsg_email_schema.sql` (E-Mail-Tracking: `partner_inbox`, `email_activities`)
 5. `supabase/rsg_notes_schema.sql` (Notizen je Account: `account_notes`)
+6. `supabase/rsg_tasks_schema.sql` (Aufgaben je Account: `account_tasks`)
 
 ### Environment
 
