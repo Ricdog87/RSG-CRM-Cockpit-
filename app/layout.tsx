@@ -20,6 +20,13 @@ export const metadata: Metadata = {
     title: "RSG CRM",
   },
   formatDetection: { telephone: false },
+  icons: {
+    icon: [
+      { url: "/api/icon?size=32", sizes: "32x32", type: "image/png" },
+      { url: "/api/icon?size=192", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/api/icon?size=180", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
