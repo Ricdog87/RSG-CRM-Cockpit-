@@ -52,6 +52,7 @@ export function EntityFormDialog({
   renderTrigger,
   autofill,
   autofillFrom = ["name"],
+  autoOpenParam,
 }: {
   triggerLabel?: string;
   title: string;
@@ -68,6 +69,8 @@ export function EntityFormDialog({
   /** KI-Auto-Ausfüllen aus den angegebenen Feldern */
   autofill?: AutofillFn;
   autofillFrom?: string[];
+  /** Öffnet den Dialog automatisch, wenn ?<param>=1 in der URL steht (Mobile-FAB-Deeplink). */
+  autoOpenParam?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -83,6 +86,17 @@ export function EntityFormDialog({
       router.refresh();
     }
   }, [state, router]);
+
+  // Deeplink vom Mobile-FAB: ?new=1 öffnet den Dialog und säubert die URL.
+  useEffect(() => {
+    if (!autoOpenParam) return;
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get(autoOpenParam) !== "1") return;
+    setOpen(true);
+    sp.delete(autoOpenParam);
+    const qs = sp.toString();
+    window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""));
+  }, [autoOpenParam]);
 
   function runAutofill() {
     const form = formRef.current;

@@ -40,6 +40,7 @@ export default async function SalesPage() {
             description="Projekt-Opportunity über KI oder Recruiting erfassen."
             fields={fields}
             action={createOpportunity}
+            autoOpenParam="new"
           />
         }
       />

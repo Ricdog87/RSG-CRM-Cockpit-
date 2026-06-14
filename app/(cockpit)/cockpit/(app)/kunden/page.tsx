@@ -36,6 +36,7 @@ export default async function KundenPage() {
             action={createAccount}
             autofill={autofillAccountAction}
             autofillFrom={["name", "contact_email"]}
+            autoOpenParam="new"
           />
         }
       />

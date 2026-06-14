@@ -3,6 +3,7 @@ import { useMockData } from "@/lib/env";
 import { Sidebar } from "@/components/cockpit/Sidebar";
 import { Topbar } from "@/components/cockpit/Topbar";
 import { MobileNav } from "@/components/cockpit/MobileNav";
+import { QuickActionsFab } from "@/components/cockpit/QuickActionsFab";
 
 /**
  * App-Shell des RSG-CRM: feste Sidebar (Desktop), Topbar und Mobile-Tab-Bar.
@@ -33,6 +34,7 @@ export default async function AppShellLayout({
         </main>
       </div>
 
+      <QuickActionsFab />
       <MobileNav />
     </div>
   );

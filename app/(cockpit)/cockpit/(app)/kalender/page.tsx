@@ -39,7 +39,7 @@ export default async function KalenderPage() {
         title="Kalender"
         description="Termine und Aufgaben – an Kunde, Projekt oder Kandidat:in gebunden."
         action={
-          <TaskCreateDialog customers={customers} candidates={cands} projects={projects} />
+          <TaskCreateDialog customers={customers} candidates={cands} projects={projects} autoOpenParam="new" />
         }
       />
 

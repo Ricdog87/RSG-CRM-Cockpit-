@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
@@ -21,14 +21,27 @@ export function TaskCreateDialog({
   candidates,
   projects,
   defaultDate,
+  autoOpenParam,
 }: {
   customers: EntityOpt[];
   candidates: EntityOpt[];
   projects: EntityOpt[];
   defaultDate?: string;
+  /** Öffnet den Dialog automatisch bei ?<param>=1 (Mobile-FAB-Deeplink). */
+  autoOpenParam?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!autoOpenParam) return;
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get(autoOpenParam) !== "1") return;
+    setOpen(true);
+    sp.delete(autoOpenParam);
+    const qs = sp.toString();
+    window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""));
+  }, [autoOpenParam]);
   const [type, setType] = useState<RelatedType>("none");
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
