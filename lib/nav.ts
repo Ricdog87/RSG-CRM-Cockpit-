@@ -2,6 +2,7 @@ import {
   IconDashboard,
   IconSpark,
   IconBolt,
+  IconCalendar,
   IconTasks,
   IconTarget,
   IconUsers,
@@ -44,6 +45,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Lead Intelligence",
         icon: IconSpark,
         description: "KI-Bewertung neuer B2B-Leads",
+      },
+      {
+        href: "/cockpit/kalender",
+        label: "Kalender",
+        icon: IconCalendar,
+        description: "Termine & Aufgaben, Google-/Outlook-Abo",
       },
       {
         href: "/cockpit/aufgaben",

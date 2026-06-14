@@ -6,6 +6,7 @@ import { useMockData } from "@/lib/env";
 import { findDuplicate } from "@/lib/dedupe";
 import { accounts as mockAccounts } from "@/lib/crm-mock";
 import { automationEnabled, AUTOMATIONS } from "@/lib/automations";
+import type { RelatedType } from "@/lib/task-link";
 
 /**
  * Server Actions für Schreibvorgänge im CRM. Bei gesetzter Supabase-ENV wird
@@ -127,9 +128,11 @@ export async function createAccount(
   const accountId = (ins as { id: string }).id;
   if (lifecycle === "lead" && (await automationEnabled(supabase, pid, "lead_followup"))) {
     const due = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
-    await supabase.from("account_tasks").insert({
+    await supabase.from("crm_tasks").insert({
       partner_id: pid,
-      account_id: accountId,
+      related_type: "customer",
+      related_id: accountId,
+      related_label: name,
       title: "Erstkontakt vereinbaren",
       due_date: due,
     });
@@ -259,9 +262,11 @@ export async function updateOpportunityStage(
               .maybeSingle();
             const accId = (acc as { id?: string } | null)?.id;
             if (accId) {
-              await supabase.from("account_tasks").insert({
+              await supabase.from("crm_tasks").insert({
                 partner_id: pid,
-                account_id: accId,
+                related_type: "customer",
+                related_id: accId,
+                related_label: accName,
                 title: `Onboarding starten: ${accName}`,
               });
               revalidatePath(`/cockpit/kunden/${accId}`);
@@ -436,57 +441,66 @@ export async function deleteContact(
   return { ok: true };
 }
 
-// ---------- Aufgaben je Account -------------------------------------
+// ---------- Aufgaben/Termine (einheitlich, crm_tasks) ---------------
 
-export async function addTask(
-  accountId: string,
-  title: string,
-  dueDate?: string
-): Promise<ActionResult> {
-  if (!title.trim()) return { ok: false, error: "Titel erforderlich." };
+function revalidateTasks(relatedType?: string, relatedId?: string | null) {
+  revalidatePath("/cockpit/aufgaben");
+  revalidatePath("/cockpit/kalender");
+  revalidatePath("/cockpit");
+  if (relatedType === "customer" && relatedId) {
+    revalidatePath(`/cockpit/kunden/${relatedId}`);
+  }
+}
+
+export interface TaskInput {
+  related_type: RelatedType;
+  related_id?: string | null;
+  related_label?: string | null;
+  title: string;
+  due_date?: string | null;
+  due_time?: string | null;
+  notes?: string | null;
+}
+
+export async function addTask(input: TaskInput): Promise<ActionResult> {
+  if (!input.title?.trim()) return { ok: false, error: "Titel erforderlich." };
   if (useMockData) return DEMO;
   const { id, error } = await currentPartnerId();
   if (!id) return { ok: false, error };
   const supabase = createClient();
-  const { error: insErr } = await supabase.from("account_tasks").insert({
+  const { error: insErr } = await supabase.from("crm_tasks").insert({
     partner_id: id,
-    account_id: accountId,
-    title: title.trim(),
-    due_date: dueDate || null,
+    related_type: input.related_type ?? "none",
+    related_id: input.related_id ?? null,
+    related_label: input.related_label ?? null,
+    title: input.title.trim(),
+    due_date: input.due_date || null,
+    due_time: input.due_time || null,
+    notes: input.notes || null,
   });
   if (insErr) return { ok: false, error: insErr.message };
-  revalidatePath(`/cockpit/kunden/${accountId}`);
-  revalidatePath("/cockpit/aufgaben");
+  revalidateTasks(input.related_type, input.related_id);
   return { ok: true };
 }
 
 export async function setTaskDone(
   id: string,
-  done: boolean,
-  accountId?: string
+  done: boolean
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
   const supabase = createClient();
-  const { error } = await supabase
-    .from("account_tasks")
-    .update({ done })
-    .eq("id", id);
+  const { error } = await supabase.from("crm_tasks").update({ done }).eq("id", id);
   if (error) return { ok: false, error: error.message };
-  if (accountId) revalidatePath(`/cockpit/kunden/${accountId}`);
-  revalidatePath("/cockpit/aufgaben");
+  revalidateTasks();
   return { ok: true };
 }
 
-export async function deleteTask(
-  id: string,
-  accountId?: string
-): Promise<ActionResult> {
+export async function deleteTask(id: string): Promise<ActionResult> {
   if (useMockData) return DEMO;
   const supabase = createClient();
-  const { error } = await supabase.from("account_tasks").delete().eq("id", id);
+  const { error } = await supabase.from("crm_tasks").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  if (accountId) revalidatePath(`/cockpit/kunden/${accountId}`);
-  revalidatePath("/cockpit/aufgaben");
+  revalidateTasks();
   return { ok: true };
 }
 

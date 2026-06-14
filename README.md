@@ -68,7 +68,8 @@ npm run dev
 5. `supabase/rsg_notes_schema.sql` (Notizen je Account: `account_notes`)
 6. `supabase/rsg_tasks_schema.sql` (Aufgaben je Account: `account_tasks`)
 7. `supabase/rsg_contacts_schema.sql` (Ansprechpartner:innen: `account_contacts`)
-8. `supabase/rsg_automations_schema.sql` (Workflow-Schalter: `automations`)
+8. `supabase/rsg_calendar_schema.sql` (Kalender/Aufgaben: `crm_tasks`, `calendar_tokens`)
+9. `supabase/rsg_automations_schema.sql` (Workflow-Schalter: `automations`)
 
 ### Environment
 

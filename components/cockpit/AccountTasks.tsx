@@ -21,9 +21,11 @@ function isOverdue(due: string | null): boolean {
 
 export function AccountTasks({
   accountId,
+  accountName,
   tasks,
 }: {
   accountId: string;
+  accountName: string;
   tasks: Task[];
 }) {
   const router = useRouter();
@@ -42,29 +44,45 @@ export function AccountTasks({
     const due = dueRef.current?.value || null;
     const optimistic: Task = {
       id: `tmp-${Date.now()}`,
+      related_type: "customer",
+      related_id: accountId,
+      related_label: accountName,
       title,
+      notes: null,
       due_date: due,
+      due_time: null,
       done: false,
-      created_at: new Date().toISOString(),
     };
     setItems((p) => [optimistic, ...p]);
     if (titleRef.current) titleRef.current.value = "";
     if (dueRef.current) dueRef.current.value = "";
-    start(async () => refresh(await addTask(accountId, title, due ?? undefined)));
+    start(async () =>
+      refresh(
+        await addTask({
+          related_type: "customer",
+          related_id: accountId,
+          related_label: accountName,
+          title,
+          due_date: due,
+        })
+      )
+    );
   }
 
   function toggle(t: Task) {
     setItems((p) => p.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)));
-    start(async () => refresh(await setTaskDone(t.id, !t.done, accountId)));
+    start(async () => refresh(await setTaskDone(t.id, !t.done)));
   }
 
   function remove(id: string) {
     setItems((p) => p.filter((x) => x.id !== id));
-    start(async () => refresh(await deleteTask(id, accountId)));
+    start(async () => refresh(await deleteTask(id)));
   }
 
   const sorted = [...items].sort(
-    (a, b) => Number(a.done) - Number(b.done) || (a.due_date ?? "9999").localeCompare(b.due_date ?? "9999")
+    (a, b) =>
+      Number(a.done) - Number(b.done) ||
+      (a.due_date ?? "9999").localeCompare(b.due_date ?? "9999")
   );
 
   return (
@@ -123,6 +141,7 @@ export function AccountTasks({
                       )}
                     >
                       fällig {formatDate(t.due_date)}
+                      {t.due_time ? ` · ${t.due_time}` : ""}
                     </p>
                   ) : null}
                 </div>

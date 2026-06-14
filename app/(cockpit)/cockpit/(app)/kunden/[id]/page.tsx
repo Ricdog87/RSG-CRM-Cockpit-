@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getAccountDetail } from "@/lib/crm-data";
 import { getEmailActivitiesForAccount } from "@/lib/email-data";
 import { getNotesForAccount } from "@/lib/notes-data";
-import { getTasksForAccount } from "@/lib/tasks-data";
+import { getTasksForRelated } from "@/lib/tasks-data";
 import { getContactsForAccount } from "@/lib/contacts-data";
 import { EmailTimeline } from "@/components/cockpit/EmailTimeline";
 import { AccountNotes } from "@/components/cockpit/AccountNotes";
@@ -62,7 +62,7 @@ export default async function AccountDetailPage({
   const [emails, notes, tasks, contacts] = await Promise.all([
     getEmailActivitiesForAccount(account.id, account.name),
     getNotesForAccount(account.id),
-    getTasksForAccount(account.id),
+    getTasksForRelated("customer", account.id),
     getContactsForAccount(account.id),
   ]);
 
@@ -128,7 +128,7 @@ export default async function AccountDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Aufgaben */}
-        <AccountTasks accountId={account.id} tasks={tasks} />
+        <AccountTasks accountId={account.id} accountName={account.name} tasks={tasks} />
         {/* Notizen */}
         <AccountNotes accountId={account.id} notes={notes} />
       </div>
