@@ -61,6 +61,7 @@ function parseName(s: string): string {
 
 interface AccountRow {
   id: string;
+  name?: string | null;
   contact_email?: string | null;
 }
 
@@ -135,7 +136,7 @@ export async function POST(req: NextRequest) {
 
   const { data: accounts } = await svc
     .from("accounts")
-    .select("id, contact_email")
+    .select("id, name, contact_email")
     .eq("partner_id", partnerId);
   const match = matchAccount(
     (accounts as AccountRow[]) ?? [],
@@ -167,9 +168,13 @@ export async function POST(req: NextRequest) {
     match.direction === "inbound" &&
     (await automationEnabled(svc, partnerId, "email_reply"))
   ) {
-    await svc.from("account_tasks").insert({
+    const accName =
+      ((accounts as AccountRow[]) ?? []).find((a) => a.id === match.id)?.name ?? null;
+    await svc.from("crm_tasks").insert({
       partner_id: partnerId,
-      account_id: match.id,
+      related_type: "customer",
+      related_id: match.id,
+      related_label: accName,
       title: "Auf E-Mail antworten",
       due_date: new Date().toISOString().slice(0, 10),
     });

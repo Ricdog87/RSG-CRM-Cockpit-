@@ -197,6 +197,13 @@ export const IconFolder = (p: IconProps) => (
   </Base>
 );
 
+export const IconCalendar = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="3" y="4.5" width="18" height="16" rx="2" />
+    <path d="M3 9h18M8 2.5v4M16 2.5v4" />
+  </Base>
+);
+
 export const IconBolt = (p: IconProps) => (
   <Base {...p}>
     <path d="M13 2 4.5 13.5a.6.6 0 0 0 .5 1H11l-1 7.5L19.5 10.5a.6.6 0 0 0-.5-1H13l1-7.5Z" />

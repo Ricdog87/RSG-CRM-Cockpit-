@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { IconChevronRight, IconTasks } from "@/components/ui/icons";
 import { formatDate } from "@/lib/format";
 import type { Task } from "@/lib/tasks-data";
+import { relatedHref } from "@/lib/task-link";
 
 function dueBucket(due: string | null): "overdue" | "today" | "later" {
   if (!due) return "later";
@@ -59,15 +60,15 @@ export function TasksToday({ tasks }: { tasks: Task[] }) {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-ink">{t.title}</p>
                   <p className="truncate text-xs text-faint">
-                    {t.account_name}
+                    {t.related_label ?? "Allgemein"}
                     {t.due_date ? ` · fällig ${formatDate(t.due_date)}` : ""}
                   </p>
                 </div>
-                {t.account_id ? (
+                {relatedHref(t.related_type, t.related_id) ? (
                   <Link
-                    href={`/cockpit/kunden/${t.account_id}`}
+                    href={relatedHref(t.related_type, t.related_id)!}
                     className="flex-none text-faint hover:text-brand-deep"
-                    aria-label="Zum Account"
+                    aria-label="Zum Datensatz"
                   >
                     <IconChevronRight size={16} />
                   </Link>
