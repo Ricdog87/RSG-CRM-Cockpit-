@@ -10,6 +10,7 @@ import {
   IconBriefcase,
   IconUserCheck,
   IconNetwork,
+  IconChart,
   IconEuro,
   IconTrophy,
 } from "@/components/ui/icons";
@@ -76,6 +77,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Segmente",
         icon: IconLayers,
         description: "KI-Zielgruppen und Use-Cases",
+      },
+      {
+        href: "/cockpit/berichte",
+        label: "Berichte",
+        icon: IconChart,
+        description: "Funnel, Forecast und Kennzahlen",
       },
     ],
   },
