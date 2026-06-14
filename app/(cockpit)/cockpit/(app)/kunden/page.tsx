@@ -2,42 +2,13 @@ import { getAccounts } from "@/lib/crm-data";
 import { createAccount } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { AccountsView } from "@/components/cockpit/views/AccountsView";
-import { EntityFormDialog, type FormField } from "@/components/cockpit/EntityFormDialog";
+import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { StatCard } from "@/components/cockpit/StatCard";
+import { ACCOUNT_FIELDS } from "@/lib/crm-forms";
 import { IconUsers, IconEuro, IconPhone, IconBriefcase } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-const FIELDS: FormField[] = [
-  { name: "name", label: "Unternehmen", required: true, full: true, placeholder: "Muster GmbH" },
-  {
-    name: "line",
-    label: "Geschäftslinie",
-    type: "select",
-    options: [
-      { value: "ki", label: "KI & Telefonassistenz" },
-      { value: "recruiting", label: "Personalvermittlung" },
-    ],
-  },
-  {
-    name: "lifecycle",
-    label: "Phase",
-    type: "select",
-    options: [
-      { value: "lead", label: "Lead" },
-      { value: "opportunity", label: "Opportunity" },
-      { value: "kunde", label: "Kunde" },
-      { value: "bestand", label: "Bestand" },
-    ],
-  },
-  { name: "branche", label: "Branche", placeholder: "z.B. Gesundheit" },
-  { name: "segment", label: "Segment", placeholder: "z.B. Praxen" },
-  { name: "ort", label: "Ort" },
-  { name: "contact_name", label: "Ansprechpartner:in" },
-  { name: "contact_email", label: "E-Mail", type: "email" },
-  { name: "mrr", label: "MRR (€)", type: "number", placeholder: "0" },
-];
 
 export default async function KundenPage() {
   const accounts = await getAccounts();
@@ -60,7 +31,7 @@ export default async function KundenPage() {
             triggerLabel="Account anlegen"
             title="Neuen Account anlegen"
             description="Unternehmen mit Kontakt und Geschäftslinie erfassen."
-            fields={FIELDS}
+            fields={ACCOUNT_FIELDS}
             action={createAccount}
           />
         }

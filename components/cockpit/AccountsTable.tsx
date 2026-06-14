@@ -16,7 +16,13 @@ const lifecycleMeta: Record<
 };
 
 /** Account-/Kundenliste (Customer Management). */
-export function AccountsTable({ accounts }: { accounts: Account[] }) {
+export function AccountsTable({
+  accounts,
+  renderActions,
+}: {
+  accounts: Account[];
+  renderActions?: (a: Account) => React.ReactNode;
+}) {
   if (accounts.length === 0) {
     return (
       <Card>
@@ -65,11 +71,14 @@ export function AccountsTable({ accounts }: { accounts: Account[] }) {
                 <div className="lg:col-span-2">
                   <Badge tone={lc.tone}>{lc.label}</Badge>
                 </div>
-                <div className="text-right lg:col-span-2">
-                  <p className="text-sm font-semibold text-ink">
-                    {a.mrr > 0 ? `${formatEur(a.mrr)}/M` : "—"}
-                  </p>
-                  <p className="text-xs text-faint">seit {formatDate(a.since)}</p>
+                <div className="flex items-center justify-end gap-2 lg:col-span-2">
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-ink">
+                      {a.mrr > 0 ? `${formatEur(a.mrr)}/M` : "—"}
+                    </p>
+                    <p className="text-xs text-faint">seit {formatDate(a.since)}</p>
+                  </div>
+                  {renderActions ? renderActions(a) : null}
                 </div>
               </li>
             );

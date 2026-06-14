@@ -150,3 +150,96 @@ export async function createMandate(
     "/cockpit/projekte/recruiting"
   );
 }
+
+// ---------- Update / Stage-Wechsel ----------------------------------
+
+async function update(
+  table: string,
+  id: string,
+  patch: Record<string, unknown>,
+  revalidate: string
+): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const { id: pid, error } = await currentPartnerId();
+  if (!pid) return { ok: false, error };
+  const supabase = createClient();
+  // RLS beschränkt zusätzlich auf eigene Datensätze.
+  const { error: updErr } = await supabase.from(table).update(patch).eq("id", id);
+  if (updErr) return { ok: false, error: updErr.message };
+  revalidatePath(revalidate);
+  return { ok: true };
+}
+
+export async function updateOpportunityStage(
+  id: string,
+  stage: string
+): Promise<ActionResult> {
+  return update("opportunities", id, { stage }, "/cockpit/sales");
+}
+
+export async function updateCandidateStage(
+  id: string,
+  stage: string
+): Promise<ActionResult> {
+  return update(
+    "candidates",
+    id,
+    { stage, updated_at: new Date().toISOString() },
+    "/cockpit/kandidaten"
+  );
+}
+
+export async function updateAccount(
+  _prev: ActionResult | null,
+  fd: FormData
+): Promise<ActionResult> {
+  const id = s(fd, "id");
+  if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
+  if (!s(fd, "name")) return { ok: false, error: "Name ist erforderlich." };
+  return update(
+    "accounts",
+    id,
+    {
+      name: s(fd, "name"),
+      branche: s(fd, "branche"),
+      segment: s(fd, "segment"),
+      line: s(fd, "line") || "ki",
+      lifecycle: s(fd, "lifecycle") || "lead",
+      contact_name: s(fd, "contact_name"),
+      contact_email: s(fd, "contact_email"),
+      mrr: n(fd, "mrr"),
+      ort: s(fd, "ort"),
+    },
+    "/cockpit/kunden"
+  );
+}
+
+// ---------- Löschen --------------------------------------------------
+
+async function remove(
+  table: string,
+  id: string,
+  revalidate: string
+): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const { id: pid, error } = await currentPartnerId();
+  if (!pid) return { ok: false, error };
+  const supabase = createClient();
+  const { error: delErr } = await supabase.from(table).delete().eq("id", id);
+  if (delErr) return { ok: false, error: delErr.message };
+  revalidatePath(revalidate);
+  return { ok: true };
+}
+
+export async function deleteAccount(id: string): Promise<ActionResult> {
+  return remove("accounts", id, "/cockpit/kunden");
+}
+export async function deleteCandidate(id: string): Promise<ActionResult> {
+  return remove("candidates", id, "/cockpit/kandidaten");
+}
+export async function deleteMandate(id: string): Promise<ActionResult> {
+  return remove("recruiting_mandates", id, "/cockpit/projekte/recruiting");
+}
+export async function deleteSegment(id: string): Promise<ActionResult> {
+  return remove("segments", id, "/cockpit/segmente");
+}

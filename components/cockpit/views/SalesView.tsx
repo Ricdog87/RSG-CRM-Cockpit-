@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
 import { LineBadge } from "@/components/cockpit/LineBadge";
+import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { FilterTabs } from "@/components/ui/FilterTabs";
+import { updateOpportunityStage } from "@/lib/crm-actions";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 import type { BusinessLine, Opportunity, SalesStage } from "@/lib/crm-types";
 
@@ -18,11 +21,19 @@ const COLUMNS: BoardColumn<SalesStage>[] = [
   { stage: "gewonnen", label: "Gewonnen", tone: "success" },
 ];
 
+const STAGE_OPTIONS = COLUMNS.map((c) => ({ value: c.stage, label: c.label }));
+
 function value(o: Opportunity) {
   return o.value_type === "mrr" ? `${formatEur(o.value)}/M` : formatEur(o.value);
 }
 
-function OppCard({ o }: { o: Opportunity }) {
+function OppCard({
+  o,
+  onMove,
+}: {
+  o: Opportunity;
+  onMove: (id: string, stage: SalesStage) => void;
+}) {
   return (
     <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
       <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -37,14 +48,28 @@ function OppCard({ o }: { o: Opportunity }) {
       <p className="mt-1 text-[0.7rem] text-faint">
         {o.owner} · {formatDate(o.expected_close)}
       </p>
+      <MoveSelect<SalesStage>
+        value={o.stage}
+        options={STAGE_OPTIONS}
+        onMove={(stage) => onMove(o.id, stage)}
+      />
     </div>
   );
 }
 
-/** Sales-Board mit Linien-Filter. */
+/** Sales-Board mit Linien-Filter und Phasenwechsel. */
 export function SalesView({ opportunities }: { opportunities: Opportunity[] }) {
+  const router = useRouter();
+  const [items, setItems] = useState(opportunities);
   const [filter, setFilter] = useState<Filter>("all");
-  const base = opportunities.filter((o) => o.stage !== "verloren");
+
+  async function move(id: string, stage: SalesStage) {
+    setItems((prev) => prev.map((o) => (o.id === id ? { ...o, stage } : o)));
+    const res = await updateOpportunityStage(id, stage);
+    if (res.ok && !res.demo) router.refresh();
+  }
+
+  const base = items.filter((o) => o.stage !== "verloren");
   const shown = filter === "all" ? base : base.filter((o) => o.line === filter);
 
   return (
@@ -66,8 +91,8 @@ export function SalesView({ opportunities }: { opportunities: Opportunity[] }) {
         columns={COLUMNS}
         items={shown}
         getStage={(o) => o.stage}
-        renderCard={(o) => <OppCard o={o} />}
-        columnFooter={(items) => <>{formatEur(items.reduce((s, o) => s + o.value, 0))}</>}
+        renderCard={(o) => <OppCard o={o} onMove={move} />}
+        columnFooter={(its) => <>{formatEur(its.reduce((s, o) => s + o.value, 0))}</>}
         emptyText="Keine Verkaufschancen in diesem Filter."
       />
     </div>

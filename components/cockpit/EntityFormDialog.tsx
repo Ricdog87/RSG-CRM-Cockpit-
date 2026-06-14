@@ -22,11 +22,11 @@ export interface FormField {
 const inputClass =
   "w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand";
 
-function SubmitButton() {
+function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-      {pending ? "Speichern …" : "Anlegen"}
+      {pending ? "Speichern …" : label}
     </Button>
   );
 }
@@ -42,12 +42,23 @@ export function EntityFormDialog({
   description,
   fields,
   action,
+  initial,
+  hiddenId,
+  submitLabel,
+  renderTrigger,
 }: {
-  triggerLabel: string;
+  triggerLabel?: string;
   title: string;
   description?: string;
   fields: FormField[];
   action: (prev: ActionResult | null, fd: FormData) => Promise<ActionResult>;
+  /** Vorbelegung der Felder (Bearbeiten-Modus) */
+  initial?: Record<string, string>;
+  /** versteckte id für Updates */
+  hiddenId?: string;
+  submitLabel?: string;
+  /** alternativer Trigger (z.B. Icon-Button in einer Tabellenzeile) */
+  renderTrigger?: (open: () => void) => React.ReactNode;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -62,9 +73,13 @@ export function EntityFormDialog({
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
-        <IconPlus size={16} /> {triggerLabel}
-      </Button>
+      {renderTrigger ? (
+        renderTrigger(() => setOpen(true))
+      ) : (
+        <Button onClick={() => setOpen(true)}>
+          <IconPlus size={16} /> {triggerLabel}
+        </Button>
+      )}
 
       <Dialog
         open={open}
@@ -73,6 +88,7 @@ export function EntityFormDialog({
         description={description}
       >
         <form action={formAction} className="space-y-4">
+          {hiddenId ? <input type="hidden" name="id" value={hiddenId} /> : null}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {fields.map((f) => (
               <div key={f.name} className={f.full ? "sm:col-span-2" : ""}>
@@ -87,7 +103,7 @@ export function EntityFormDialog({
                   <select
                     id={f.name}
                     name={f.name}
-                    defaultValue={f.defaultValue}
+                    defaultValue={initial?.[f.name] ?? f.defaultValue}
                     required={f.required}
                     className={inputClass}
                   >
@@ -103,7 +119,7 @@ export function EntityFormDialog({
                     name={f.name}
                     rows={3}
                     placeholder={f.placeholder}
-                    defaultValue={f.defaultValue}
+                    defaultValue={initial?.[f.name] ?? f.defaultValue}
                     required={f.required}
                     className={inputClass}
                   />
@@ -113,7 +129,7 @@ export function EntityFormDialog({
                     name={f.name}
                     type={f.type ?? "text"}
                     placeholder={f.placeholder}
-                    defaultValue={f.defaultValue}
+                    defaultValue={initial?.[f.name] ?? f.defaultValue}
                     required={f.required}
                     className={inputClass}
                   />
@@ -142,7 +158,7 @@ export function EntityFormDialog({
             >
               Abbrechen
             </Button>
-            <SubmitButton />
+            <SubmitButton label={submitLabel ?? "Anlegen"} />
           </div>
         </form>
       </Dialog>

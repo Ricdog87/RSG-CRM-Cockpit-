@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
+import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { FilterTabs } from "@/components/ui/FilterTabs";
+import { updateCandidateStage } from "@/lib/crm-actions";
 import { formatDate } from "@/lib/format";
 import type { Candidate, CandidateStage } from "@/lib/crm-types";
 
@@ -14,7 +17,15 @@ const COLUMNS: BoardColumn<CandidateStage>[] = [
   { stage: "platziert", label: "Platziert", tone: "success" },
 ];
 
-function CandidateCard({ c }: { c: Candidate }) {
+const STAGE_OPTIONS = COLUMNS.map((c) => ({ value: c.stage, label: c.label }));
+
+function CandidateCard({
+  c,
+  onMove,
+}: {
+  c: Candidate;
+  onMove: (id: string, stage: CandidateStage) => void;
+}) {
   return (
     <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
       <p className="truncate text-sm font-medium text-ink">{c.name}</p>
@@ -24,16 +35,29 @@ function CandidateCard({ c }: { c: Candidate }) {
         <span>{c.source}</span>
         <span>{formatDate(c.updated_at)}</span>
       </div>
+      <MoveSelect<CandidateStage>
+        value={c.stage}
+        options={STAGE_OPTIONS}
+        onMove={(stage) => onMove(c.id, stage)}
+      />
     </div>
   );
 }
 
-/** Kandidaten-Board mit Filter nach Mandat. */
+/** Kandidaten-Board mit Mandats-Filter und Phasenwechsel. */
 export function CandidatesView({ candidates }: { candidates: Candidate[] }) {
-  const mandates = Array.from(new Set(candidates.map((c) => c.mandate_account)));
+  const router = useRouter();
+  const [items, setItems] = useState(candidates);
   const [filter, setFilter] = useState<string>("all");
 
-  const base = candidates.filter((c) => c.stage !== "abgelehnt");
+  async function move(id: string, stage: CandidateStage) {
+    setItems((prev) => prev.map((c) => (c.id === id ? { ...c, stage } : c)));
+    const res = await updateCandidateStage(id, stage);
+    if (res.ok && !res.demo) router.refresh();
+  }
+
+  const mandates = Array.from(new Set(items.map((c) => c.mandate_account)));
+  const base = items.filter((c) => c.stage !== "abgelehnt");
   const shown = filter === "all" ? base : base.filter((c) => c.mandate_account === filter);
 
   return (
@@ -54,7 +78,7 @@ export function CandidatesView({ candidates }: { candidates: Candidate[] }) {
         columns={COLUMNS}
         items={shown}
         getStage={(c) => c.stage}
-        renderCard={(c) => <CandidateCard c={c} />}
+        renderCard={(c) => <CandidateCard c={c} onMove={move} />}
         emptyText="Keine Kandidat:innen in diesem Filter."
       />
     </div>
