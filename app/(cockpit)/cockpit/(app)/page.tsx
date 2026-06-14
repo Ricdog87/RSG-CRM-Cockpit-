@@ -5,9 +5,11 @@ import {
   getMandates,
   getCandidates,
 } from "@/lib/crm-data";
+import { getOpenTasks } from "@/lib/tasks-data";
 import { HeroBestand } from "@/components/cockpit/HeroBestand";
 import { KpiRow } from "@/components/cockpit/KpiRow";
 import { CrmOverview } from "@/components/cockpit/CrmOverview";
+import { TasksToday } from "@/components/cockpit/TasksToday";
 import { OverrideNudge } from "@/components/cockpit/OverrideNudge";
 import { Pipeline } from "@/components/cockpit/Pipeline";
 import { CareerProgress } from "@/components/cockpit/CareerProgress";
@@ -18,13 +20,15 @@ import { TeamDownline } from "@/components/cockpit/TeamDownline";
 export const dynamic = "force-dynamic";
 
 export default async function CockpitPage() {
-  const [data, opportunities, kiProjects, mandates, candidates] = await Promise.all([
-    getCockpitData(),
-    getOpportunities(),
-    getKiProjects(),
-    getMandates(),
-    getCandidates(),
-  ]);
+  const [data, opportunities, kiProjects, mandates, candidates, openTasks] =
+    await Promise.all([
+      getCockpitData(),
+      getOpportunities(),
+      getKiProjects(),
+      getMandates(),
+      getCandidates(),
+      getOpenTasks(),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -56,12 +60,17 @@ export default async function CockpitPage() {
       <OverrideNudge earnings={data.earnings} override={data.override} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* 4. Pipeline-Vorschau */}
+        {/* Aufgaben heute */}
+        <section className="animate-fade-up" aria-label="Aufgaben heute">
+          <TasksToday tasks={openTasks} />
+        </section>
+
+        {/* Pipeline-Vorschau */}
         <section className="animate-fade-up" aria-label="Pipeline">
           <Pipeline deals={data.pipeline} limit={4} viewAllHref="/cockpit/pipeline" />
         </section>
 
-        {/* 5. Karriere */}
+        {/* Karriere */}
         <section className="animate-fade-up" aria-label="Karriere">
           <CareerProgress career={data.career} />
         </section>

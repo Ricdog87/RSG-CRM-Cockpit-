@@ -320,6 +320,42 @@ export async function deleteNote(
   return { ok: true };
 }
 
+// ---------- Kontakte je Account -------------------------------------
+
+export async function addContact(
+  accountId: string,
+  contact: { name: string; role?: string; email?: string; phone?: string }
+): Promise<ActionResult> {
+  if (!contact.name?.trim()) return { ok: false, error: "Name erforderlich." };
+  if (useMockData) return DEMO;
+  const { id, error } = await currentPartnerId();
+  if (!id) return { ok: false, error };
+  const supabase = createClient();
+  const { error: insErr } = await supabase.from("account_contacts").insert({
+    partner_id: id,
+    account_id: accountId,
+    name: contact.name.trim(),
+    role: contact.role?.trim() || null,
+    email: contact.email?.trim() || null,
+    phone: contact.phone?.trim() || null,
+  });
+  if (insErr) return { ok: false, error: insErr.message };
+  revalidatePath(`/cockpit/kunden/${accountId}`);
+  return { ok: true };
+}
+
+export async function deleteContact(
+  id: string,
+  accountId: string
+): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const supabase = createClient();
+  const { error } = await supabase.from("account_contacts").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/cockpit/kunden/${accountId}`);
+  return { ok: true };
+}
+
 // ---------- Aufgaben je Account -------------------------------------
 
 export async function addTask(

@@ -4,9 +4,11 @@ import { getAccountDetail } from "@/lib/crm-data";
 import { getEmailActivitiesForAccount } from "@/lib/email-data";
 import { getNotesForAccount } from "@/lib/notes-data";
 import { getTasksForAccount } from "@/lib/tasks-data";
+import { getContactsForAccount } from "@/lib/contacts-data";
 import { EmailTimeline } from "@/components/cockpit/EmailTimeline";
 import { AccountNotes } from "@/components/cockpit/AccountNotes";
 import { AccountTasks } from "@/components/cockpit/AccountTasks";
+import { AccountContacts } from "@/components/cockpit/AccountContacts";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { LineBadge } from "@/components/cockpit/LineBadge";
@@ -57,10 +59,11 @@ export default async function AccountDetailPage({
   const detail = await getAccountDetail(params.id);
   if (!detail) notFound();
   const { account, opportunities, kiProjects, mandates, candidates } = detail;
-  const [emails, notes, tasks] = await Promise.all([
+  const [emails, notes, tasks, contacts] = await Promise.all([
     getEmailActivitiesForAccount(account.id, account.name),
     getNotesForAccount(account.id),
     getTasksForAccount(account.id),
+    getContactsForAccount(account.id),
   ]);
 
   return (
@@ -110,6 +113,9 @@ export default async function AccountDetailPage({
           </div>
         </CardBody>
       </Card>
+
+      {/* Ansprechpartner:innen */}
+      <AccountContacts accountId={account.id} contacts={contacts} />
 
       {/* KI-Analyse des Accounts */}
       <AccountEnrich
