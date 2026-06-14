@@ -7,9 +7,10 @@ import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
-import { CANDIDATE_FIELDS } from "@/lib/crm-forms";
+import { CANDIDATE_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { updateCandidateStage, updateCandidate, deleteCandidate } from "@/lib/crm-actions";
 import { formatDate } from "@/lib/format";
+import type { FormField } from "@/components/cockpit/EntityFormDialog";
 import type { Candidate, CandidateStage } from "@/lib/crm-types";
 
 const COLUMNS: BoardColumn<CandidateStage>[] = [
@@ -26,10 +27,12 @@ function CandidateCard({
   c,
   onMove,
   onDelete,
+  editFields,
 }: {
   c: Candidate;
   onMove: (id: string, stage: CandidateStage) => void;
   onDelete: (id: string) => void;
+  editFields: FormField[];
 }) {
   return (
     <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
@@ -45,7 +48,7 @@ function CandidateCard({
             <EditDialog
               id={c.id}
               title="Kandidat:in bearbeiten"
-              fields={CANDIDATE_FIELDS}
+              fields={editFields}
               action={updateCandidate}
               initial={{
                 name: c.name,
@@ -73,10 +76,17 @@ function CandidateCard({
 }
 
 /** Kandidaten-Board mit Mandats-Filter und Phasenwechsel. */
-export function CandidatesView({ candidates }: { candidates: Candidate[] }) {
+export function CandidatesView({
+  candidates,
+  accountNames = [],
+}: {
+  candidates: Candidate[];
+  accountNames?: string[];
+}) {
   const router = useRouter();
   const [items, setItems] = useState(candidates);
   const [filter, setFilter] = useState<string>("all");
+  const editFields = withDatalist(CANDIDATE_FIELDS, "mandate_account", accountNames);
 
   async function move(id: string, stage: CandidateStage) {
     setItems((prev) => prev.map((c) => (c.id === id ? { ...c, stage } : c)));
@@ -112,7 +122,9 @@ export function CandidatesView({ candidates }: { candidates: Candidate[] }) {
         columns={COLUMNS}
         items={shown}
         getStage={(c) => c.stage}
-        renderCard={(c) => <CandidateCard c={c} onMove={move} onDelete={onDelete} />}
+        renderCard={(c) => (
+          <CandidateCard c={c} onMove={move} onDelete={onDelete} editFields={editFields} />
+        )}
         emptyText="Keine Kandidat:innen in diesem Filter."
       />
     </div>

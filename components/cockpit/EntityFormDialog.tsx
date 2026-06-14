@@ -11,7 +11,7 @@ import type { ActionResult } from "@/lib/crm-actions";
 export interface FormField {
   name: string;
   label: string;
-  type?: "text" | "email" | "number" | "date" | "select" | "textarea";
+  type?: "text" | "email" | "number" | "date" | "select" | "textarea" | "datalist";
   options?: { value: string; label: string }[];
   required?: boolean;
   placeholder?: string;
@@ -123,6 +123,24 @@ export function EntityFormDialog({
                     required={f.required}
                     className={inputClass}
                   />
+                ) : f.type === "datalist" ? (
+                  <>
+                    <input
+                      id={f.name}
+                      name={f.name}
+                      list={`${f.name}-list`}
+                      placeholder={f.placeholder}
+                      defaultValue={initial?.[f.name] ?? f.defaultValue}
+                      required={f.required}
+                      autoComplete="off"
+                      className={inputClass}
+                    />
+                    <datalist id={`${f.name}-list`}>
+                      {(f.options ?? []).map((o) => (
+                        <option key={o.value} value={o.value} />
+                      ))}
+                    </datalist>
+                  </>
                 ) : (
                   <input
                     id={f.name}

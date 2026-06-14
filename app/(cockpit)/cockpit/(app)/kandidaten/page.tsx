@@ -1,17 +1,19 @@
-import { getCandidates } from "@/lib/crm-data";
+import { getCandidates, getAccounts } from "@/lib/crm-data";
 import { createCandidate } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { CandidatesView } from "@/components/cockpit/views/CandidatesView";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
-import { CANDIDATE_FIELDS } from "@/lib/crm-forms";
+import { CANDIDATE_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { IconUserCheck } from "@/components/ui/icons";
 import { formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function KandidatenPage() {
-  const candidates = await getCandidates();
+  const [candidates, accounts] = await Promise.all([getCandidates(), getAccounts()]);
+  const accountNames = accounts.map((a) => a.name);
+  const createFields = withDatalist(CANDIDATE_FIELDS, "mandate_account", accountNames);
 
   const platziert = candidates.filter((c) => c.stage === "platziert").length;
   const aktiv = candidates.filter(
@@ -30,7 +32,7 @@ export default async function KandidatenPage() {
             triggerLabel="Kandidat:in anlegen"
             title="Neue:n Kandidat:in anlegen"
             description="Person der Recruiting-Pipeline hinzufügen."
-            fields={CANDIDATE_FIELDS}
+            fields={createFields}
             action={createCandidate}
           />
         }
@@ -60,7 +62,7 @@ export default async function KandidatenPage() {
         />
       </div>
 
-      <CandidatesView candidates={candidates} />
+      <CandidatesView candidates={candidates} accountNames={accountNames} />
     </div>
   );
 }

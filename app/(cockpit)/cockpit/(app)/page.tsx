@@ -1,6 +1,13 @@
 import { getCockpitData } from "@/lib/data";
+import {
+  getOpportunities,
+  getKiProjects,
+  getMandates,
+  getCandidates,
+} from "@/lib/crm-data";
 import { HeroBestand } from "@/components/cockpit/HeroBestand";
 import { KpiRow } from "@/components/cockpit/KpiRow";
+import { CrmOverview } from "@/components/cockpit/CrmOverview";
 import { OverrideNudge } from "@/components/cockpit/OverrideNudge";
 import { Pipeline } from "@/components/cockpit/Pipeline";
 import { CareerProgress } from "@/components/cockpit/CareerProgress";
@@ -11,7 +18,13 @@ import { TeamDownline } from "@/components/cockpit/TeamDownline";
 export const dynamic = "force-dynamic";
 
 export default async function CockpitPage() {
-  const data = await getCockpitData();
+  const [data, opportunities, kiProjects, mandates, candidates] = await Promise.all([
+    getCockpitData(),
+    getOpportunities(),
+    getKiProjects(),
+    getMandates(),
+    getCandidates(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -29,7 +42,17 @@ export default async function CockpitPage() {
         />
       </section>
 
-      {/* 3. Override-Nudge (nur wenn override_pausiert > 0) */}
+      {/* 3. CRM-Kennzahlen: Vertrieb & Projekte */}
+      <section className="animate-fade-up" aria-label="Vertrieb & Projekte">
+        <CrmOverview
+          opportunities={opportunities}
+          kiProjects={kiProjects}
+          mandates={mandates}
+          candidates={candidates}
+        />
+      </section>
+
+      {/* 4. Override-Nudge (nur wenn override_pausiert > 0) */}
       <OverrideNudge earnings={data.earnings} override={data.override} />
 
       <div className="grid gap-6 lg:grid-cols-2">

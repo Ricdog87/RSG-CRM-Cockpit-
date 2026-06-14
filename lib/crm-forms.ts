@@ -106,3 +106,61 @@ export const KIPROJECT_FIELDS: FormField[] = [
   { name: "mrr", label: "MRR (€)", type: "number", placeholder: "0" },
   { name: "go_live", label: "Go-Live", type: "date" },
 ];
+
+export const OPPORTUNITY_FIELDS: FormField[] = [
+  { name: "account_name", label: "Account", required: true, full: true, placeholder: "Muster GmbH" },
+  { name: "title", label: "Titel", full: true, placeholder: "z.B. AI Account Manager" },
+  {
+    name: "line",
+    label: "Geschäftslinie",
+    type: "select",
+    options: [
+      { value: "ki", label: "KI & Telefonassistenz" },
+      { value: "recruiting", label: "Personalvermittlung" },
+    ],
+  },
+  {
+    name: "value_type",
+    label: "Wert-Typ",
+    type: "select",
+    options: [
+      { value: "mrr", label: "MRR (monatlich)" },
+      { value: "fixed", label: "Festpreis" },
+    ],
+  },
+  { name: "value", label: "Wert (€)", type: "number", placeholder: "0" },
+  { name: "probability", label: "Wahrscheinlichkeit (%)", type: "number", placeholder: "0" },
+  {
+    name: "stage",
+    label: "Phase",
+    type: "select",
+    options: [
+      { value: "neu", label: "Neu" },
+      { value: "qualifiziert", label: "Qualifiziert" },
+      { value: "demo", label: "Demo/Termin" },
+      { value: "angebot", label: "Angebot" },
+      { value: "verhandlung", label: "Verhandlung" },
+      { value: "gewonnen", label: "Gewonnen" },
+    ],
+  },
+  { name: "owner", label: "Verantwortlich" },
+  { name: "expected_close", label: "Erwarteter Abschluss", type: "date" },
+];
+
+/**
+ * Wandelt ein Freitextfeld in ein Autocomplete-Feld (datalist) mit den
+ * angegebenen Werten – z.B. um bestehende Accounts vorzuschlagen.
+ */
+export function withDatalist(
+  fields: FormField[],
+  fieldName: string,
+  values: string[]
+): FormField[] {
+  const options = Array.from(new Set(values.filter(Boolean))).map((v) => ({
+    value: v,
+    label: v,
+  }));
+  return fields.map((f) =>
+    f.name === fieldName ? { ...f, type: "datalist" as const, options } : f
+  );
+}

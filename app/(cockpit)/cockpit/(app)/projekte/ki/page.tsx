@@ -1,4 +1,4 @@
-import { getKiProjects } from "@/lib/crm-data";
+import { getKiProjects, getAccounts } from "@/lib/crm-data";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { KiProjectsView } from "@/components/cockpit/views/KiProjectsView";
 import { StatCard } from "@/components/cockpit/StatCard";
@@ -8,7 +8,8 @@ import { formatEur, formatNumber } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function KiProjektePage() {
-  const projects = await getKiProjects();
+  const [projects, accounts] = await Promise.all([getKiProjects(), getAccounts()]);
+  const accountNames = accounts.map((a) => a.name);
 
   const live = projects.filter((p) => p.status === "live");
   const onboarding = projects.filter((p) => p.status === "onboarding");
@@ -56,7 +57,7 @@ export default async function KiProjektePage() {
         />
       </div>
 
-      <KiProjectsView projects={projects} />
+      <KiProjectsView projects={projects} accountNames={accountNames} />
     </div>
   );
 }

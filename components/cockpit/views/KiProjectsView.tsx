@@ -6,7 +6,7 @@ import { KiProjectsTable } from "@/components/cockpit/KiProjectsTable";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
-import { KIPROJECT_FIELDS } from "@/lib/crm-forms";
+import { KIPROJECT_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { updateKiProject, deleteKiProject } from "@/lib/crm-actions";
 import type { KiProject, KiStatus } from "@/lib/crm-types";
 
@@ -21,10 +21,17 @@ const STATUS: { value: Filter; label: string }[] = [
 ];
 
 /** KI-Projekttabelle mit Status-Filter, Bearbeiten und Löschen. */
-export function KiProjectsView({ projects }: { projects: KiProject[] }) {
+export function KiProjectsView({
+  projects,
+  accountNames = [],
+}: {
+  projects: KiProject[];
+  accountNames?: string[];
+}) {
   const router = useRouter();
   const [items, setItems] = useState(projects);
   const [filter, setFilter] = useState<Filter>("all");
+  const editFields = withDatalist(KIPROJECT_FIELDS, "account_name", accountNames);
 
   async function onDelete(id: string) {
     setItems((prev) => prev.filter((p) => p.id !== id));
@@ -59,7 +66,7 @@ export function KiProjectsView({ projects }: { projects: KiProject[] }) {
                 id={p.id}
                 title="KI-Projekt bearbeiten"
                 description="Status, Health und MRR aktualisieren."
-                fields={KIPROJECT_FIELDS}
+                fields={editFields}
                 action={updateKiProject}
                 initial={{
                   account_name: p.account_name,

@@ -1,56 +1,22 @@
-import { getOpportunities } from "@/lib/crm-data";
+import { getOpportunities, getAccounts } from "@/lib/crm-data";
 import { createOpportunity } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { SalesView } from "@/components/cockpit/views/SalesView";
-import { EntityFormDialog, type FormField } from "@/components/cockpit/EntityFormDialog";
+import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
+import { OPPORTUNITY_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { IconTarget, IconEuro, IconTrendingUp } from "@/components/ui/icons";
 import { formatEur } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const FIELDS: FormField[] = [
-  { name: "account_name", label: "Account", required: true, full: true, placeholder: "Muster GmbH" },
-  { name: "title", label: "Titel", full: true, placeholder: "z.B. AI Account Manager" },
-  {
-    name: "line",
-    label: "Geschäftslinie",
-    type: "select",
-    options: [
-      { value: "ki", label: "KI & Telefonassistenz" },
-      { value: "recruiting", label: "Personalvermittlung" },
-    ],
-  },
-  {
-    name: "value_type",
-    label: "Wert-Typ",
-    type: "select",
-    options: [
-      { value: "mrr", label: "MRR (monatlich)" },
-      { value: "fixed", label: "Festpreis" },
-    ],
-  },
-  { name: "value", label: "Wert (€)", type: "number", placeholder: "0" },
-  { name: "probability", label: "Wahrscheinlichkeit (%)", type: "number", placeholder: "0" },
-  {
-    name: "stage",
-    label: "Phase",
-    type: "select",
-    options: [
-      { value: "neu", label: "Neu" },
-      { value: "qualifiziert", label: "Qualifiziert" },
-      { value: "demo", label: "Demo/Termin" },
-      { value: "angebot", label: "Angebot" },
-      { value: "verhandlung", label: "Verhandlung" },
-      { value: "gewonnen", label: "Gewonnen" },
-    ],
-  },
-  { name: "owner", label: "Verantwortlich" },
-  { name: "expected_close", label: "Erwarteter Abschluss", type: "date" },
-];
-
 export default async function SalesPage() {
-  const opps = await getOpportunities();
+  const [opps, accounts] = await Promise.all([getOpportunities(), getAccounts()]);
+  const fields = withDatalist(
+    OPPORTUNITY_FIELDS,
+    "account_name",
+    accounts.map((a) => a.name)
+  );
   const open = opps.filter((o) => o.stage !== "gewonnen" && o.stage !== "verloren");
 
   const weighted = open.reduce((s, o) => s + (o.value * o.probability) / 100, 0);
@@ -71,7 +37,7 @@ export default async function SalesPage() {
             triggerLabel="Chance anlegen"
             title="Neue Verkaufschance"
             description="Projekt-Opportunity über KI oder Recruiting erfassen."
-            fields={FIELDS}
+            fields={fields}
             action={createOpportunity}
           />
         }
