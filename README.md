@@ -77,21 +77,29 @@ npm run dev
 | `PERPLEXITY_API_KEY` | optional, web-gestützte Lead-Recherche |
 | `OPENROUTER_API_KEY` | optional, alternativer LLM-Provider statt Anthropic |
 
-## KI / Lead Intelligence
+## KI-Suite (intelligentes B2B-Lead-CRM)
 
-RSG-CRM ist als **intelligentes B2B-Lead-CRM** ausgelegt. Die KI-Schicht
-(`lib/ai/*`) läuft **ausschließlich serverseitig** (Keys nie im Browser):
+Die KI-Schicht (`lib/ai/*`) läuft **ausschließlich serverseitig** (Keys nie im
+Browser). **Brain:** Claude über das offizielle Anthropic-SDK
+(`claude-opus-4-8`, adaptives Denken). **Optional:** Perplexity (Sonar) für
+web-gestützte Recherche, OpenRouter als alternativer LLM-Provider. **Ohne Key**
+greift überall ein realistischer Demo-/Heuristik-Modus (Banner sichtbar).
 
-- **Brain:** Claude über das offizielle Anthropic-SDK (`claude-opus-4-8`,
-  adaptives Denken), strenger JSON-Vertrag → Fit-Score, empfohlene Linie
-  (RSG AI / Recruiting), Kaufsignale, Schmerzpunkte, Gesprächsaufhänger und ein
-  fertiger Erstkontakt – zugeschnitten auf die beiden RSG-Geschäftslinien.
-- **Web-Grounding (optional):** Perplexity (Sonar) reichert die Analyse mit
-  aktuellen Unternehmensfakten an.
-- **Provider-Wahl:** Ohne `ANTHROPIC_API_KEY`, aber mit `OPENROUTER_API_KEY`
-  wird über OpenRouter geroutet. Ohne jeden Key liefert die Seite eine
-  realistische **Demo-Analyse** (Banner sichtbar), damit die Preview läuft.
-- Analysierte Leads lassen sich per Klick als CRM-Account übernehmen.
+| Feature | Ort | Was es tut |
+| --- | --- | --- |
+| **CRM Co-Pilot** | Topbar (überall) | Frag dein CRM in natürlicher Sprache – Antwort nur aus deinem Kontext |
+| **Lead-Discovery** | `/cockpit/leads` | ICP eingeben → KI schlägt Ziel-Accounts vor → Import |
+| **Lead Intelligence** | `/cockpit/leads` | Unternehmen → Fit-Score, Linie, Signale, Erstkontakt |
+| **Account-Anreicherung** | Kunden-Detailseite | KI-Analyse für bestehende Accounts |
+| **Pipeline-Scoring** | Sales-Board | Score + nächste beste Aktion je Chance |
+| **Bulk-Priorisierung** | Sales-Seite | „Heute zuerst" – sortierte Tagesliste |
+
+Geschlossene Schleife **finden → bewerten → priorisieren → pflegen → fragen**.
+Analysierte Leads/Kandidaten lassen sich per Klick als CRM-Account übernehmen.
+
+**Live schalten:** `ANTHROPIC_API_KEY` in Vercel setzen (optional
+`PERPLEXITY_API_KEY` fürs Web-Grounding, `AI_MODEL`, oder `OPENROUTER_API_KEY`
+als Alternative) → Redeploy.
 
 ## Provisionslogik
 
