@@ -197,6 +197,12 @@ export const IconFolder = (p: IconProps) => (
   </Base>
 );
 
+export const IconBolt = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M13 2 4.5 13.5a.6.6 0 0 0 .5 1H11l-1 7.5L19.5 10.5a.6.6 0 0 0-.5-1H13l1-7.5Z" />
+  </Base>
+);
+
 export const IconSettings = (p: IconProps) => (
   <Base {...p}>
     <circle cx="12" cy="12" r="3" />

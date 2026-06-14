@@ -1,6 +1,7 @@
 import {
   IconDashboard,
   IconSpark,
+  IconBolt,
   IconTasks,
   IconTarget,
   IconUsers,
@@ -49,6 +50,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Aufgaben",
         icon: IconTasks,
         description: "Alle offenen Aufgaben nach Fälligkeit",
+      },
+      {
+        href: "/cockpit/automatisierungen",
+        label: "Automatisierungen",
+        icon: IconBolt,
+        description: "Regelbasierte Workflows im Hintergrund",
       },
     ],
   },

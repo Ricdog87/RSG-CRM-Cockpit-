@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceClient, hasServiceRole } from "@/lib/supabase/service";
 import { emailDomain, isGenericDomain } from "@/lib/dedupe";
+import { automationEnabled } from "@/lib/automations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -159,5 +160,20 @@ export async function POST(req: NextRequest) {
   if (error && !/duplicate key|unique/i.test(error.message)) {
     return json({ ok: false, error: error.message });
   }
+
+  // Workflow: eingehende E-Mail → Antwort-Aufgabe beim Account.
+  if (
+    match &&
+    match.direction === "inbound" &&
+    (await automationEnabled(svc, partnerId, "email_reply"))
+  ) {
+    await svc.from("account_tasks").insert({
+      partner_id: partnerId,
+      account_id: match.id,
+      title: "Auf E-Mail antworten",
+      due_date: new Date().toISOString().slice(0, 10),
+    });
+  }
+
   return json({ ok: true, account_id: match?.id ?? null, matched: !!match });
 }

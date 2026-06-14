@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import { findDuplicate } from "@/lib/dedupe";
 import { accounts as mockAccounts } from "@/lib/crm-mock";
+import { automationEnabled, AUTOMATIONS } from "@/lib/automations";
 
 /**
  * Server Actions für Schreibvorgänge im CRM. Bei gesetzter Supabase-ENV wird
@@ -97,21 +98,43 @@ export async function createAccount(
     }
   }
 
-  return insert(
-    "accounts",
-    {
-      name: s(fd, "name"),
+  if (useMockData) return DEMO;
+  const { id: pid, error } = await currentPartnerId();
+  if (!pid) return { ok: false, error };
+  const supabase = createClient();
+  const lifecycle = s(fd, "lifecycle") || "lead";
+
+  const { data: ins, error: insErr } = await supabase
+    .from("accounts")
+    .insert({
+      partner_id: pid,
+      name,
       branche: s(fd, "branche"),
       segment: s(fd, "segment"),
       line: s(fd, "line") || "ki",
-      lifecycle: s(fd, "lifecycle") || "lead",
+      lifecycle,
       contact_name: s(fd, "contact_name"),
       contact_email: s(fd, "contact_email"),
       mrr: n(fd, "mrr"),
       ort: s(fd, "ort"),
-    },
-    "/cockpit/kunden"
-  );
+    })
+    .select("id")
+    .single();
+  if (insErr) return { ok: false, error: insErr.message };
+  revalidatePath("/cockpit/kunden");
+
+  // Workflow: neuer Lead → Erstkontakt-Aufgabe.
+  const accountId = (ins as { id: string }).id;
+  if (lifecycle === "lead" && (await automationEnabled(supabase, pid, "lead_followup"))) {
+    const due = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
+    await supabase.from("account_tasks").insert({
+      partner_id: pid,
+      account_id: accountId,
+      title: "Erstkontakt vereinbaren",
+      due_date: due,
+    });
+  }
+  return { ok: true };
 }
 
 export async function createOpportunity(
@@ -214,7 +237,64 @@ export async function updateOpportunityStage(
   id: string,
   stage: string
 ): Promise<ActionResult> {
-  return update("opportunities", id, { stage }, "/cockpit/sales");
+  const res = await update("opportunities", id, { stage }, "/cockpit/sales");
+  // Workflow: Chance gewonnen → Onboarding-Aufgabe beim Account.
+  if (res.ok && !res.demo && stage === "gewonnen") {
+    try {
+      const { id: pid } = await currentPartnerId();
+      if (pid) {
+        const supabase = createClient();
+        if (await automationEnabled(supabase, pid, "won_onboarding")) {
+          const { data: opp } = await supabase
+            .from("opportunities")
+            .select("account_name")
+            .eq("id", id)
+            .single();
+          const accName = (opp as { account_name?: string } | null)?.account_name;
+          if (accName) {
+            const { data: acc } = await supabase
+              .from("accounts")
+              .select("id")
+              .eq("name", accName)
+              .maybeSingle();
+            const accId = (acc as { id?: string } | null)?.id;
+            if (accId) {
+              await supabase.from("account_tasks").insert({
+                partner_id: pid,
+                account_id: accId,
+                title: `Onboarding starten: ${accName}`,
+              });
+              revalidatePath(`/cockpit/kunden/${accId}`);
+            }
+          }
+        }
+      }
+    } catch {
+      /* Automation darf den Phasenwechsel nie blockieren */
+    }
+  }
+  return res;
+}
+
+/** Setzt eine Automatisierungs-Regel an/aus. */
+export async function setAutomation(
+  key: string,
+  enabled: boolean
+): Promise<ActionResult> {
+  if (!AUTOMATIONS.some((a) => a.key === key)) return { ok: false, error: "Unbekannte Regel." };
+  if (useMockData) return DEMO;
+  const { id, error } = await currentPartnerId();
+  if (!id) return { ok: false, error };
+  const supabase = createClient();
+  const { error: e } = await supabase
+    .from("automations")
+    .upsert(
+      { partner_id: id, key, enabled, updated_at: new Date().toISOString() },
+      { onConflict: "partner_id,key" }
+    );
+  if (e) return { ok: false, error: e.message };
+  revalidatePath("/cockpit/automatisierungen");
+  return { ok: true };
 }
 
 export async function updateCandidateStage(
