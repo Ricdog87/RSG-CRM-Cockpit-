@@ -169,3 +169,38 @@ export async function getSegments(): Promise<Segment[]> {
     }))
   );
 }
+
+export interface AccountDetail {
+  account: Account;
+  opportunities: Opportunity[];
+  kiProjects: KiProject[];
+  mandates: RecruitingMandate[];
+  candidates: Candidate[];
+}
+
+/**
+ * Account inkl. verknüpfter Datensätze (Chancen, KI-Projekte, Mandate,
+ * Kandidaten) – verbunden über den Account-Namen.
+ */
+export async function getAccountDetail(id: string): Promise<AccountDetail | null> {
+  const [accounts, opportunities, kiProjects, mandates, candidates] =
+    await Promise.all([
+      getAccounts(),
+      getOpportunities(),
+      getKiProjects(),
+      getMandates(),
+      getCandidates(),
+    ]);
+
+  const account = accounts.find((a) => a.id === id);
+  if (!account) return null;
+  const name = account.name;
+
+  return {
+    account,
+    opportunities: opportunities.filter((o) => o.account_name === name),
+    kiProjects: kiProjects.filter((p) => p.account_name === name),
+    mandates: mandates.filter((m) => m.account_name === name),
+    candidates: candidates.filter((c) => c.mandate_account === name),
+  };
+}

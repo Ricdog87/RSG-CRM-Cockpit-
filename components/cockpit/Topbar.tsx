@@ -29,16 +29,17 @@ export function Topbar({ partnerName }: { partnerName: string }) {
           </h1>
         </div>
 
-        {/* Suche (dekorativ verdrahtet – CRM-weite Suche folgt) */}
-        <label className="relative hidden items-center sm:flex">
+        {/* CRM-weite Suche */}
+        <form action="/cockpit/suche" className="relative hidden items-center sm:flex">
           <IconSearch size={16} className="absolute left-3 text-faint" />
           <input
             type="search"
-            placeholder="Kunden, Deals, Partner…"
+            name="q"
+            placeholder="Kunden, Chancen, Kandidaten…"
             aria-label="Suche"
             className="w-44 rounded-xl border border-border bg-elevated/60 py-2 pl-9 pr-3 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-sky lg:w-64"
           />
-        </label>
+        </form>
 
         <button
           type="button"

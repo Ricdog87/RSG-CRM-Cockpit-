@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -54,7 +55,12 @@ export function AccountsTable({
               >
                 <div className="col-span-2 min-w-0 lg:col-span-3">
                   <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium text-ink">{a.name}</p>
+                    <Link
+                      href={`/cockpit/kunden/${a.id}`}
+                      className="truncate text-sm font-medium text-ink hover:text-brand-deep hover:underline"
+                    >
+                      {a.name}
+                    </Link>
                     <LineBadge line={a.line} />
                   </div>
                   <p className="text-xs text-faint">
