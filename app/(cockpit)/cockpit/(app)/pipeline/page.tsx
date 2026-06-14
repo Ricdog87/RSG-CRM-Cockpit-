@@ -20,9 +20,9 @@ export default async function PipelinePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Vertrieb"
-        title="Pipeline"
-        description="Offene Deals nach Phase – mit gewichtetem MRR-Potenzial."
+        eyebrow="Deine Abschlüsse"
+        title="Meine Pipeline"
+        description="Deine persönlichen Deals nach Phase – mit gewichtetem MRR-Potenzial."
         action={
           <Button>
             <IconPlus size={16} /> Deal anlegen

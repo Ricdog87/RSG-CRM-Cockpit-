@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_ITEMS } from "@/lib/nav";
+import { NAV_GROUPS } from "@/lib/nav";
 import { IconLogout } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
 
@@ -33,28 +33,39 @@ export function Sidebar({ partnerName }: { partnerName: string }) {
         </span>
       </Link>
 
-      <nav className="flex flex-1 flex-col gap-1">
-        {NAV_ITEMS.map((item) => {
-          const active = isActive(pathname, item.href);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              data-active={active}
-              className="nav-link group"
-            >
-              <Icon
-                size={19}
-                className={cn(active ? "text-purple-soft" : "text-faint group-hover:text-muted")}
-              />
-              <span>{item.label}</span>
-              {active ? (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-cyan" />
-              ) : null}
-            </Link>
-          );
-        })}
+      <nav className="flex flex-1 flex-col gap-5 overflow-y-auto">
+        {NAV_GROUPS.map((group, gi) => (
+          <div key={group.label ?? gi} className="flex flex-col gap-1">
+            {group.label ? (
+              <p className="px-3 pb-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-faint">
+                {group.label}
+              </p>
+            ) : null}
+            {group.items.map((item) => {
+              const active = isActive(pathname, item.href);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  data-active={active}
+                  className="nav-link group"
+                >
+                  <Icon
+                    size={19}
+                    className={cn(
+                      active ? "text-purple-soft" : "text-faint group-hover:text-muted"
+                    )}
+                  />
+                  <span>{item.label}</span>
+                  {active ? (
+                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-cyan" />
+                  ) : null}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       <div className="mt-4 border-t border-border/70 pt-4">

@@ -1,7 +1,11 @@
 import {
   IconDashboard,
-  IconPipeline,
+  IconTarget,
   IconUsers,
+  IconLayers,
+  IconPhone,
+  IconBriefcase,
+  IconUserCheck,
   IconNetwork,
   IconEuro,
   IconTrophy,
@@ -11,48 +15,107 @@ export interface NavItem {
   href: string;
   label: string;
   icon: (p: { size?: number; className?: string }) => JSX.Element;
-  /** Kurzbeschreibung für die Seiten-Kopfzeile */
   description: string;
 }
 
-/** Hauptnavigation des RSG-CRM. Reihenfolge = Sidebar-Reihenfolge. */
-export const NAV_ITEMS: NavItem[] = [
+export interface NavGroup {
+  label?: string;
+  items: NavItem[];
+}
+
+/** Gruppierte Hauptnavigation des RSG-CRM. */
+export const NAV_GROUPS: NavGroup[] = [
   {
-    href: "/cockpit",
-    label: "Übersicht",
-    icon: IconDashboard,
-    description: "Dein wachsender Bestand auf einen Blick",
+    items: [
+      {
+        href: "/cockpit",
+        label: "Übersicht",
+        icon: IconDashboard,
+        description: "Dein wachsender Bestand auf einen Blick",
+      },
+    ],
   },
   {
-    href: "/cockpit/pipeline",
-    label: "Pipeline",
-    icon: IconPipeline,
-    description: "Offene Deals und gewichtetes Potenzial",
+    label: "Vertrieb",
+    items: [
+      {
+        href: "/cockpit/sales",
+        label: "Sales-Pipeline",
+        icon: IconTarget,
+        description: "Projekt-Chancen über beide Geschäftslinien",
+      },
+      {
+        href: "/cockpit/kunden",
+        label: "Kunden",
+        icon: IconUsers,
+        description: "Accounts, Kontakte und Lifecycle",
+      },
+      {
+        href: "/cockpit/segmente",
+        label: "Segmente",
+        icon: IconLayers,
+        description: "KI-Zielgruppen und Use-Cases",
+      },
+    ],
   },
   {
-    href: "/cockpit/kunden",
-    label: "Kunden",
-    icon: IconUsers,
-    description: "Dein aktiver Bestand und Onboarding",
+    label: "Projekte",
+    items: [
+      {
+        href: "/cockpit/projekte/ki",
+        label: "KI & Telefonassistenz",
+        icon: IconPhone,
+        description: "Umsetzung und Betrieb der KI-Projekte",
+      },
+      {
+        href: "/cockpit/projekte/recruiting",
+        label: "Personalvermittlung",
+        icon: IconBriefcase,
+        description: "Recruiting-Mandate und Besetzungen",
+      },
+      {
+        href: "/cockpit/kandidaten",
+        label: "Kandidaten",
+        icon: IconUserCheck,
+        description: "Recruiting-Pipeline der Kandidat:innen",
+      },
+    ],
   },
   {
-    href: "/cockpit/team",
-    label: "Team",
-    icon: IconNetwork,
-    description: "Deine Downline und ihr Bestand",
+    label: "Partner",
+    items: [
+      {
+        href: "/cockpit/team",
+        label: "Team",
+        icon: IconNetwork,
+        description: "Deine Downline und ihr Bestand",
+      },
+      {
+        href: "/cockpit/provisionen",
+        label: "Provisionen",
+        icon: IconEuro,
+        description: "Auszahlungen, Reserve und Override",
+      },
+      {
+        href: "/cockpit/karriere",
+        label: "Karriere",
+        icon: IconTrophy,
+        description: "Stufenplan, Override-Ebenen und Leaderboard",
+      },
+    ],
   },
-  {
-    href: "/cockpit/provisionen",
-    label: "Provisionen",
-    icon: IconEuro,
-    description: "Auszahlungen, Reserve und Override",
-  },
-  {
-    href: "/cockpit/karriere",
-    label: "Karriere",
-    icon: IconTrophy,
-    description: "Stufenplan, Override-Ebenen und Leaderboard",
-  },
+];
+
+/** Flache Liste aller Nav-Einträge (für Aktiv-Match und Mobile-Bar). */
+export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
+
+/** Kuratiierte Primär-Einträge für die Mobile-Tab-Bar. */
+export const MOBILE_NAV_HREFS = [
+  "/cockpit",
+  "/cockpit/sales",
+  "/cockpit/kunden",
+  "/cockpit/kandidaten",
+  "/cockpit/provisionen",
 ];
 
 /** Findet den aktiven Nav-Eintrag zum aktuellen Pfad (längster Präfix-Match). */

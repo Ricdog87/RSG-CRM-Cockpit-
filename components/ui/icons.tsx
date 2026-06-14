@@ -154,3 +154,45 @@ export const IconPlus = (p: IconProps) => (
     <path d="M12 5v14M5 12h14" />
   </Base>
 );
+
+export const IconTarget = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="8" />
+    <circle cx="12" cy="12" r="4" />
+    <circle cx="12" cy="12" r="0.6" fill="currentColor" stroke="none" />
+  </Base>
+);
+
+export const IconLayers = (p: IconProps) => (
+  <Base {...p}>
+    <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+    <path d="m3 13 9 5 9-5M3 17l9 5 9-5" />
+  </Base>
+);
+
+export const IconPhone = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" />
+  </Base>
+);
+
+export const IconBriefcase = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="2.5" y="7" width="19" height="13" rx="2" />
+    <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M2.5 12.5h19" />
+  </Base>
+);
+
+export const IconUserCheck = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M14 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1" />
+    <circle cx="8" cy="7" r="4" />
+    <path d="m16 11 2 2 4-4" />
+  </Base>
+);
+
+export const IconFolder = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+  </Base>
+);

@@ -1,60 +1,68 @@
-import { getCockpitData } from "@/lib/data";
+import { getAccounts } from "@/lib/crm-data";
 import { PageHeader } from "@/components/cockpit/PageHeader";
-import { CustomersTable } from "@/components/cockpit/CustomersTable";
+import { AccountsTable } from "@/components/cockpit/AccountsTable";
 import { StatCard } from "@/components/cockpit/StatCard";
-import { IconUsers, IconEuro, IconSpark } from "@/components/ui/icons";
+import { Button } from "@/components/ui/Button";
+import { IconUsers, IconEuro, IconPhone, IconBriefcase, IconPlus } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function KundenPage() {
-  const { customers } = await getCockpitData();
+  const accounts = await getAccounts();
 
-  const aktiv = customers.filter((c) => c.status === "aktiv");
-  const onboarding = customers.filter((c) => c.status === "onboarding");
-  const mrrSum = aktiv.reduce((s, c) => s + c.mrr, 0);
-  const provSum = aktiv.reduce((s, c) => s + c.bestandsprovision, 0);
+  const ki = accounts.filter((a) => a.line === "ki");
+  const recruiting = accounts.filter((a) => a.line === "recruiting");
+  const mrrSum = accounts.reduce((s, a) => s + a.mrr, 0);
+  const kunden = accounts.filter(
+    (a) => a.lifecycle === "kunde" || a.lifecycle === "bestand"
+  );
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Bestand"
+        eyebrow="Customer Management"
         title="Kunden"
-        description="Dein aktiver wiederkehrender Bestand, Onboarding und Stornoreserve."
+        description="Alle Unternehmen, Kontakte und ihr Lifecycle – über beide Geschäftslinien."
+        action={
+          <Button>
+            <IconPlus size={16} /> Account anlegen
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
-          label="Aktive Kund:innen"
-          value={formatNumber(aktiv.length)}
-          hint={`${formatNumber(onboarding.length)} im Onboarding`}
+          label="Accounts"
+          value={formatNumber(accounts.length)}
+          hint={`${formatNumber(kunden.length)} aktive Kund:innen`}
           accent="cyan"
           icon={IconUsers}
         />
         <StatCard
-          label="MRR-Volumen"
-          value={`${formatEur(mrrSum)}/M`}
-          hint="aktiver Kundenumsatz"
+          label="KI-Linie"
+          value={formatNumber(ki.length)}
+          hint="Telefonassistenz & Automatisierung"
+          accent="cyan"
+          icon={IconPhone}
+        />
+        <StatCard
+          label="Recruiting-Linie"
+          value={formatNumber(recruiting.length)}
+          hint="Personalvermittlung"
           accent="purple"
-          icon={IconEuro}
+          icon={IconBriefcase}
         />
         <StatCard
-          label="Bestandsprovision"
-          value={`${formatEur(provSum)}/M`}
-          hint="17 % MRR (Provisionsordnung §3.1)"
+          label="MRR gesamt"
+          value={`${formatEur(mrrSum)}/M`}
+          hint="wiederkehrender KI-Umsatz"
           accent="success"
-          icon={IconSpark}
-        />
-        <StatCard
-          label="Ø Provision / Kunde"
-          value={aktiv.length ? formatEur(provSum / aktiv.length) : "–"}
-          hint="pro aktiver Kund:in"
-          accent="neutral"
           icon={IconEuro}
         />
       </div>
 
-      <CustomersTable customers={customers} />
+      <AccountsTable accounts={accounts} />
     </div>
   );
 }

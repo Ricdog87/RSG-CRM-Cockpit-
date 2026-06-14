@@ -2,21 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_ITEMS } from "@/lib/nav";
+import { NAV_ITEMS, MOBILE_NAV_HREFS } from "@/lib/nav";
 import { cn } from "@/components/ui/cn";
 
 function isActive(pathname: string, href: string) {
   return href === "/cockpit" ? pathname === "/cockpit" : pathname.startsWith(href);
 }
 
-/** Untere Tab-Bar für Mobile (≤ lg). */
+const MOBILE_ITEMS = MOBILE_NAV_HREFS.map(
+  (href) => NAV_ITEMS.find((i) => i.href === href)!
+).filter(Boolean);
+
+/** Untere Tab-Bar für Mobile (≤ lg) – kuratierte Primär-Einträge. */
 export function MobileNav() {
   const pathname = usePathname();
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-surface/90 backdrop-blur-xl lg:hidden">
       <ul className="mx-auto flex max-w-lg items-stretch justify-between px-1">
-        {NAV_ITEMS.map((item) => {
+        {MOBILE_ITEMS.map((item) => {
           const active = isActive(pathname, item.href);
           const Icon = item.icon;
           return (
