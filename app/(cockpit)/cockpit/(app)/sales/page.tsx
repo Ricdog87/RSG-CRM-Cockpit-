@@ -12,10 +12,10 @@ export const dynamic = "force-dynamic";
 
 const COLUMNS: BoardColumn<SalesStage>[] = [
   { stage: "neu", label: "Neu", tone: "neutral" },
-  { stage: "qualifiziert", label: "Qualifiziert", tone: "cyan" },
-  { stage: "demo", label: "Demo/Termin", tone: "cyan" },
-  { stage: "angebot", label: "Angebot", tone: "purple" },
-  { stage: "verhandlung", label: "Verhandlung", tone: "purple" },
+  { stage: "qualifiziert", label: "Qualifiziert", tone: "sky" },
+  { stage: "demo", label: "Demo/Termin", tone: "sky" },
+  { stage: "angebot", label: "Angebot", tone: "brand" },
+  { stage: "verhandlung", label: "Verhandlung", tone: "brand" },
   { stage: "gewonnen", label: "Gewonnen", tone: "success" },
 ];
 
@@ -25,7 +25,7 @@ function value(o: Opportunity) {
 
 function OppCard({ o }: { o: Opportunity }) {
   return (
-    <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-purple/40">
+    <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <p className="truncate text-sm font-medium text-ink">{o.account_name}</p>
         <LineBadge line={o.line} />
@@ -71,7 +71,7 @@ export default async function SalesPage() {
           label="Offene Chancen"
           value={`${open.length}`}
           hint={`${kiOpen} KI · ${recOpen} Recruiting`}
-          accent="cyan"
+          accent="sky"
           icon={IconTarget}
         />
         <StatCard
@@ -85,7 +85,7 @@ export default async function SalesPage() {
           label="Recruiting-Volumen"
           value={formatEur(recVolume)}
           hint="Festpreis offener Mandate"
-          accent="purple"
+          accent="brand"
           icon={IconEuro}
         />
         <StatCard

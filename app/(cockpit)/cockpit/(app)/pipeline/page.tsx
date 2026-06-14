@@ -35,14 +35,14 @@ export default async function PipelinePage() {
           label="Offene Deals"
           value={formatNumber(open.length)}
           hint="in aktiver Bearbeitung"
-          accent="cyan"
+          accent="sky"
           icon={IconPipeline}
         />
         <StatCard
           label="MRR-Volumen offen"
           value={`${formatEur(openMrr)}/M`}
           hint="Summe ungewichtet"
-          accent="purple"
+          accent="brand"
           icon={IconEuro}
         />
         <StatCard

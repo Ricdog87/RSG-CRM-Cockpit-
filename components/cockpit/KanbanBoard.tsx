@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Card, CardBody } from "@/components/ui/Card";
 
-type Tone = "neutral" | "cyan" | "purple" | "success" | "warning" | "danger";
+type Tone = "neutral" | "sky" | "brand" | "success" | "warning" | "danger";
 
 export interface BoardColumn<S extends string> {
   stage: S;

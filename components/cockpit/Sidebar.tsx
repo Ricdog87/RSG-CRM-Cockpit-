@@ -24,7 +24,7 @@ export function Sidebar({ partnerName }: { partnerName: string }) {
   return (
     <aside className="sticky top-0 hidden h-screen w-64 flex-none flex-col border-r border-border bg-surface/80 px-4 py-5 backdrop-blur-xl lg:flex">
       <Link href="/cockpit" className="mb-8 flex items-center gap-2.5 px-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple to-cyan text-sm font-black text-white shadow-glow">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-sky text-sm font-black text-white shadow-glow">
           RSG
         </span>
         <span className="flex flex-col leading-tight">
@@ -54,12 +54,12 @@ export function Sidebar({ partnerName }: { partnerName: string }) {
                   <Icon
                     size={19}
                     className={cn(
-                      active ? "text-purple-deep" : "text-faint group-hover:text-muted"
+                      active ? "text-brand-deep" : "text-faint group-hover:text-muted"
                     )}
                   />
                   <span>{item.label}</span>
                   {active ? (
-                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-cyan" />
+                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sky" />
                   ) : null}
                 </Link>
               );

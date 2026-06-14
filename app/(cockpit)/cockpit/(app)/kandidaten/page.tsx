@@ -11,15 +11,15 @@ export const dynamic = "force-dynamic";
 
 const COLUMNS: BoardColumn<CandidateStage>[] = [
   { stage: "neu", label: "Neu", tone: "neutral" },
-  { stage: "screening", label: "Screening", tone: "cyan" },
-  { stage: "interview", label: "Interview", tone: "purple" },
-  { stage: "angebot", label: "Angebot", tone: "purple" },
+  { stage: "screening", label: "Screening", tone: "sky" },
+  { stage: "interview", label: "Interview", tone: "brand" },
+  { stage: "angebot", label: "Angebot", tone: "brand" },
   { stage: "platziert", label: "Platziert", tone: "success" },
 ];
 
 function CandidateCard({ c }: { c: Candidate }) {
   return (
-    <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-purple/40">
+    <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
       <p className="truncate text-sm font-medium text-ink">{c.name}</p>
       <p className="truncate text-xs text-muted">{c.role}</p>
       <p className="mt-2 truncate text-xs text-faint">{c.mandate_account}</p>
@@ -58,14 +58,14 @@ export default async function KandidatenPage() {
           label="In Pipeline"
           value={formatNumber(aktiv)}
           hint="aktiv in Bearbeitung"
-          accent="cyan"
+          accent="sky"
           icon={IconUserCheck}
         />
         <StatCard
           label="In Interviews"
           value={formatNumber(interviews)}
           hint="laufende Gespräche"
-          accent="purple"
+          accent="brand"
           icon={IconUserCheck}
         />
         <StatCard

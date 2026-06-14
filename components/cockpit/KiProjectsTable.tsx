@@ -6,11 +6,11 @@ import type { Health, KiProject, KiStatus } from "@/lib/crm-types";
 
 const statusMeta: Record<
   KiStatus,
-  { label: string; tone: "cyan" | "success" | "purple" | "warning" | "danger" }
+  { label: string; tone: "sky" | "success" | "brand" | "warning" | "danger" }
 > = {
-  onboarding: { label: "Onboarding", tone: "cyan" },
+  onboarding: { label: "Onboarding", tone: "sky" },
   live: { label: "Live", tone: "success" },
-  optimierung: { label: "Optimierung", tone: "purple" },
+  optimierung: { label: "Optimierung", tone: "brand" },
   pausiert: { label: "Pausiert", tone: "warning" },
   gekuendigt: { label: "Gekündigt", tone: "danger" },
 };

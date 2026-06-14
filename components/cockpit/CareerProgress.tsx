@@ -8,7 +8,7 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
   return (
     <div className="h-2 w-full overflow-hidden rounded-full bg-elevated">
       <div
-        className="h-full rounded-full bg-gradient-to-r from-purple to-cyan transition-all"
+        className="h-full rounded-full bg-gradient-to-r from-brand to-sky transition-all"
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -35,11 +35,11 @@ export function CareerProgress({ career }: { career: CareerState }) {
             <p className="text-xs text-faint">Aktuelle Stufe</p>
             <p className="text-lg font-bold text-ink">{current.name}</p>
           </div>
-          <Badge tone="purple">Stufe {current.level}</Badge>
+          <Badge tone="brand">Stufe {current.level}</Badge>
         </div>
 
         <div className="mb-5 flex items-center gap-2">
-          <Badge tone="cyan">
+          <Badge tone="sky">
             {current.override_levels > 0
               ? `Override · ${current.override_levels} ${
                   current.override_levels === 1 ? "Ebene" : "Ebenen"
@@ -70,7 +70,7 @@ export function CareerProgress({ career }: { career: CareerState }) {
               ) : (
                 <>
                   Noch{" "}
-                  <span className="font-semibold text-cyan-deep">
+                  <span className="font-semibold text-sky-deep">
                     {fehlend} aktive:r Direktpartner:in
                   </span>{" "}
                   bis dein Override wieder aktiv ist.
@@ -79,7 +79,7 @@ export function CareerProgress({ career }: { career: CareerState }) {
             </p>
           </div>
         ) : (
-          <p className="rounded-xl border border-purple/20 bg-purple/5 px-4 py-3 text-sm text-purple-deep">
+          <p className="rounded-xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-brand-deep">
             {next
               ? "Gewinne deine ersten aktiven Direktpartner:innen, um die nächste Stufe und deinen Override freizuschalten."
               : "Höchste Stufe erreicht. Jetzt zählt die Breite und Tiefe deines Teams."}

@@ -18,11 +18,11 @@
 
   /* Sichtbarer Tastatur-Fokus auf der gesamten Oberfläche. */
   :focus-visible {
-    @apply outline-none ring-2 ring-purple ring-offset-2 ring-offset-base rounded-md;
+    @apply outline-none ring-2 ring-brand ring-offset-2 ring-offset-base rounded-md;
   }
 
   ::selection {
-    @apply bg-purple/20 text-purple-ink;
+    @apply bg-brand/20 text-brand-ink;
   }
 
   /* Dezente Scrollbar. */
@@ -55,11 +55,11 @@
 
   /* Interaktive Card (Hover-Lift). */
   .card-hover {
-    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-purple/40 hover:shadow-glow;
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-glow;
   }
 
   .eyebrow {
-    @apply text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-cyan-deep;
+    @apply text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-sky-deep;
   }
 
   .kpi-label {
@@ -72,7 +72,7 @@
 
   /* Gradient-Text für Heldenzahlen. */
   .text-gradient {
-    @apply bg-gradient-to-r from-purple-deep to-cyan-deep bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-brand-deep to-sky-deep bg-clip-text text-transparent;
   }
 
   /* Skeleton-Schimmer für Ladezustände. */
@@ -88,6 +88,6 @@
     @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-elevated hover:text-ink;
   }
   .nav-link[data-active="true"] {
-    @apply bg-purple/10 text-purple-ink;
+    @apply bg-brand/10 text-brand-ink;
   }
 }

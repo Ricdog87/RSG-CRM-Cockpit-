@@ -37,14 +37,14 @@ export default async function KiProjektePage() {
           label="Im Onboarding"
           value={formatNumber(onboarding.length)}
           hint="Einrichtung läuft"
-          accent="cyan"
+          accent="sky"
           icon={IconSpark}
         />
         <StatCard
           label="MRR aktiv"
           value={`${formatEur(mrr)}/M`}
           hint="laufender Projektumsatz"
-          accent="purple"
+          accent="brand"
           icon={IconEuro}
         />
         <StatCard

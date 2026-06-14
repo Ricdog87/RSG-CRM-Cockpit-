@@ -33,14 +33,14 @@ export default async function ProvisionenPage() {
           label="Diesen Monat"
           value={formatEur(provisionAktuellerMonat)}
           hint="laufender Abrechnungsmonat"
-          accent="purple"
+          accent="brand"
           icon={IconEuro}
         />
         <StatCard
           label="Offen freigegeben"
           value={formatEur(earnings.offen_freigegeben)}
           hint="zur Auszahlung am 15."
-          accent="cyan"
+          accent="sky"
           icon={IconCheck}
         />
         <StatCard
@@ -92,7 +92,7 @@ export default async function ProvisionenPage() {
                       <p className="text-sm font-medium text-ink">{p.name}</p>
                       <p className="text-xs text-faint">{p.note}</p>
                     </div>
-                    <span className="flex-none text-right text-sm font-semibold text-cyan-deep">
+                    <span className="flex-none text-right text-sm font-semibold text-sky-deep">
                       {p.rate}
                     </span>
                   </li>

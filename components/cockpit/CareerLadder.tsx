@@ -47,7 +47,7 @@ export function CareerLadder({ currentLevel }: { currentLevel: number }) {
                 className={cn(
                   "flex items-start gap-3 rounded-xl border px-3 py-3 transition-colors",
                   active
-                    ? "border-purple/40 bg-purple/10"
+                    ? "border-brand/40 bg-brand/10"
                     : "border-border/60 bg-elevated/30"
                 )}
               >
@@ -55,7 +55,7 @@ export function CareerLadder({ currentLevel }: { currentLevel: number }) {
                   className={cn(
                     "flex h-8 w-8 flex-none items-center justify-center rounded-lg text-sm font-bold",
                     active
-                      ? "bg-gradient-to-br from-purple-deep to-cyan-deep text-white"
+                      ? "bg-gradient-to-br from-brand-deep to-sky-deep text-white"
                       : done
                         ? "bg-success/15 text-success"
                         : "bg-elevated text-faint"
@@ -73,10 +73,10 @@ export function CareerLadder({ currentLevel }: { currentLevel: number }) {
                     >
                       {s.name}
                     </p>
-                    {active ? <Badge tone="purple">Aktuell</Badge> : null}
+                    {active ? <Badge tone="brand">Aktuell</Badge> : null}
                   </div>
                   <p className="mt-0.5 text-xs text-faint">Aufstieg: {s.aufstieg}</p>
-                  <p className="text-xs text-cyan-deep">{s.override}</p>
+                  <p className="text-xs text-sky-deep">{s.override}</p>
                 </div>
               </li>
             );

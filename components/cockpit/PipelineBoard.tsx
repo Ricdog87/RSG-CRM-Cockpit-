@@ -16,7 +16,7 @@ const COLUMNS: DealStage[] = [
 
 function DealCard({ deal }: { deal: Deal }) {
   return (
-    <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-purple/40">
+    <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
       <p className="truncate text-sm font-medium text-ink">{deal.customer_name}</p>
       <p className="mt-0.5 truncate text-xs text-muted">{deal.product_name}</p>
       <div className="mt-3 flex items-center justify-between">

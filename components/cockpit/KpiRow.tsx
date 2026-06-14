@@ -21,14 +21,14 @@ export function KpiRow({
         label="Aktive Kund:innen"
         value={formatNumber(bestand.aktive_kunden)}
         hint="zahlen aktuell deinen Bestand"
-        accent="cyan"
+        accent="sky"
         icon={IconUsers}
       />
       <StatCard
         label="Provision diesen Monat"
         value={formatEur(provisionAktuellerMonat)}
         hint={`${formatEur(earnings.offen_freigegeben)} freigegeben · Auszahlung zum 15.`}
-        accent="purple"
+        accent="brand"
         icon={IconEuro}
       />
       <StatCard

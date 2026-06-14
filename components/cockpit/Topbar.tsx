@@ -17,7 +17,7 @@ export function Topbar({ partnerName }: { partnerName: string }) {
       <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
         {/* Mobile-Logo */}
         <Link href="/cockpit" className="flex items-center gap-2 lg:hidden">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple to-cyan text-xs font-black text-white">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand to-sky text-xs font-black text-white">
             RSG
           </span>
         </Link>
@@ -36,7 +36,7 @@ export function Topbar({ partnerName }: { partnerName: string }) {
             type="search"
             placeholder="Kunden, Deals, Partner…"
             aria-label="Suche"
-            className="w-44 rounded-xl border border-border bg-elevated/60 py-2 pl-9 pr-3 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-cyan lg:w-64"
+            className="w-44 rounded-xl border border-border bg-elevated/60 py-2 pl-9 pr-3 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-sky lg:w-64"
           />
         </label>
 
@@ -46,7 +46,7 @@ export function Topbar({ partnerName }: { partnerName: string }) {
           className="relative rounded-xl border border-border bg-elevated/60 p-2 text-muted transition-colors hover:text-ink"
         >
           <IconBell size={18} />
-          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-cyan" />
+          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-sky" />
         </button>
       </div>
     </header>

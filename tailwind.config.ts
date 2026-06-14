@@ -1,10 +1,10 @@
 import type { Config } from "tailwindcss";
 
 /**
- * RSG Marken-Tokens – helles, professionelles CRM-Theme.
- * Weiße Cards auf hellem Canvas, RSG-Akzente Purple (#a855f7) und
- * Cyan (#22d3ee) gezielt eingesetzt. Tiefere Varianten (deep/ink) sorgen
- * für lesbaren Text auf hellen Flächen.
+ * RSG Marken-Tokens – helles, professionelles CRM-Theme in Blau/Weiß/Grau.
+ * Weiße Cards auf hellem Grau-Canvas, Blau (#2563eb) als Primärakzent,
+ * Sky-Blau (#0ea5e9) sekundär. Tiefere Varianten (deep/ink) für lesbaren
+ * Text auf hellen Flächen.
  */
 const config: Config = {
   content: [
@@ -16,26 +16,27 @@ const config: Config = {
     extend: {
       colors: {
         // Flächen
-        base: "#f5f7fb", // App-Canvas
+        base: "#f4f6fa", // App-Canvas (hellgrau)
         surface: "#ffffff", // Cards
-        elevated: "#eef1f7", // Inputs / dezente Füllungen
-        border: "#e2e6ef", // Hairlines
+        elevated: "#eef1f6", // Inputs / dezente Füllungen
+        border: "#e1e6ee", // Hairlines
         // Text
-        ink: "#0f172a", // primär
-        muted: "#48566b", // sekundär
+        ink: "#0f1b2d", // primär (dunkles Navy-Slate)
+        muted: "#44516a", // sekundär
         faint: "#6b7689", // tertiär
-        // Marke
-        purple: {
-          DEFAULT: "#a855f7",
-          soft: "#c084fc",
-          deep: "#7c3aed",
-          ink: "#6d28d9",
+        // Marke – Blau
+        brand: {
+          DEFAULT: "#2563eb",
+          soft: "#60a5fa",
+          deep: "#1d4ed8",
+          ink: "#1e40af",
         },
-        cyan: {
-          DEFAULT: "#22d3ee",
-          soft: "#67e8f9",
-          deep: "#0891b2",
-          ink: "#0e7490",
+        // Sekundär – Sky-Blau
+        sky: {
+          DEFAULT: "#0ea5e9",
+          soft: "#38bdf8",
+          deep: "#0284c7",
+          ink: "#0369a1",
         },
         // Status (dunkel genug für Text auf hellem Tint)
         success: "#15803d",
@@ -58,12 +59,12 @@ const config: Config = {
         "2xl": "1.25rem",
       },
       boxShadow: {
-        glow: "0 1px 2px rgba(124,58,237,0.08), 0 16px 40px -16px rgba(124,58,237,0.30)",
-        card: "0 1px 2px rgba(16,24,40,0.04), 0 10px 28px -16px rgba(16,24,40,0.18)",
+        glow: "0 1px 2px rgba(37,99,235,0.08), 0 16px 40px -16px rgba(37,99,235,0.30)",
+        card: "0 1px 2px rgba(15,27,45,0.04), 0 10px 28px -16px rgba(15,27,45,0.16)",
       },
       backgroundImage: {
         "brand-glow":
-          "radial-gradient(55% 70% at 12% -5%, rgba(168,85,247,0.10), transparent 55%), radial-gradient(45% 55% at 100% 0%, rgba(34,211,238,0.10), transparent 55%)",
+          "radial-gradient(55% 70% at 12% -5%, rgba(37,99,235,0.10), transparent 55%), radial-gradient(45% 55% at 100% 0%, rgba(14,165,233,0.09), transparent 55%)",
       },
       keyframes: {
         "fade-up": {

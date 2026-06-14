@@ -1,19 +1,19 @@
 import { Card, CardBody } from "@/components/ui/Card";
 import { cn } from "@/components/ui/cn";
 
-type Accent = "purple" | "cyan" | "warning" | "success" | "neutral";
+type Accent = "brand" | "sky" | "warning" | "success" | "neutral";
 
 const accentDot: Record<Accent, string> = {
-  purple: "bg-purple",
-  cyan: "bg-cyan",
+  brand: "bg-brand",
+  sky: "bg-sky",
   warning: "bg-warning",
   success: "bg-success",
   neutral: "bg-faint",
 };
 
 const accentIcon: Record<Accent, string> = {
-  purple: "bg-purple/10 text-purple-deep",
-  cyan: "bg-cyan/10 text-cyan-deep",
+  brand: "bg-brand/10 text-brand-deep",
+  sky: "bg-sky/10 text-sky-deep",
   warning: "bg-warning/10 text-warning",
   success: "bg-success/10 text-success",
   neutral: "bg-elevated text-muted",

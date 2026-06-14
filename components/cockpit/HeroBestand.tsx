@@ -46,7 +46,7 @@ export function HeroBestand({
               </Badge>
             ) : null}
             {yoyDelta > 0 ? (
-              <Badge tone="purple">{formatDelta(yoyDelta)} über 12 Monate</Badge>
+              <Badge tone="brand">{formatDelta(yoyDelta)} über 12 Monate</Badge>
             ) : null}
           </div>
         </div>

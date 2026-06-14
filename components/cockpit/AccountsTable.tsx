@@ -7,11 +7,11 @@ import type { Account, Lifecycle } from "@/lib/crm-types";
 
 const lifecycleMeta: Record<
   Lifecycle,
-  { label: string; tone: "neutral" | "cyan" | "purple" | "success" }
+  { label: string; tone: "neutral" | "sky" | "brand" | "success" }
 > = {
   lead: { label: "Lead", tone: "neutral" },
-  opportunity: { label: "Opportunity", tone: "cyan" },
-  kunde: { label: "Kunde", tone: "purple" },
+  opportunity: { label: "Opportunity", tone: "sky" },
+  kunde: { label: "Kunde", tone: "brand" },
   bestand: { label: "Bestand", tone: "success" },
 };
 

@@ -10,7 +10,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm animate-fade-up">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple to-cyan text-lg font-black text-white shadow-glow">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-sky text-lg font-black text-white shadow-glow">
             RSG
           </div>
           <h1 className="text-xl font-bold text-ink">Partner-Cockpit</h1>

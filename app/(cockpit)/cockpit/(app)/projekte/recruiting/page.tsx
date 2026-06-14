@@ -40,7 +40,7 @@ export default async function RecruitingProjektePage() {
           label="Aktive Mandate"
           value={formatNumber(mandates.length)}
           hint={`${formatNumber(offenePositionen)} offene Stellen`}
-          accent="purple"
+          accent="brand"
           icon={IconBriefcase}
         />
         <StatCard
@@ -54,7 +54,7 @@ export default async function RecruitingProjektePage() {
           label="Kandidat:innen"
           value={formatNumber(kandidaten)}
           hint="in der Pipeline"
-          accent="cyan"
+          accent="sky"
           icon={IconUserCheck}
         />
         <StatCard

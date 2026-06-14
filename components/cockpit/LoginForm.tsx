@@ -64,7 +64,7 @@ export function LoginForm() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-border bg-elevated px-3.5 py-2.5 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-cyan";
+    "w-full rounded-xl border border-border bg-elevated px-3.5 py-2.5 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-sky";
 
   return (
     <Card>

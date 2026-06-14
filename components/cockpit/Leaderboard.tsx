@@ -21,7 +21,7 @@ export function Leaderboard({ rows }: { rows: LeaderboardRow[] }) {
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-3 py-2.5",
                   row.is_self
-                    ? "border border-purple/30 bg-purple/10"
+                    ? "border border-brand/30 bg-brand/10"
                     : "hover:bg-elevated"
                 )}
               >
@@ -29,7 +29,7 @@ export function Leaderboard({ rows }: { rows: LeaderboardRow[] }) {
                   className={cn(
                     "flex h-7 w-7 flex-none items-center justify-center rounded-lg text-xs font-bold",
                     row.rank <= 3
-                      ? "bg-gradient-to-br from-purple-deep to-cyan-deep text-white"
+                      ? "bg-gradient-to-br from-brand-deep to-sky-deep text-white"
                       : "bg-elevated text-muted"
                   )}
                 >
@@ -43,7 +43,7 @@ export function Leaderboard({ rows }: { rows: LeaderboardRow[] }) {
                 >
                   {row.full_name}
                   {row.is_self ? (
-                    <span className="ml-1.5 text-xs text-purple-deep">· du</span>
+                    <span className="ml-1.5 text-xs text-brand-deep">· du</span>
                   ) : null}
                 </span>
                 <div className="flex-none text-right">

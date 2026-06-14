@@ -9,12 +9,12 @@ import type { Deal, DealStage } from "@/lib/types";
 
 export const stageMeta: Record<
   DealStage,
-  { label: string; tone: "neutral" | "cyan" | "purple" | "success" | "danger" }
+  { label: string; tone: "neutral" | "sky" | "brand" | "success" | "danger" }
 > = {
   neu: { label: "Neu", tone: "neutral" },
-  qualifiziert: { label: "Qualifiziert", tone: "cyan" },
-  angebot: { label: "Angebot", tone: "cyan" },
-  verhandlung: { label: "Verhandlung", tone: "purple" },
+  qualifiziert: { label: "Qualifiziert", tone: "sky" },
+  angebot: { label: "Angebot", tone: "sky" },
+  verhandlung: { label: "Verhandlung", tone: "brand" },
   gewonnen: { label: "Gewonnen", tone: "success" },
   verloren: { label: "Verloren", tone: "danger" },
 };
@@ -76,7 +76,7 @@ export function Pipeline({
             viewAllHref ? (
               <Link
                 href={viewAllHref}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-deep hover:text-cyan-ink"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-sky-deep hover:text-sky-ink"
               >
                 Alle ansehen <IconChevronRight size={14} />
               </Link>

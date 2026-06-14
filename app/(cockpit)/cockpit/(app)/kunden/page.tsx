@@ -36,21 +36,21 @@ export default async function KundenPage() {
           label="Accounts"
           value={formatNumber(accounts.length)}
           hint={`${formatNumber(kunden.length)} aktive Kund:innen`}
-          accent="cyan"
+          accent="sky"
           icon={IconUsers}
         />
         <StatCard
           label="KI-Linie"
           value={formatNumber(ki.length)}
           hint="Telefonassistenz & Automatisierung"
-          accent="cyan"
+          accent="sky"
           icon={IconPhone}
         />
         <StatCard
           label="Recruiting-Linie"
           value={formatNumber(recruiting.length)}
           hint="Personalvermittlung"
-          accent="purple"
+          accent="brand"
           icon={IconBriefcase}
         />
         <StatCard

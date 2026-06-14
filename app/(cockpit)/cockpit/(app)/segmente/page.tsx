@@ -32,14 +32,14 @@ export default async function SegmentePage() {
           label="Segmente"
           value={formatNumber(segments.length)}
           hint="aktive Zielgruppen"
-          accent="cyan"
+          accent="sky"
           icon={IconLayers}
         />
         <StatCard
           label="Accounts gesamt"
           value={formatNumber(totalAccounts)}
           hint="über alle Segmente"
-          accent="purple"
+          accent="brand"
           icon={IconUsers}
         />
         <StatCard
@@ -57,7 +57,7 @@ export default async function SegmentePage() {
             <CardBody className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="text-base font-semibold text-ink">{s.name}</h3>
-                <Badge tone="cyan">{formatNumber(s.accounts)} Accounts</Badge>
+                <Badge tone="sky">{formatNumber(s.accounts)} Accounts</Badge>
               </div>
               <p className="text-sm text-muted">{s.description}</p>
               <div className="flex items-center justify-between border-t border-border/60 pt-3 text-sm">

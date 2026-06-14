@@ -22,13 +22,13 @@ export function BestandChart({ data }: { data: BestandPoint[] }) {
         <AreaChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 4 }}>
           <defs>
             <linearGradient id="bestandFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#a855f7" stopOpacity={0.28} />
-              <stop offset="65%" stopColor="#a855f7" stopOpacity={0.06} />
-              <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.01} />
+              <stop offset="0%" stopColor="#2563eb" stopOpacity={0.28} />
+              <stop offset="65%" stopColor="#2563eb" stopOpacity={0.06} />
+              <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.01} />
             </linearGradient>
             <linearGradient id="bestandStroke" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#a855f7" />
-              <stop offset="100%" stopColor="#22d3ee" />
+              <stop offset="0%" stopColor="#2563eb" />
+              <stop offset="100%" stopColor="#0ea5e9" />
             </linearGradient>
           </defs>
           <XAxis
@@ -44,7 +44,7 @@ export function BestandChart({ data }: { data: BestandPoint[] }) {
             domain={[0, (max: number) => Math.ceil((max * 1.15) / 100) * 100]}
           />
           <Tooltip
-            cursor={{ stroke: "#22d3ee", strokeOpacity: 0.3, strokeWidth: 1 }}
+            cursor={{ stroke: "#0ea5e9", strokeOpacity: 0.3, strokeWidth: 1 }}
             contentStyle={{
               background: "#ffffff",
               border: "1px solid #e2e6ef",
@@ -63,7 +63,7 @@ export function BestandChart({ data }: { data: BestandPoint[] }) {
             strokeWidth={2.5}
             fill="url(#bestandFill)"
             dot={false}
-            activeDot={{ r: 4, fill: "#7c3aed", stroke: "#ffffff", strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: "#1d4ed8", stroke: "#ffffff", strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

@@ -8,11 +8,11 @@ import type { MandateStatus, RecruitingMandate } from "@/lib/crm-types";
 
 const statusMeta: Record<
   MandateStatus,
-  { label: string; tone: "neutral" | "cyan" | "purple" | "success" | "warning" }
+  { label: string; tone: "neutral" | "sky" | "brand" | "success" | "warning" }
 > = {
   offen: { label: "Offen", tone: "neutral" },
-  in_arbeit: { label: "In Arbeit", tone: "cyan" },
-  interviews: { label: "Interviews", tone: "purple" },
+  in_arbeit: { label: "In Arbeit", tone: "sky" },
+  interviews: { label: "Interviews", tone: "brand" },
   besetzt: { label: "Besetzt", tone: "success" },
   pausiert: { label: "Pausiert", tone: "warning" },
 };
@@ -55,7 +55,7 @@ export function MandatesList({ mandates }: { mandates: RecruitingMandate[] }) {
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-elevated">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-purple to-cyan"
+                    className="h-full rounded-full bg-gradient-to-r from-brand to-sky"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -75,7 +75,7 @@ export function MandatesList({ mandates }: { mandates: RecruitingMandate[] }) {
                 </span>
                 <Link
                   href="/cockpit/kandidaten"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-deep hover:text-cyan-ink"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-sky-deep hover:text-sky-ink"
                 >
                   Kandidaten <IconChevronRight size={14} />
                 </Link>

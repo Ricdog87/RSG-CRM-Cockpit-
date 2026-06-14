@@ -1,11 +1,11 @@
 import { cn } from "@/components/ui/cn";
 
-type Tone = "neutral" | "purple" | "cyan" | "success" | "warning" | "danger";
+type Tone = "neutral" | "brand" | "sky" | "success" | "warning" | "danger";
 
 const tones: Record<Tone, string> = {
   neutral: "border-border bg-elevated text-muted",
-  purple: "border-purple/30 bg-purple/10 text-purple-deep",
-  cyan: "border-cyan/30 bg-cyan/10 text-cyan-deep",
+  brand: "border-brand/30 bg-brand/10 text-brand-deep",
+  sky: "border-sky/30 bg-sky/10 text-sky-deep",
   success: "border-success/30 bg-success/10 text-success",
   warning: "border-warning/30 bg-warning/10 text-warning",
   danger: "border-danger/30 bg-danger/10 text-danger",

@@ -34,14 +34,14 @@ export default async function TeamPage() {
           label="Direktpartner:innen"
           value={formatNumber(downline.length)}
           hint={`${formatNumber(aktive.length)} aktiv`}
-          accent="purple"
+          accent="brand"
           icon={IconNetwork}
         />
         <StatCard
           label="Team-Kund:innen"
           value={formatNumber(teamKunden)}
           hint="aktiver Bestand der Downline"
-          accent="cyan"
+          accent="sky"
           icon={IconUsers}
         />
         <StatCard
