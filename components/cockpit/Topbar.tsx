@@ -14,7 +14,7 @@ export function Topbar({ partnerName }: { partnerName: string }) {
   const isOverview = item.href === "/cockpit";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-surface/80 backdrop-blur-xl">
+    <header className="pt-safe sticky top-0 z-30 border-b border-border bg-surface/80 backdrop-blur-xl">
       <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
         {/* Mobile-Logo */}
         <Link href="/cockpit" className="flex items-center gap-2 lg:hidden">
@@ -30,7 +30,7 @@ export function Topbar({ partnerName }: { partnerName: string }) {
           </h1>
         </div>
 
-        {/* CRM-weite Suche */}
+        {/* CRM-weite Suche (Desktop/Tablet) */}
         <form action="/cockpit/suche" className="relative hidden items-center sm:flex">
           <IconSearch size={16} className="absolute left-3 text-faint" />
           <input
@@ -41,6 +41,15 @@ export function Topbar({ partnerName }: { partnerName: string }) {
             className="w-44 rounded-xl border border-border bg-elevated/60 py-2 pl-9 pr-3 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-sky lg:w-64"
           />
         </form>
+
+        {/* Suche als Icon-Button (Mobile) */}
+        <Link
+          href="/cockpit/suche"
+          aria-label="Suche"
+          className="rounded-xl border border-border bg-elevated/60 p-2 text-muted transition-colors hover:text-ink sm:hidden"
+        >
+          <IconSearch size={18} />
+        </Link>
 
         <Copilot />
 

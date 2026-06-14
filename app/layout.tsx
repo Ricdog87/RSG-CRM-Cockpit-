@@ -13,12 +13,20 @@ export const metadata: Metadata = {
   title: "RSG CRM · Partner-Cockpit",
   description:
     "Das hausinterne RSG-CRM: wachsender Bestand, Provisionen, Pipeline, Kunden, Team und Karriere – an einem Ort.",
+  applicationName: "RSG CRM",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "RSG CRM",
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f5f7fb",
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

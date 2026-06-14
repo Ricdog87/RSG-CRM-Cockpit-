@@ -23,8 +23,13 @@ export function HeroBestand({
   const yoyDelta = first > 0 ? ((last - first) / first) * 100 : 0;
 
   return (
-    <Card className="overflow-hidden">
-      <CardBody className="space-y-6">
+    <Card className="relative overflow-hidden">
+      {/* Branded Glow-Backdrop für den Hero. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-brand-glow opacity-70"
+      />
+      <CardBody className="relative space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="kpi-label">Wiederkehrender Bestand</p>
