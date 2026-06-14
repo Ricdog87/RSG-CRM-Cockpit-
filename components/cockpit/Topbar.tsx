@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { activeNavItem } from "@/lib/nav";
+import { Copilot } from "@/components/cockpit/Copilot";
 import { IconBell, IconSearch } from "@/components/ui/icons";
 
 /** Obere Leiste: aktueller Bereich + Suche + Mobile-Logo. */
@@ -40,6 +41,8 @@ export function Topbar({ partnerName }: { partnerName: string }) {
             className="w-44 rounded-xl border border-border bg-elevated/60 py-2 pl-9 pr-3 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-sky lg:w-64"
           />
         </form>
+
+        <Copilot />
 
         <button
           type="button"

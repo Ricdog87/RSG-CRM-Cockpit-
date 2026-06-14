@@ -3,6 +3,7 @@
 import { analyzeLead } from "@/lib/ai/lead-intelligence";
 import { scoreOpportunity, heuristicScore } from "@/lib/ai/scoring";
 import { discoverLeads } from "@/lib/ai/discovery";
+import { askCopilot } from "@/lib/ai/copilot";
 import { getOpportunities } from "@/lib/crm-data";
 import { createAccount, type ActionResult } from "@/lib/crm-actions";
 import type {
@@ -43,6 +44,23 @@ export async function runLeadAnalysis(
     return {
       ok: false,
       error: e instanceof Error ? e.message : "Analyse fehlgeschlagen.",
+    };
+  }
+}
+
+/** KI-Co-Pilot: beantwortet eine Frage zum eigenen CRM. */
+export async function askCopilotAction(
+  question: string
+): Promise<{ ok: boolean; answer?: string; mode?: "live" | "demo"; error?: string }> {
+  const q = question.trim();
+  if (!q) return { ok: false, error: "Bitte eine Frage eingeben." };
+  try {
+    const { answer, mode } = await askCopilot(q);
+    return { ok: true, answer, mode };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Antwort fehlgeschlagen.",
     };
   }
 }
