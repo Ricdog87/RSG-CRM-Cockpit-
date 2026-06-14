@@ -1,35 +1,32 @@
 import { getCandidates } from "@/lib/crm-data";
+import { createCandidate } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
-import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
-import { Button } from "@/components/ui/Button";
-import { IconUserCheck, IconPlus } from "@/components/ui/icons";
-import { formatDate, formatNumber } from "@/lib/format";
-import type { Candidate, CandidateStage } from "@/lib/crm-types";
+import { CandidatesView } from "@/components/cockpit/views/CandidatesView";
+import { EntityFormDialog, type FormField } from "@/components/cockpit/EntityFormDialog";
+import { IconUserCheck } from "@/components/ui/icons";
+import { formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const COLUMNS: BoardColumn<CandidateStage>[] = [
-  { stage: "neu", label: "Neu", tone: "neutral" },
-  { stage: "screening", label: "Screening", tone: "sky" },
-  { stage: "interview", label: "Interview", tone: "brand" },
-  { stage: "angebot", label: "Angebot", tone: "brand" },
-  { stage: "platziert", label: "Platziert", tone: "success" },
+const FIELDS: FormField[] = [
+  { name: "name", label: "Name", required: true, placeholder: "Vor- und Nachname" },
+  { name: "role", label: "Position", placeholder: "z.B. Pflegefachkraft" },
+  { name: "mandate_account", label: "Mandat (Account)", full: true },
+  {
+    name: "stage",
+    label: "Phase",
+    type: "select",
+    options: [
+      { value: "neu", label: "Neu" },
+      { value: "screening", label: "Screening" },
+      { value: "interview", label: "Interview" },
+      { value: "angebot", label: "Angebot" },
+      { value: "platziert", label: "Platziert" },
+    ],
+  },
+  { name: "source", label: "Quelle", placeholder: "z.B. LinkedIn" },
 ];
-
-function CandidateCard({ c }: { c: Candidate }) {
-  return (
-    <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
-      <p className="truncate text-sm font-medium text-ink">{c.name}</p>
-      <p className="truncate text-xs text-muted">{c.role}</p>
-      <p className="mt-2 truncate text-xs text-faint">{c.mandate_account}</p>
-      <div className="mt-2 flex items-center justify-between text-[0.7rem] text-faint">
-        <span>{c.source}</span>
-        <span>{formatDate(c.updated_at)}</span>
-      </div>
-    </div>
-  );
-}
 
 export default async function KandidatenPage() {
   const candidates = await getCandidates();
@@ -47,9 +44,13 @@ export default async function KandidatenPage() {
         title="Kandidaten"
         description="Die Recruiting-Pipeline – von der Ansprache bis zur Platzierung."
         action={
-          <Button>
-            <IconPlus size={16} /> Kandidat:in anlegen
-          </Button>
+          <EntityFormDialog
+            triggerLabel="Kandidat:in anlegen"
+            title="Neue:n Kandidat:in anlegen"
+            description="Person der Recruiting-Pipeline hinzufügen."
+            fields={FIELDS}
+            action={createCandidate}
+          />
         }
       />
 
@@ -77,13 +78,7 @@ export default async function KandidatenPage() {
         />
       </div>
 
-      <KanbanBoard
-        columns={COLUMNS}
-        items={candidates.filter((c) => c.stage !== "abgelehnt")}
-        getStage={(c) => c.stage}
-        renderCard={(c) => <CandidateCard c={c} />}
-        emptyText="Noch keine Kandidat:innen. Lege deine erste Person an oder importiere aus dem Sourcing."
-      />
+      <CandidatesView candidates={candidates} />
     </div>
   );
 }

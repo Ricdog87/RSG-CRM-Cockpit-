@@ -1,0 +1,75 @@
+"use client";
+
+import { useState } from "react";
+import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
+import { LineBadge } from "@/components/cockpit/LineBadge";
+import { FilterTabs } from "@/components/ui/FilterTabs";
+import { formatDate, formatEur, formatPercent } from "@/lib/format";
+import type { BusinessLine, Opportunity, SalesStage } from "@/lib/crm-types";
+
+type Filter = "all" | BusinessLine;
+
+const COLUMNS: BoardColumn<SalesStage>[] = [
+  { stage: "neu", label: "Neu", tone: "neutral" },
+  { stage: "qualifiziert", label: "Qualifiziert", tone: "sky" },
+  { stage: "demo", label: "Demo/Termin", tone: "sky" },
+  { stage: "angebot", label: "Angebot", tone: "brand" },
+  { stage: "verhandlung", label: "Verhandlung", tone: "brand" },
+  { stage: "gewonnen", label: "Gewonnen", tone: "success" },
+];
+
+function value(o: Opportunity) {
+  return o.value_type === "mrr" ? `${formatEur(o.value)}/M` : formatEur(o.value);
+}
+
+function OppCard({ o }: { o: Opportunity }) {
+  return (
+    <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <p className="truncate text-sm font-medium text-ink">{o.account_name}</p>
+        <LineBadge line={o.line} />
+      </div>
+      <p className="truncate text-xs text-muted">{o.title}</p>
+      <div className="mt-3 flex items-center justify-between">
+        <span className="text-sm font-semibold text-ink">{value(o)}</span>
+        <span className="text-xs text-faint">{formatPercent(o.probability)}</span>
+      </div>
+      <p className="mt-1 text-[0.7rem] text-faint">
+        {o.owner} · {formatDate(o.expected_close)}
+      </p>
+    </div>
+  );
+}
+
+/** Sales-Board mit Linien-Filter. */
+export function SalesView({ opportunities }: { opportunities: Opportunity[] }) {
+  const [filter, setFilter] = useState<Filter>("all");
+  const base = opportunities.filter((o) => o.stage !== "verloren");
+  const shown = filter === "all" ? base : base.filter((o) => o.line === filter);
+
+  return (
+    <div className="space-y-4">
+      <FilterTabs<Filter>
+        value={filter}
+        onChange={setFilter}
+        options={[
+          { value: "all", label: "Alle", count: base.length },
+          { value: "ki", label: "KI", count: base.filter((o) => o.line === "ki").length },
+          {
+            value: "recruiting",
+            label: "Recruiting",
+            count: base.filter((o) => o.line === "recruiting").length,
+          },
+        ]}
+      />
+      <KanbanBoard
+        columns={COLUMNS}
+        items={shown}
+        getStage={(o) => o.stage}
+        renderCard={(o) => <OppCard o={o} />}
+        columnFooter={(items) => <>{formatEur(items.reduce((s, o) => s + o.value, 0))}</>}
+        emptyText="Keine Verkaufschancen in diesem Filter."
+      />
+    </div>
+  );
+}

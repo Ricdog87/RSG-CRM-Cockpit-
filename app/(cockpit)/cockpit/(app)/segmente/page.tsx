@@ -1,13 +1,20 @@
 import { getSegments } from "@/lib/crm-data";
+import { createSegment } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { IconLayers, IconUsers, IconEuro, IconPlus } from "@/components/ui/icons";
+import { EntityFormDialog, type FormField } from "@/components/cockpit/EntityFormDialog";
+import { IconLayers, IconUsers, IconEuro } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+
+const FIELDS: FormField[] = [
+  { name: "name", label: "Segmentname", required: true, full: true, placeholder: "z.B. Handwerk & Bau" },
+  { name: "description", label: "Beschreibung", type: "textarea", full: true },
+  { name: "top_product", label: "Top-Produkt", placeholder: "z.B. AI Account Manager" },
+];
 
 export default async function SegmentePage() {
   const segments = await getSegments();
@@ -21,9 +28,13 @@ export default async function SegmentePage() {
         title="Segmente"
         description="KI-Zielgruppen nach Branche und Use-Case – Basis für gezielte Ansprache."
         action={
-          <Button>
-            <IconPlus size={16} /> Segment anlegen
-          </Button>
+          <EntityFormDialog
+            triggerLabel="Segment anlegen"
+            title="Neues Segment"
+            description="KI-Zielgruppe nach Branche/Use-Case erfassen."
+            fields={FIELDS}
+            action={createSegment}
+          />
         }
       />
 

@@ -1,46 +1,53 @@
 import { getOpportunities } from "@/lib/crm-data";
+import { createOpportunity } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
-import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
-import { LineBadge } from "@/components/cockpit/LineBadge";
-import { Button } from "@/components/ui/Button";
-import { IconPlus, IconTarget, IconEuro, IconTrendingUp } from "@/components/ui/icons";
-import { formatDate, formatEur, formatPercent } from "@/lib/format";
-import type { Opportunity, SalesStage } from "@/lib/crm-types";
+import { SalesView } from "@/components/cockpit/views/SalesView";
+import { EntityFormDialog, type FormField } from "@/components/cockpit/EntityFormDialog";
+import { IconTarget, IconEuro, IconTrendingUp } from "@/components/ui/icons";
+import { formatEur } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const COLUMNS: BoardColumn<SalesStage>[] = [
-  { stage: "neu", label: "Neu", tone: "neutral" },
-  { stage: "qualifiziert", label: "Qualifiziert", tone: "sky" },
-  { stage: "demo", label: "Demo/Termin", tone: "sky" },
-  { stage: "angebot", label: "Angebot", tone: "brand" },
-  { stage: "verhandlung", label: "Verhandlung", tone: "brand" },
-  { stage: "gewonnen", label: "Gewonnen", tone: "success" },
+const FIELDS: FormField[] = [
+  { name: "account_name", label: "Account", required: true, full: true, placeholder: "Muster GmbH" },
+  { name: "title", label: "Titel", full: true, placeholder: "z.B. AI Account Manager" },
+  {
+    name: "line",
+    label: "Geschäftslinie",
+    type: "select",
+    options: [
+      { value: "ki", label: "KI & Telefonassistenz" },
+      { value: "recruiting", label: "Personalvermittlung" },
+    ],
+  },
+  {
+    name: "value_type",
+    label: "Wert-Typ",
+    type: "select",
+    options: [
+      { value: "mrr", label: "MRR (monatlich)" },
+      { value: "fixed", label: "Festpreis" },
+    ],
+  },
+  { name: "value", label: "Wert (€)", type: "number", placeholder: "0" },
+  { name: "probability", label: "Wahrscheinlichkeit (%)", type: "number", placeholder: "0" },
+  {
+    name: "stage",
+    label: "Phase",
+    type: "select",
+    options: [
+      { value: "neu", label: "Neu" },
+      { value: "qualifiziert", label: "Qualifiziert" },
+      { value: "demo", label: "Demo/Termin" },
+      { value: "angebot", label: "Angebot" },
+      { value: "verhandlung", label: "Verhandlung" },
+      { value: "gewonnen", label: "Gewonnen" },
+    ],
+  },
+  { name: "owner", label: "Verantwortlich" },
+  { name: "expected_close", label: "Erwarteter Abschluss", type: "date" },
 ];
-
-function value(o: Opportunity) {
-  return o.value_type === "mrr" ? `${formatEur(o.value)}/M` : formatEur(o.value);
-}
-
-function OppCard({ o }: { o: Opportunity }) {
-  return (
-    <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
-      <div className="mb-1.5 flex items-center justify-between gap-2">
-        <p className="truncate text-sm font-medium text-ink">{o.account_name}</p>
-        <LineBadge line={o.line} />
-      </div>
-      <p className="truncate text-xs text-muted">{o.title}</p>
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-sm font-semibold text-ink">{value(o)}</span>
-        <span className="text-xs text-faint">{formatPercent(o.probability)}</span>
-      </div>
-      <p className="mt-1 text-[0.7rem] text-faint">
-        {o.owner} · {formatDate(o.expected_close)}
-      </p>
-    </div>
-  );
-}
 
 export default async function SalesPage() {
   const opps = await getOpportunities();
@@ -60,9 +67,13 @@ export default async function SalesPage() {
         title="Sales-Pipeline"
         description="Projekt-Verkaufschancen über beide Geschäftslinien – KI und Personalvermittlung."
         action={
-          <Button>
-            <IconPlus size={16} /> Chance anlegen
-          </Button>
+          <EntityFormDialog
+            triggerLabel="Chance anlegen"
+            title="Neue Verkaufschance"
+            description="Projekt-Opportunity über KI oder Recruiting erfassen."
+            fields={FIELDS}
+            action={createOpportunity}
+          />
         }
       />
 
@@ -97,16 +108,7 @@ export default async function SalesPage() {
         />
       </div>
 
-      <KanbanBoard
-        columns={COLUMNS}
-        items={opps.filter((o) => o.stage !== "verloren")}
-        getStage={(o) => o.stage}
-        renderCard={(o) => <OppCard o={o} />}
-        columnFooter={(items) => (
-          <>{formatEur(items.reduce((s, o) => s + o.value, 0))}</>
-        )}
-        emptyText="Noch keine Verkaufschancen. Lege deine erste Chance an."
-      />
+      <SalesView opportunities={opps} />
     </div>
   );
 }

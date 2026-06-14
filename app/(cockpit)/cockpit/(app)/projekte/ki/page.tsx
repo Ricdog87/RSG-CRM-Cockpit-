@@ -1,6 +1,6 @@
 import { getKiProjects } from "@/lib/crm-data";
 import { PageHeader } from "@/components/cockpit/PageHeader";
-import { KiProjectsTable } from "@/components/cockpit/KiProjectsTable";
+import { KiProjectsView } from "@/components/cockpit/views/KiProjectsView";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { IconPhone, IconSpark, IconEuro, IconAlert } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
@@ -56,7 +56,7 @@ export default async function KiProjektePage() {
         />
       </div>
 
-      <KiProjectsTable projects={projects} />
+      <KiProjectsView projects={projects} />
     </div>
   );
 }
