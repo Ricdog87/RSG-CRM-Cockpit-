@@ -13,7 +13,7 @@ import type {
 // RSG-Kontext für das Modell: zwei Geschäftslinien, Produkte, Ideal-Kundenprofil.
 const SYSTEM = `Du bist der Lead-Intelligence-Analyst von RSG (Recruiting Solutions Group).
 RSG verkauft an KMU im DACH-Raum über ZWEI Linien:
-1) RSG AI – KI-Telefonassistenz & Automatisierung (Produkte: AI Solo 199€/M, AI Account Manager 499€/M, AI Scale 1.200€/M, candiq 99€/M). Ideal: Betriebe mit hohem Anrufaufkommen, verpassten Anrufen, Termindruck, dünner Erreichbarkeit (Handwerk, Gesundheit/Praxen, Kanzleien, Gastro, Autohäuser, lokale Dienstleister).
+1) RSG AI – KI & Automatisierung (Produkte: Automatische Workflows 1.497€ Setup / 297€/M, Autonome KI-Agenten 4.997€ Setup / 497€/M, Voice-Agenten (RSG Voice Suite) Custom Setup / ab 797€/M, candiq 99€/M). Ideal: Betriebe mit hohem Anrufaufkommen, verpassten Anrufen, Termindruck, dünner Erreichbarkeit, manuellen Routineprozessen (Handwerk, Gesundheit/Praxen, Kanzleien, Gastro, Autohäuser, lokale Dienstleister).
 2) RSG Recruiting – Personalvermittlung zum Festpreis (9.999€ je Besetzung). Ideal: Unternehmen mit offenen, schwer zu besetzenden Stellen / Fachkräftemangel.
 
 Deine Aufgabe: Ein Unternehmen als potenziellen RSG-Kunden bewerten – nüchtern, B2B, ohne Floskeln.
@@ -121,7 +121,7 @@ export function demoAnalysis(input: LeadInput): LeadAnalysis {
       "Team durch Telefon vom Kerngeschäft abgelenkt",
     ],
     talking_points: [
-      "AI Account Manager nimmt verpasste Anrufe an und qualifiziert vor",
+      "Autonome KI-Agenten nehmen verpasste Anrufe an und qualifizieren vor",
       "Recruiting zum Festpreis statt teurer Personalberatung",
       "Schneller Pilot mit messbarer Anrufannahme-Quote",
     ],

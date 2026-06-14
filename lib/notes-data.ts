@@ -33,7 +33,7 @@ export async function getNotesForAccount(accountId: string): Promise<Note[]> {
 const mockNotes: Note[] = [
   {
     id: "n1",
-    body: "Entscheider ist der Inhaber. Schmerzpunkt: verpasste Anrufe in der Mittagspause. Pilot AI Account Manager angeboten.",
+    body: "Entscheider ist der Inhaber. Schmerzpunkt: verpasste Anrufe in der Mittagspause. Pilot Autonome KI-Agenten angeboten.",
     created_at: "2026-06-11T10:30:00Z",
   },
   {

@@ -19,7 +19,7 @@ export const segments: Segment[] = [
     description: "Betriebe mit hohem Anrufaufkommen und Terminkoordination.",
     accounts: 14,
     mrr: 5980,
-    top_product: "AI Account Manager",
+    top_product: "Autonome KI-Agenten",
   },
   {
     id: "s-gesundheit",
@@ -27,7 +27,7 @@ export const segments: Segment[] = [
     description: "Arzt- und Zahnarztpraxen, Pflege, MVZ – Entlastung der Rezeption.",
     accounts: 11,
     mrr: 5210,
-    top_product: "AI Account Manager",
+    top_product: "Autonome KI-Agenten",
   },
   {
     id: "s-kanzlei",
@@ -35,7 +35,7 @@ export const segments: Segment[] = [
     description: "Steuer-, Rechts- und Unternehmensberatung – Erreichbarkeit & Triage.",
     accounts: 8,
     mrr: 3120,
-    top_product: "AI Scale",
+    top_product: "Voice-Agenten",
   },
   {
     id: "s-gastro",
@@ -43,7 +43,7 @@ export const segments: Segment[] = [
     description: "Reservierungen, Bestellannahme, wiederkehrende Standardanfragen.",
     accounts: 9,
     mrr: 2140,
-    top_product: "AI Solo",
+    top_product: "Automatische Workflows",
   },
   {
     id: "s-automotive",
@@ -51,7 +51,7 @@ export const segments: Segment[] = [
     description: "Autohäuser und Werkstätten – Serviceannahme und Rückrufe.",
     accounts: 6,
     mrr: 3360,
-    top_product: "AI Scale",
+    top_product: "Voice-Agenten",
   },
 ];
 
@@ -71,11 +71,11 @@ export const accounts: Account[] = [
 ];
 
 export const opportunities: Opportunity[] = [
-  { id: "o-1", account_name: "Stadtwerke Region Süd", line: "ki", title: "AI Scale – Bürgertelefon", value: 1200, value_type: "mrr", stage: "verhandlung", probability: 70, owner: "Demo Partner", expected_close: "2026-06-30" },
-  { id: "o-2", account_name: "Bäckerei Kortmann GmbH", line: "ki", title: "AI Account Manager", value: 499, value_type: "mrr", stage: "angebot", probability: 55, owner: "Demo Partner", expected_close: "2026-07-08" },
-  { id: "o-3", account_name: "Praxis Dr. Lindner", line: "ki", title: "AI Solo – Rezeption", value: 199, value_type: "mrr", stage: "demo", probability: 40, owner: "Anna Decker", expected_close: "2026-07-14" },
+  { id: "o-1", account_name: "Stadtwerke Region Süd", line: "ki", title: "Voice-Agenten – Bürgertelefon", value: 797, value_type: "mrr", stage: "verhandlung", probability: 70, owner: "Demo Partner", expected_close: "2026-06-30" },
+  { id: "o-2", account_name: "Bäckerei Kortmann GmbH", line: "ki", title: "Autonome KI-Agenten", value: 497, value_type: "mrr", stage: "angebot", probability: 55, owner: "Demo Partner", expected_close: "2026-07-08" },
+  { id: "o-3", account_name: "Praxis Dr. Lindner", line: "ki", title: "Automatische Workflows – Rezeption", value: 297, value_type: "mrr", stage: "demo", probability: 40, owner: "Anna Decker", expected_close: "2026-07-14" },
   { id: "o-4", account_name: "Café Lichtblick", line: "ki", title: "candiq", value: 99, value_type: "mrr", stage: "qualifiziert", probability: 30, owner: "Demo Partner", expected_close: "2026-07-20" },
-  { id: "o-5", account_name: "City Fitness Group", line: "ki", title: "AI Scale – 3 Standorte", value: 1200, value_type: "mrr", stage: "neu", probability: 15, owner: "Jonas Pfeiffer", expected_close: "2026-08-02" },
+  { id: "o-5", account_name: "City Fitness Group", line: "ki", title: "Voice-Agenten – 3 Standorte", value: 797, value_type: "mrr", stage: "neu", probability: 15, owner: "Jonas Pfeiffer", expected_close: "2026-08-02" },
   { id: "o-6", account_name: "CareHaus Senioren", line: "recruiting", title: "3× Pflegefachkraft", value: 29997, value_type: "fixed", stage: "verhandlung", probability: 65, owner: "Demo Partner", expected_close: "2026-07-05" },
   { id: "o-7", account_name: "TechnoFlex Engineering", line: "recruiting", title: "2× CNC-Fachkraft", value: 19998, value_type: "fixed", stage: "angebot", probability: 50, owner: "Anna Decker", expected_close: "2026-07-12" },
   { id: "o-8", account_name: "Spedition Kaiser", line: "recruiting", title: "1× Disponent:in", value: 9999, value_type: "fixed", stage: "qualifiziert", probability: 35, owner: "Demo Partner", expected_close: "2026-07-25" },
@@ -83,13 +83,13 @@ export const opportunities: Opportunity[] = [
 ];
 
 export const kiProjects: KiProject[] = [
-  { id: "k-1", account_name: "Hofmann Dental MVZ", product: "AI Account Manager", segment: "Gesundheit & Praxen", status: "live", mrr: 499, go_live: "2025-01-20", health: "gut" },
-  { id: "k-2", account_name: "Logistik Brendel GmbH", product: "AI Scale", segment: "Handwerk & Bau", status: "optimierung", mrr: 1200, go_live: "2025-03-12", health: "neutral" },
-  { id: "k-3", account_name: "Kanzlei Vogt & Partner", product: "AI Account Manager", segment: "Kanzleien & Beratung", status: "live", mrr: 499, go_live: "2024-11-28", health: "gut" },
-  { id: "k-4", account_name: "Autohaus Petersen", product: "AI Scale", segment: "Automotive & KFZ", status: "live", mrr: 1200, go_live: "2025-04-18", health: "gut" },
-  { id: "k-5", account_name: "Pflegedienst Aurum", product: "AI Account Manager", segment: "Gesundheit & Praxen", status: "onboarding", mrr: 499, go_live: "2026-06-20", health: "neutral" },
-  { id: "k-6", account_name: "Elektro Wagner", product: "AI Solo", segment: "Handwerk & Bau", status: "live", mrr: 199, go_live: "2025-07-22", health: "gut" },
-  { id: "k-7", account_name: "Gastro Lindblatt", product: "AI Account Manager", segment: "Gastro & Retail", status: "pausiert", mrr: 499, go_live: "2026-02-18", health: "risiko" },
+  { id: "k-1", account_name: "Hofmann Dental MVZ", product: "Autonome KI-Agenten", segment: "Gesundheit & Praxen", status: "live", mrr: 497, go_live: "2025-01-20", health: "gut" },
+  { id: "k-2", account_name: "Logistik Brendel GmbH", product: "Voice-Agenten", segment: "Handwerk & Bau", status: "optimierung", mrr: 797, go_live: "2025-03-12", health: "neutral" },
+  { id: "k-3", account_name: "Kanzlei Vogt & Partner", product: "Autonome KI-Agenten", segment: "Kanzleien & Beratung", status: "live", mrr: 497, go_live: "2024-11-28", health: "gut" },
+  { id: "k-4", account_name: "Autohaus Petersen", product: "Voice-Agenten", segment: "Automotive & KFZ", status: "live", mrr: 797, go_live: "2025-04-18", health: "gut" },
+  { id: "k-5", account_name: "Pflegedienst Aurum", product: "Autonome KI-Agenten", segment: "Gesundheit & Praxen", status: "onboarding", mrr: 497, go_live: "2026-06-20", health: "neutral" },
+  { id: "k-6", account_name: "Elektro Wagner", product: "Automatische Workflows", segment: "Handwerk & Bau", status: "live", mrr: 297, go_live: "2025-07-22", health: "gut" },
+  { id: "k-7", account_name: "Gastro Lindblatt", product: "Autonome KI-Agenten", segment: "Gastro & Retail", status: "pausiert", mrr: 497, go_live: "2026-02-18", health: "risiko" },
 ];
 
 export const mandates: RecruitingMandate[] = [

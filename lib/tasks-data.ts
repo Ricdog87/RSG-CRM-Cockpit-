@@ -134,7 +134,7 @@ export async function getCalendarToken(): Promise<{ token: string; demo: boolean
 const mockTasks: Task[] = [
   { id: "t1", related_type: "customer", related_id: "c-1", related_label: "Hofmann Dental MVZ", title: "Angebot nachfassen", notes: null, due_date: "2026-06-15", due_time: "10:00", done: false },
   { id: "t2", related_type: "candidate", related_id: "cand-1", related_label: "Anna Decker", title: "Interview vorbereiten", notes: null, due_date: "2026-06-16", due_time: "14:30", done: false },
-  { id: "t3", related_type: "project", related_id: "p-1", related_label: "Logistik Brendel · AI Scale", title: "Go-Live-Call", notes: null, due_date: "2026-06-18", due_time: "11:00", done: false },
+  { id: "t3", related_type: "project", related_id: "p-1", related_label: "Logistik Brendel · Voice-Agenten", title: "Go-Live-Call", notes: null, due_date: "2026-06-18", due_time: "11:00", done: false },
   { id: "t4", related_type: "customer", related_id: "c-2", related_label: "Praxis Dr. Vogt", title: "Demo-Termin", notes: null, due_date: "2026-06-12", due_time: "09:00", done: false },
   { id: "t5", related_type: "none", related_id: null, related_label: null, title: "Wochenplanung", notes: null, due_date: "2026-06-14", due_time: null, done: false },
 ];

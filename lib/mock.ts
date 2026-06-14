@@ -101,18 +101,18 @@ const pipeline: Deal[] = [
 
 // Kundenbestand (Auszug). MRR + Bestandsprovision (17 %, Provisionsordnung §3.1).
 const rawCustomers: Array<[string, string, number, CustomerRow["status"], string, number]> = [
-  ["Hofmann Dental MVZ", "AI Account Manager", 499, "aktiv", "2025-01-12", 17],
-  ["Logistik Brendel GmbH", "AI Scale", 1200, "aktiv", "2025-03-04", 15],
-  ["Kanzlei Vogt & Partner", "AI Account Manager", 499, "aktiv", "2024-11-20", 19],
-  ["Sanitär Kruse", "AI Solo", 199, "aktiv", "2025-06-01", 12],
-  ["Praxis Dr. Lindner", "AI Account Manager", 499, "aktiv", "2025-02-18", 16],
-  ["Autohaus Petersen", "AI Scale", 1200, "aktiv", "2025-04-09", 14],
+  ["Hofmann Dental MVZ", "Autonome KI-Agenten", 497, "aktiv", "2025-01-12", 17],
+  ["Logistik Brendel GmbH", "Voice-Agenten", 797, "aktiv", "2025-03-04", 15],
+  ["Kanzlei Vogt & Partner", "Autonome KI-Agenten", 497, "aktiv", "2024-11-20", 19],
+  ["Sanitär Kruse", "Automatische Workflows", 297, "aktiv", "2025-06-01", 12],
+  ["Praxis Dr. Lindner", "Autonome KI-Agenten", 497, "aktiv", "2025-02-18", 16],
+  ["Autohaus Petersen", "Voice-Agenten", 797, "aktiv", "2025-04-09", 14],
   ["Bäckerei Sommer", "candiq", 99, "aktiv", "2025-05-22", 13],
-  ["Elektro Wagner", "AI Solo", 199, "aktiv", "2025-07-15", 11],
-  ["Pflegedienst Aurum", "AI Account Manager", 499, "onboarding", "2026-05-28", 0],
-  ["Steuerkanzlei Reich", "AI Solo", 199, "onboarding", "2026-06-02", 0],
-  ["Gastro Lindblatt", "AI Account Manager", 499, "storno_reserve", "2026-02-10", 4],
-  ["Fitness Nordpol", "AI Solo", 199, "storno_reserve", "2026-03-19", 3],
+  ["Elektro Wagner", "Automatische Workflows", 297, "aktiv", "2025-07-15", 11],
+  ["Pflegedienst Aurum", "Autonome KI-Agenten", 497, "onboarding", "2026-05-28", 0],
+  ["Steuerkanzlei Reich", "Automatische Workflows", 297, "onboarding", "2026-06-02", 0],
+  ["Gastro Lindblatt", "Autonome KI-Agenten", 497, "storno_reserve", "2026-02-10", 4],
+  ["Fitness Nordpol", "Automatische Workflows", 297, "storno_reserve", "2026-03-19", 3],
   ["Möbel Hartwig", "candiq", 99, "gekuendigt", "2025-08-01", 5],
 ];
 

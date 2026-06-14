@@ -74,12 +74,12 @@ export const MANDATE_FIELDS: FormField[] = [
 export const SEGMENT_FIELDS: FormField[] = [
   { name: "name", label: "Segmentname", required: true, full: true, placeholder: "z.B. Handwerk & Bau" },
   { name: "description", label: "Beschreibung", type: "textarea", full: true },
-  { name: "top_product", label: "Top-Produkt", placeholder: "z.B. AI Account Manager" },
+  { name: "top_product", label: "Top-Produkt", placeholder: "z.B. Autonome KI-Agenten" },
 ];
 
 export const KIPROJECT_FIELDS: FormField[] = [
   { name: "account_name", label: "Account", required: true, full: true, placeholder: "Muster GmbH" },
-  { name: "product", label: "Produkt", placeholder: "z.B. AI Account Manager" },
+  { name: "product", label: "Produkt", placeholder: "z.B. Autonome KI-Agenten" },
   { name: "segment", label: "Segment" },
   {
     name: "status",
@@ -109,7 +109,7 @@ export const KIPROJECT_FIELDS: FormField[] = [
 
 export const OPPORTUNITY_FIELDS: FormField[] = [
   { name: "account_name", label: "Account", required: true, full: true, placeholder: "Muster GmbH" },
-  { name: "title", label: "Titel", full: true, placeholder: "z.B. AI Account Manager" },
+  { name: "title", label: "Titel", full: true, placeholder: "z.B. Autonome KI-Agenten" },
   {
     name: "line",
     label: "Geschäftslinie",
