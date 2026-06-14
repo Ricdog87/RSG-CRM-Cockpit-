@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    @apply bg-base text-ink antialiased;
+  }
+
+  /* Sichtbarer Tastatur-Fokus auf der gesamten Oberfläche. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-cyan ring-offset-2 ring-offset-base rounded-md;
+  }
+
+  ::selection {
+    @apply bg-purple/30 text-ink;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-border bg-surface/80 shadow-card backdrop-blur;
+  }
+
+  .card-pad {
+    @apply p-5 sm:p-6;
+  }
+
+  .kpi-label {
+    @apply text-xs font-medium uppercase tracking-wider text-faint;
+  }
+
+  .section-title {
+    @apply text-sm font-semibold uppercase tracking-wider text-muted;
+  }
+
+  /* Skeleton-Schimmer für Ladezustände. */
+  .skeleton {
+    @apply relative overflow-hidden rounded-md bg-elevated;
+  }
+  .skeleton::after {
+    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/5 to-transparent content-[''];
+  }
+}
