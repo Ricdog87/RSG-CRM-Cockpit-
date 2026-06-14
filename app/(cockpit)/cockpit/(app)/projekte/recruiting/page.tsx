@@ -1,33 +1,17 @@
 import { getMandates } from "@/lib/crm-data";
 import { createMandate } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
-import { MandatesList } from "@/components/cockpit/MandatesList";
+import { MandatesView } from "@/components/cockpit/views/MandatesView";
 import { StatCard } from "@/components/cockpit/StatCard";
-import { EntityFormDialog, type FormField } from "@/components/cockpit/EntityFormDialog";
+import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
+import { MANDATE_FIELDS } from "@/lib/crm-forms";
 import { IconBriefcase, IconUserCheck, IconEuro } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const FIELDS: FormField[] = [
-  { name: "account_name", label: "Account", required: true, full: true, placeholder: "Muster GmbH" },
-  { name: "role", label: "Position", full: true, placeholder: "z.B. Pflegefachkraft (m/w/d)" },
-  { name: "positions", label: "Anzahl Stellen", type: "number", placeholder: "1" },
-  { name: "fee", label: "Festpreis je Stelle (€)", type: "number", placeholder: "9999" },
-  {
-    name: "status",
-    label: "Status",
-    type: "select",
-    options: [
-      { value: "offen", label: "Offen" },
-      { value: "in_arbeit", label: "In Arbeit" },
-      { value: "interviews", label: "Interviews" },
-      { value: "besetzt", label: "Besetzt" },
-      { value: "pausiert", label: "Pausiert" },
-    ],
-  },
-  { name: "deadline", label: "Deadline", type: "date" },
-];
+// Anlegen ohne „davon besetzt" (Feld nur beim Bearbeiten relevant).
+const CREATE_FIELDS = MANDATE_FIELDS.filter((f) => f.name !== "filled");
 
 export default async function RecruitingProjektePage() {
   const mandates = await getMandates();
@@ -54,7 +38,7 @@ export default async function RecruitingProjektePage() {
             triggerLabel="Mandat anlegen"
             title="Neues Recruiting-Mandat"
             description="Offene Stelle mit Festpreis und Deadline erfassen."
-            fields={FIELDS}
+            fields={CREATE_FIELDS}
             action={createMandate}
           />
         }
@@ -91,7 +75,7 @@ export default async function RecruitingProjektePage() {
         />
       </div>
 
-      <MandatesList mandates={mandates} />
+      <MandatesView mandates={mandates} />
     </div>
   );
 }

@@ -243,3 +243,94 @@ export async function deleteMandate(id: string): Promise<ActionResult> {
 export async function deleteSegment(id: string): Promise<ActionResult> {
   return remove("segments", id, "/cockpit/segmente");
 }
+export async function deleteKiProject(id: string): Promise<ActionResult> {
+  return remove("ki_projects", id, "/cockpit/projekte/ki");
+}
+
+// ---------- Update der übrigen Entitäten ----------------------------
+
+export async function updateCandidate(
+  _prev: ActionResult | null,
+  fd: FormData
+): Promise<ActionResult> {
+  const id = s(fd, "id");
+  if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
+  if (!s(fd, "name")) return { ok: false, error: "Name ist erforderlich." };
+  return update(
+    "candidates",
+    id,
+    {
+      name: s(fd, "name"),
+      role: s(fd, "role"),
+      mandate_account: s(fd, "mandate_account"),
+      stage: s(fd, "stage") || "neu",
+      source: s(fd, "source"),
+      updated_at: new Date().toISOString(),
+    },
+    "/cockpit/kandidaten"
+  );
+}
+
+export async function updateMandate(
+  _prev: ActionResult | null,
+  fd: FormData
+): Promise<ActionResult> {
+  const id = s(fd, "id");
+  if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
+  if (!s(fd, "account_name")) return { ok: false, error: "Account ist erforderlich." };
+  return update(
+    "recruiting_mandates",
+    id,
+    {
+      account_name: s(fd, "account_name"),
+      role: s(fd, "role"),
+      positions: n(fd, "positions") || 1,
+      filled: n(fd, "filled"),
+      status: s(fd, "status") || "offen",
+      fee: n(fd, "fee") || 9999,
+      deadline: s(fd, "deadline") || null,
+    },
+    "/cockpit/projekte/recruiting"
+  );
+}
+
+export async function updateSegment(
+  _prev: ActionResult | null,
+  fd: FormData
+): Promise<ActionResult> {
+  const id = s(fd, "id");
+  if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
+  if (!s(fd, "name")) return { ok: false, error: "Name ist erforderlich." };
+  return update(
+    "segments",
+    id,
+    {
+      name: s(fd, "name"),
+      description: s(fd, "description"),
+      top_product: s(fd, "top_product"),
+    },
+    "/cockpit/segmente"
+  );
+}
+
+export async function updateKiProject(
+  _prev: ActionResult | null,
+  fd: FormData
+): Promise<ActionResult> {
+  const id = s(fd, "id");
+  if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
+  return update(
+    "ki_projects",
+    id,
+    {
+      account_name: s(fd, "account_name"),
+      product: s(fd, "product"),
+      segment: s(fd, "segment"),
+      status: s(fd, "status") || "onboarding",
+      mrr: n(fd, "mrr"),
+      go_live: s(fd, "go_live") || null,
+      health: s(fd, "health") || "neutral",
+    },
+    "/cockpit/projekte/ki"
+  );
+}

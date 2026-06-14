@@ -4,8 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
 import { MoveSelect } from "@/components/cockpit/MoveSelect";
+import { EditDialog } from "@/components/cockpit/EditDialog";
+import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
-import { updateCandidateStage } from "@/lib/crm-actions";
+import { CANDIDATE_FIELDS } from "@/lib/crm-forms";
+import { updateCandidateStage, updateCandidate, deleteCandidate } from "@/lib/crm-actions";
 import { formatDate } from "@/lib/format";
 import type { Candidate, CandidateStage } from "@/lib/crm-types";
 
@@ -22,14 +25,39 @@ const STAGE_OPTIONS = COLUMNS.map((c) => ({ value: c.stage, label: c.label }));
 function CandidateCard({
   c,
   onMove,
+  onDelete,
 }: {
   c: Candidate;
   onMove: (id: string, stage: CandidateStage) => void;
+  onDelete: (id: string) => void;
 }) {
   return (
     <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
-      <p className="truncate text-sm font-medium text-ink">{c.name}</p>
-      <p className="truncate text-xs text-muted">{c.role}</p>
+      <div className="flex items-start justify-between gap-1">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-ink">{c.name}</p>
+          <p className="truncate text-xs text-muted">{c.role}</p>
+        </div>
+        <RowActions
+          confirmText={`„${c.name}" wirklich löschen?`}
+          onDelete={() => onDelete(c.id)}
+          editNode={
+            <EditDialog
+              id={c.id}
+              title="Kandidat:in bearbeiten"
+              fields={CANDIDATE_FIELDS}
+              action={updateCandidate}
+              initial={{
+                name: c.name,
+                role: c.role,
+                mandate_account: c.mandate_account,
+                stage: c.stage,
+                source: c.source,
+              }}
+            />
+          }
+        />
+      </div>
       <p className="mt-2 truncate text-xs text-faint">{c.mandate_account}</p>
       <div className="mt-2 flex items-center justify-between text-[0.7rem] text-faint">
         <span>{c.source}</span>
@@ -56,6 +84,12 @@ export function CandidatesView({ candidates }: { candidates: Candidate[] }) {
     if (res.ok && !res.demo) router.refresh();
   }
 
+  async function onDelete(id: string) {
+    setItems((prev) => prev.filter((c) => c.id !== id));
+    const res = await deleteCandidate(id);
+    if (res.ok && !res.demo) router.refresh();
+  }
+
   const mandates = Array.from(new Set(items.map((c) => c.mandate_account)));
   const base = items.filter((c) => c.stage !== "abgelehnt");
   const shown = filter === "all" ? base : base.filter((c) => c.mandate_account === filter);
@@ -78,7 +112,7 @@ export function CandidatesView({ candidates }: { candidates: Candidate[] }) {
         columns={COLUMNS}
         items={shown}
         getStage={(c) => c.stage}
-        renderCard={(c) => <CandidateCard c={c} onMove={move} />}
+        renderCard={(c) => <CandidateCard c={c} onMove={move} onDelete={onDelete} />}
         emptyText="Keine Kandidat:innen in diesem Filter."
       />
     </div>

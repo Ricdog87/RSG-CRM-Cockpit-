@@ -2,19 +2,13 @@ import { getSegments } from "@/lib/crm-data";
 import { createSegment } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
-import { Card, CardBody } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { EntityFormDialog, type FormField } from "@/components/cockpit/EntityFormDialog";
+import { SegmentsView } from "@/components/cockpit/views/SegmentsView";
+import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
+import { SEGMENT_FIELDS } from "@/lib/crm-forms";
 import { IconLayers, IconUsers, IconEuro } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-const FIELDS: FormField[] = [
-  { name: "name", label: "Segmentname", required: true, full: true, placeholder: "z.B. Handwerk & Bau" },
-  { name: "description", label: "Beschreibung", type: "textarea", full: true },
-  { name: "top_product", label: "Top-Produkt", placeholder: "z.B. AI Account Manager" },
-];
 
 export default async function SegmentePage() {
   const segments = await getSegments();
@@ -32,7 +26,7 @@ export default async function SegmentePage() {
             triggerLabel="Segment anlegen"
             title="Neues Segment"
             description="KI-Zielgruppe nach Branche/Use-Case erfassen."
-            fields={FIELDS}
+            fields={SEGMENT_FIELDS}
             action={createSegment}
           />
         }
@@ -62,25 +56,7 @@ export default async function SegmentePage() {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {segments.map((s) => (
-          <Card key={s.id} className="card-hover">
-            <CardBody className="space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-base font-semibold text-ink">{s.name}</h3>
-                <Badge tone="sky">{formatNumber(s.accounts)} Accounts</Badge>
-              </div>
-              <p className="text-sm text-muted">{s.description}</p>
-              <div className="flex items-center justify-between border-t border-border/60 pt-3 text-sm">
-                <span className="text-faint">
-                  Top: <span className="text-muted">{s.top_product}</span>
-                </span>
-                <span className="font-semibold text-ink">{formatEur(s.mrr)}/M</span>
-              </div>
-            </CardBody>
-          </Card>
-        ))}
-      </div>
+      <SegmentsView segments={segments} />
     </div>
   );
 }

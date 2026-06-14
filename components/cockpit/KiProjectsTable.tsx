@@ -22,7 +22,13 @@ const healthMeta: Record<Health, { label: string; tone: "success" | "neutral" | 
 };
 
 /** Projekttabelle für KI- & Telefonassistenz-Projekte. */
-export function KiProjectsTable({ projects }: { projects: KiProject[] }) {
+export function KiProjectsTable({
+  projects,
+  renderActions,
+}: {
+  projects: KiProject[];
+  renderActions?: (p: KiProject) => React.ReactNode;
+}) {
   if (projects.length === 0) {
     return (
       <Card>
@@ -67,8 +73,9 @@ export function KiProjectsTable({ projects }: { projects: KiProject[] }) {
                 <div className="lg:col-span-2">
                   <Badge tone={he.tone}>{he.label}</Badge>
                 </div>
-                <div className="text-right lg:col-span-2">
+                <div className="flex items-center justify-end gap-2 lg:col-span-2">
                   <p className="text-sm font-semibold text-ink">{formatEur(p.mrr)}/M</p>
+                  {renderActions ? renderActions(p) : null}
                 </div>
               </li>
             );

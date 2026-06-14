@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AccountsTable } from "@/components/cockpit/AccountsTable";
-import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
+import { EditDialog } from "@/components/cockpit/EditDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
-import { IconPencil } from "@/components/ui/icons";
 import { ACCOUNT_FIELDS } from "@/lib/crm-forms";
 import { updateAccount, deleteAccount } from "@/lib/crm-actions";
 import type { Account, BusinessLine } from "@/lib/crm-types";
@@ -49,13 +48,12 @@ export function AccountsView({ accounts }: { accounts: Account[] }) {
             confirmText={`„${a.name}" wirklich löschen?`}
             onDelete={() => onDelete(a.id)}
             editNode={
-              <EntityFormDialog
+              <EditDialog
+                id={a.id}
                 title="Account bearbeiten"
                 description="Stammdaten und Lifecycle aktualisieren."
                 fields={ACCOUNT_FIELDS}
                 action={updateAccount}
-                hiddenId={a.id}
-                submitLabel="Speichern"
                 initial={{
                   name: a.name,
                   line: a.line,
@@ -67,16 +65,6 @@ export function AccountsView({ accounts }: { accounts: Account[] }) {
                   contact_email: a.contact_email,
                   mrr: String(a.mrr ?? ""),
                 }}
-                renderTrigger={(open) => (
-                  <button
-                    type="button"
-                    aria-label="Bearbeiten"
-                    onClick={open}
-                    className="rounded-lg p-1.5 text-faint transition-colors hover:bg-elevated hover:text-ink"
-                  >
-                    <IconPencil size={16} />
-                  </button>
-                )}
               />
             }
           />

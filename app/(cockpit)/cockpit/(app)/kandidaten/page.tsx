@@ -3,30 +3,12 @@ import { createCandidate } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { CandidatesView } from "@/components/cockpit/views/CandidatesView";
-import { EntityFormDialog, type FormField } from "@/components/cockpit/EntityFormDialog";
+import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
+import { CANDIDATE_FIELDS } from "@/lib/crm-forms";
 import { IconUserCheck } from "@/components/ui/icons";
 import { formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-const FIELDS: FormField[] = [
-  { name: "name", label: "Name", required: true, placeholder: "Vor- und Nachname" },
-  { name: "role", label: "Position", placeholder: "z.B. Pflegefachkraft" },
-  { name: "mandate_account", label: "Mandat (Account)", full: true },
-  {
-    name: "stage",
-    label: "Phase",
-    type: "select",
-    options: [
-      { value: "neu", label: "Neu" },
-      { value: "screening", label: "Screening" },
-      { value: "interview", label: "Interview" },
-      { value: "angebot", label: "Angebot" },
-      { value: "platziert", label: "Platziert" },
-    ],
-  },
-  { name: "source", label: "Quelle", placeholder: "z.B. LinkedIn" },
-];
 
 export default async function KandidatenPage() {
   const candidates = await getCandidates();
@@ -48,7 +30,7 @@ export default async function KandidatenPage() {
             triggerLabel="Kandidat:in anlegen"
             title="Neue:n Kandidat:in anlegen"
             description="Person der Recruiting-Pipeline hinzufügen."
-            fields={FIELDS}
+            fields={CANDIDATE_FIELDS}
             action={createCandidate}
           />
         }

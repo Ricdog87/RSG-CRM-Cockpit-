@@ -18,7 +18,13 @@ const statusMeta: Record<
 };
 
 /** Liste der Recruiting-Mandate mit Besetzungsfortschritt. */
-export function MandatesList({ mandates }: { mandates: RecruitingMandate[] }) {
+export function MandatesList({
+  mandates,
+  renderActions,
+}: {
+  mandates: RecruitingMandate[];
+  renderActions?: (m: RecruitingMandate) => React.ReactNode;
+}) {
   if (mandates.length === 0) {
     return (
       <Card>
@@ -43,7 +49,10 @@ export function MandatesList({ mandates }: { mandates: RecruitingMandate[] }) {
                   <p className="truncate text-sm font-semibold text-ink">{m.role}</p>
                   <p className="truncate text-xs text-faint">{m.account_name}</p>
                 </div>
-                <Badge tone={st.tone}>{st.label}</Badge>
+                <div className="flex flex-none items-center gap-1">
+                  <Badge tone={st.tone}>{st.label}</Badge>
+                  {renderActions ? renderActions(m) : null}
+                </div>
               </div>
 
               <div className="space-y-1.5">
