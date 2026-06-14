@@ -12,6 +12,10 @@
     @apply bg-base text-ink antialiased;
   }
 
+  body {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
   /* Sichtbarer Tastatur-Fokus auf der gesamten Oberfläche. */
   :focus-visible {
     @apply outline-none ring-2 ring-cyan ring-offset-2 ring-offset-base rounded-md;
@@ -20,15 +24,46 @@
   ::selection {
     @apply bg-purple/30 text-ink;
   }
+
+  /* Dezente Scrollbar im Markenlook. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2a2a38 transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    @apply rounded-full border-2 border-solid border-transparent bg-clip-padding;
+    background-color: #2a2a38;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: #3a3a4a;
+  }
 }
 
 @layer components {
+  /* Glassmorphism-Card mit feinem oberen Lichtsaum. */
   .card {
-    @apply rounded-2xl border border-border bg-surface/80 shadow-card backdrop-blur;
+    @apply relative rounded-2xl border border-border/80 bg-surface/70 shadow-card backdrop-blur-xl;
+  }
+  .card::before {
+    content: "";
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent;
   }
 
   .card-pad {
     @apply p-5 sm:p-6;
+  }
+
+  /* Interaktive Card (Hover-Lift). */
+  .card-hover {
+    @apply transition-all duration-200 hover:border-purple/40 hover:shadow-glow;
+  }
+
+  .eyebrow {
+    @apply text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-cyan;
   }
 
   .kpi-label {
@@ -39,11 +74,24 @@
     @apply text-sm font-semibold uppercase tracking-wider text-muted;
   }
 
+  /* Gradient-Text für Heldenzahlen. */
+  .text-gradient {
+    @apply bg-gradient-to-r from-purple-soft via-purple-soft to-cyan-soft bg-clip-text text-transparent;
+  }
+
   /* Skeleton-Schimmer für Ladezustände. */
   .skeleton {
     @apply relative overflow-hidden rounded-md bg-elevated;
   }
   .skeleton::after {
     @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/5 to-transparent content-[''];
+  }
+
+  /* Navigations-Link in der Sidebar. */
+  .nav-link {
+    @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-elevated hover:text-ink;
+  }
+  .nav-link[data-active="true"] {
+    @apply bg-purple/10 text-ink;
   }
 }

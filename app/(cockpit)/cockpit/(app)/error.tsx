@@ -12,7 +12,7 @@ export default function CockpitError({
   reset: () => void;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
+    <main className="flex min-h-[60vh] items-center justify-center px-4">
       <Card className="max-w-md">
         <CardBody className="space-y-4 text-center">
           <h1 className="text-lg font-bold text-ink">

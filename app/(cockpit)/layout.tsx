@@ -1,8 +1,7 @@
-import { useMockData } from "@/lib/env";
-
 /**
- * Layout der geschützten Route-Group. Reiner Rahmen — der eigentliche
- * Auth-Guard läuft in der Middleware (Redirect auf /cockpit/login).
+ * Äußere Route-Group. Reiner visueller Rahmen (Marken-Glow). Der Auth-Guard
+ * läuft in der Middleware; die App-Shell sitzt in der inneren (app)-Group,
+ * damit die Login-Seite ohne Shell bleibt.
  */
 export default function CockpitGroupLayout({
   children,
@@ -11,16 +10,10 @@ export default function CockpitGroupLayout({
 }) {
   return (
     <div className="relative min-h-screen">
-      {/* Marken-Glow im Hintergrund */}
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 -z-10 bg-brand-glow"
       />
-      {useMockData ? (
-        <div className="border-b border-warning/20 bg-warning/10 px-4 py-1.5 text-center text-xs text-warning">
-          Demo-Modus · Mock-Daten aktiv (keine Supabase-ENV gesetzt)
-        </div>
-      ) : null}
       {children}
     </div>
   );

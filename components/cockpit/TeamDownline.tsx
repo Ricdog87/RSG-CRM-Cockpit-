@@ -1,13 +1,24 @@
+import Link from "next/link";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { IconChevronRight } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
 import type { DownlinePartner } from "@/lib/types";
 
 /** Team/Downline: partners where upline_id = eigene id. */
-export function TeamDownline({ team }: { team: DownlinePartner[] }) {
+export function TeamDownline({
+  team,
+  limit,
+  viewAllHref,
+}: {
+  team: DownlinePartner[];
+  limit?: number;
+  viewAllHref?: string;
+}) {
   const aktive = team.filter((p) => p.is_active).length;
+  const shown = limit ? team.slice(0, limit) : team;
 
   return (
     <Card>
@@ -19,16 +30,26 @@ export function TeamDownline({ team }: { team: DownlinePartner[] }) {
               ? `${aktive} von ${team.length} Direktpartner:innen aktiv`
               : undefined
           }
+          action={
+            viewAllHref ? (
+              <Link
+                href={viewAllHref}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-soft hover:text-cyan"
+              >
+                Alle ansehen <IconChevronRight size={14} />
+              </Link>
+            ) : undefined
+          }
         />
 
-        {team.length === 0 ? (
+        {shown.length === 0 ? (
           <EmptyState
             title="Du hast noch keine Direktpartner:innen. Gewinne deine erste Empfehlung, um Override aufzubauen."
             action={<Button variant="ghost">Partner:in einladen</Button>}
           />
         ) : (
           <ul className="space-y-2">
-            {team.map((member) => (
+            {shown.map((member) => (
               <li
                 key={member.partner_id}
                 className="flex items-center gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5"

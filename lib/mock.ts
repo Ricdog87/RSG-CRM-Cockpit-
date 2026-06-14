@@ -1,6 +1,7 @@
 import type {
   CareerLevel,
   CockpitData,
+  CustomerRow,
   Deal,
   DownlinePartner,
   LeaderboardRow,
@@ -97,6 +98,36 @@ const pipeline: Deal[] = [
     updated_at: "2026-06-03T10:15:00Z",
   },
 ];
+
+// Kundenbestand (Auszug). MRR + Bestandsprovision (17 %, Provisionsordnung §3.1).
+const rawCustomers: Array<[string, string, number, CustomerRow["status"], string, number]> = [
+  ["Hofmann Dental MVZ", "AI Account Manager", 499, "aktiv", "2025-01-12", 17],
+  ["Logistik Brendel GmbH", "AI Scale", 1200, "aktiv", "2025-03-04", 15],
+  ["Kanzlei Vogt & Partner", "AI Account Manager", 499, "aktiv", "2024-11-20", 19],
+  ["Sanitär Kruse", "AI Solo", 199, "aktiv", "2025-06-01", 12],
+  ["Praxis Dr. Lindner", "AI Account Manager", 499, "aktiv", "2025-02-18", 16],
+  ["Autohaus Petersen", "AI Scale", 1200, "aktiv", "2025-04-09", 14],
+  ["Bäckerei Sommer", "candiq", 99, "aktiv", "2025-05-22", 13],
+  ["Elektro Wagner", "AI Solo", 199, "aktiv", "2025-07-15", 11],
+  ["Pflegedienst Aurum", "AI Account Manager", 499, "onboarding", "2026-05-28", 0],
+  ["Steuerkanzlei Reich", "AI Solo", 199, "onboarding", "2026-06-02", 0],
+  ["Gastro Lindblatt", "AI Account Manager", 499, "storno_reserve", "2026-02-10", 4],
+  ["Fitness Nordpol", "AI Solo", 199, "storno_reserve", "2026-03-19", 3],
+  ["Möbel Hartwig", "candiq", 99, "gekuendigt", "2025-08-01", 5],
+];
+
+const customers: CustomerRow[] = rawCustomers.map(
+  ([name, product_name, mrr, status, since, laufzeit_monate], i) => ({
+    id: `c-${i + 1}`,
+    name,
+    product_name,
+    mrr,
+    bestandsprovision: Math.round(mrr * 0.17 * 100) / 100,
+    status,
+    since,
+    laufzeit_monate,
+  })
+);
 
 const downline: DownlinePartner[] = [
   {
@@ -195,6 +226,7 @@ export const mockCockpitData: CockpitData = {
   provisionAktuellerMonat: 2310, // Bestand + Neugeschäft (Setup) im Monat
   bestandsverlauf,
   pipeline,
+  customers,
   career: {
     current: careerLevels[1], // Senior Partner
     next: careerLevels[2], // Director

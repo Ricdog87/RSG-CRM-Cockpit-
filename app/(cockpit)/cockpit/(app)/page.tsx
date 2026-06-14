@@ -1,5 +1,4 @@
 import { getCockpitData } from "@/lib/data";
-import { CockpitHeader } from "@/components/cockpit/CockpitHeader";
 import { HeroBestand } from "@/components/cockpit/HeroBestand";
 import { KpiRow } from "@/components/cockpit/KpiRow";
 import { OverrideNudge } from "@/components/cockpit/OverrideNudge";
@@ -15,11 +14,7 @@ export default async function CockpitPage() {
   const data = await getCockpitData();
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
-      <div className="animate-fade-up">
-        <CockpitHeader name={data.partner.display_name} />
-      </div>
-
+    <div className="space-y-6">
       {/* 1. Hero: wiederkehrender Bestand + Wachstumskurve */}
       <section className="animate-fade-up" aria-label="Wiederkehrender Bestand">
         <HeroBestand bestand={data.bestand} verlauf={data.bestandsverlauf} />
@@ -35,14 +30,12 @@ export default async function CockpitPage() {
       </section>
 
       {/* 3. Override-Nudge (nur wenn override_pausiert > 0) */}
-      <section className="animate-fade-up" aria-label="Override-Hinweis">
-        <OverrideNudge earnings={data.earnings} override={data.override} />
-      </section>
+      <OverrideNudge earnings={data.earnings} override={data.override} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* 4. Pipeline */}
+        {/* 4. Pipeline-Vorschau */}
         <section className="animate-fade-up" aria-label="Pipeline">
-          <Pipeline deals={data.pipeline} />
+          <Pipeline deals={data.pipeline} limit={4} viewAllHref="/cockpit/pipeline" />
         </section>
 
         {/* 5. Karriere */}
@@ -55,15 +48,11 @@ export default async function CockpitPage() {
           <Leaderboard rows={data.leaderboard} />
         </section>
 
-        {/* 7. Team/Downline */}
+        {/* 7. Team/Downline-Vorschau */}
         <section className="animate-fade-up" aria-label="Team">
-          <TeamDownline team={data.downline} />
+          <TeamDownline team={data.downline} limit={3} viewAllHref="/cockpit/team" />
         </section>
       </div>
-
-      <footer className="pt-2 text-center text-xs text-faint">
-        RSG Partner-Cockpit · Bestand, Provisionen & Team in Echtzeit
-      </footer>
-    </main>
+    </div>
   );
 }

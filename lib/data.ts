@@ -7,6 +7,7 @@ import type {
   CareerLevel,
   CareerState,
   CockpitData,
+  CustomerRow,
   Deal,
   DownlinePartner,
   LeaderboardRow,
@@ -14,6 +15,19 @@ import type {
   PartnerBestand,
   PartnerEarnings,
 } from "@/lib/types";
+
+/** Monate ungekündigter Laufzeit aus dem Vertragsbeginn ableiten. */
+function monthsSince(iso: string | null | undefined): number {
+  if (!iso) return 0;
+  const start = new Date(iso);
+  if (Number.isNaN(start.getTime())) return 0;
+  const now = new Date();
+  return Math.max(
+    0,
+    (now.getFullYear() - start.getFullYear()) * 12 +
+      (now.getMonth() - start.getMonth())
+  );
+}
 
 const MONTH_LABELS = [
   "Jan",
@@ -159,6 +173,7 @@ export async function getCockpitData(): Promise<CockpitData> {
     leaderboardRes,
     dealsRes,
     downlineRes,
+    customersRes,
     verlaufRes,
     monatProvRes,
   ] = await Promise.all([
@@ -205,6 +220,12 @@ export async function getCockpitData(): Promise<CockpitData> {
       .from("partners")
       .select("id, full_name, is_active")
       .eq("upline_id", partnerId),
+    // Kundenbestand: customers join products
+    supabase
+      .from("customers")
+      .select("id, name, mrr, status, created_at, started_at, products(name)")
+      .eq("partner_id", partnerId)
+      .order("mrr", { ascending: false }),
     // Bestands-Wachstumskurve: commissions, closer_recurring je Periode
     supabase
       .from("commissions")
@@ -275,6 +296,23 @@ export async function getCockpitData(): Promise<CockpitData> {
     updated_at: String(row.updated_at ?? ""),
   }));
 
+  const customers: CustomerRow[] = (
+    (customersRes.data as Array<Record<string, unknown>> | null) ?? []
+  ).map((row) => {
+    const mrr = Number(row.mrr ?? 0);
+    const since = String(row.started_at ?? row.created_at ?? "");
+    return {
+      id: String(row.id),
+      name: String(row.name ?? "Kunde"),
+      product_name: (row.products as { name?: string } | null)?.name ?? "Produkt",
+      mrr,
+      bestandsprovision: Math.round(mrr * 0.17 * 100) / 100,
+      status: (row.status as CustomerRow["status"]) ?? "aktiv",
+      since,
+      laufzeit_monate: monthsSince(since),
+    };
+  });
+
   // Downline: Bestand der direkten Partner:innen via v_partner_bestand zumischen.
   const directRows =
     (downlineRes.data as Array<Record<string, unknown>> | null) ?? [];
@@ -329,9 +367,42 @@ export async function getCockpitData(): Promise<CockpitData> {
     provisionAktuellerMonat,
     bestandsverlauf,
     pipeline,
+    customers,
     career,
     override,
     leaderboard,
     downline,
+  };
+}
+
+/**
+ * Leichte Identität für die App-Shell (Sidebar/Topbar), ohne den vollen
+ * Cockpit-Datensatz zu laden.
+ */
+export async function getPartnerIdentity(): Promise<{
+  display_name: string;
+  email: string;
+}> {
+  if (useMockData) {
+    return {
+      display_name: mockCockpitData.partner.display_name,
+      email: mockCockpitData.partner.email,
+    };
+  }
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { display_name: "Partner:in", email: "" };
+
+  const { data } = await supabase
+    .from("partners")
+    .select("full_name, email")
+    .eq("auth_user_id", user.id)
+    .single();
+
+  return {
+    display_name: String(data?.full_name ?? user.email ?? "Partner:in"),
+    email: String(data?.email ?? user.email ?? ""),
   };
 }

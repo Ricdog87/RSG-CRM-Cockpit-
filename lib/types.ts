@@ -116,6 +116,24 @@ export interface BestandPoint {
   amount: number;
 }
 
+/** table customers (join products) für die:den Partner:in */
+export type CustomerStatus = "aktiv" | "onboarding" | "storno_reserve" | "gekuendigt";
+
+export interface CustomerRow {
+  id: string;
+  name: string;
+  product_name: string;
+  /** monatlicher Umsatz (MRR) in € */
+  mrr: number;
+  /** monatliche Bestandsprovision (17 % MRR) in € */
+  bestandsprovision: number;
+  status: CustomerStatus;
+  /** Vertragsbeginn (ISO) */
+  since: string;
+  /** Monate ungekündigter Laufzeit (für Stornoreserve-Freigabe nach 6) */
+  laufzeit_monate: number;
+}
+
 /** Bündel aller Cockpit-Daten für die:den eingeloggte:n Partner:in */
 export interface CockpitData {
   partner: {
@@ -129,6 +147,7 @@ export interface CockpitData {
   provisionAktuellerMonat: number;
   bestandsverlauf: BestandPoint[];
   pipeline: Deal[];
+  customers: CustomerRow[];
   career: CareerState;
   override: OverrideEligibility;
   leaderboard: LeaderboardRow[];
