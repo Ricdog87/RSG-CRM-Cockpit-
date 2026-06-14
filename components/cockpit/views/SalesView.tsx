@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
 import { LineBadge } from "@/components/cockpit/LineBadge";
 import { MoveSelect } from "@/components/cockpit/MoveSelect";
+import { OppScore } from "@/components/cockpit/OppScore";
 import { FilterTabs } from "@/components/ui/FilterTabs";
 import { updateOpportunityStage } from "@/lib/crm-actions";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
@@ -52,6 +53,17 @@ function OppCard({
         value={o.stage}
         options={STAGE_OPTIONS}
         onMove={(stage) => onMove(o.id, stage)}
+      />
+      <OppScore
+        input={{
+          account_name: o.account_name,
+          line: o.line,
+          title: o.title,
+          value: o.value,
+          value_type: o.value_type,
+          stage: o.stage,
+          probability: o.probability,
+        }}
       />
     </div>
   );

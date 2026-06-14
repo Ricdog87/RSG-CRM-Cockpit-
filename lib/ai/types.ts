@@ -29,6 +29,32 @@ export interface LeadInput {
   notes?: string;
 }
 
+export type Priority = "hoch" | "mittel" | "niedrig";
+
+/** Eingabe für das Opportunity-Scoring. */
+export interface OppScoreInput {
+  account_name: string;
+  line: string;
+  title: string;
+  value: number;
+  value_type: string;
+  stage: string;
+  probability: number;
+}
+
+/** KI-Bewertung einer Verkaufschance. */
+export interface OppScore {
+  /** Priorisierungs-Score 0–100 */
+  score: number;
+  priority: Priority;
+  /** die EINE konkrete nächste Aktion */
+  next_action: string;
+  /** kurze Begründung */
+  reasoning: string;
+  /** "live" = echtes LLM, "demo" = Heuristik */
+  mode: "live" | "demo";
+}
+
 export interface LeadResult {
   analysis: LeadAnalysis;
   /** "live" = echtes LLM, "demo" = Mock ohne API-Key */

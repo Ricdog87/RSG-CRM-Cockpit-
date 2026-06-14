@@ -1,8 +1,9 @@
 "use server";
 
 import { analyzeLead } from "@/lib/ai/lead-intelligence";
+import { scoreOpportunity } from "@/lib/ai/scoring";
 import { createAccount, type ActionResult } from "@/lib/crm-actions";
-import type { LeadResult } from "@/lib/ai/types";
+import type { LeadResult, OppScore, OppScoreInput } from "@/lib/ai/types";
 
 export type LeadActionState = {
   ok: boolean;
@@ -29,6 +30,21 @@ export async function runLeadAnalysis(
     return {
       ok: false,
       error: e instanceof Error ? e.message : "Analyse fehlgeschlagen.",
+    };
+  }
+}
+
+/** Bewertet eine Verkaufschance (KI-Score + nächste beste Aktion). */
+export async function scoreOpportunityAction(
+  input: OppScoreInput
+): Promise<{ ok: boolean; score?: OppScore; error?: string }> {
+  try {
+    const score = await scoreOpportunity(input);
+    return { ok: true, score };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Bewertung fehlgeschlagen.",
     };
   }
 }
