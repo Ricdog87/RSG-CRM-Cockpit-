@@ -64,6 +64,7 @@ npm run dev
 1. `rsg_vertrieb_schema.sql` (bestehendes Vertriebsschema, von RSG)
 2. `rsg_engine_rpc.sql` (RPC-Wrapper, von RSG)
 3. `supabase/rsg_crm_schema.sql` (CRM-Tabellen + RLS + `v_segments`)
+4. `supabase/rsg_email_schema.sql` (E-Mail-Tracking: `partner_inbox`, `email_activities`)
 
 ### Environment
 
@@ -100,6 +101,24 @@ Analysierte Leads/Kandidaten lassen sich per Klick als CRM-Account übernehmen.
 **Live schalten:** `ANTHROPIC_API_KEY` in Vercel setzen (optional
 `PERPLEXITY_API_KEY` fürs Web-Grounding, `AI_MODEL`, oder `OPENROUTER_API_KEY`
 als Alternative) → Redeploy.
+
+## E-Mail-Tracking (BCC, wie HubSpot)
+
+Jede:r Partner:in bekommt unter **Postfach** eine persönliche Adresse
+`track+<token>@<EMAIL_INBOUND_DOMAIN>`. Setzt man sie ins **BCC** (Outlook/Gmail),
+leitet ein **Inbound-Mail-Dienst** (provider-agnostisch: SendGrid Inbound Parse /
+Mailgun Routes / Postmark Inbound …) die Mail an `POST /api/email/inbound`. Der
+Webhook ordnet sie via **intelligentem Abgleich** (E-Mail/Domain, Dublettenschutz)
+dem passenden Account zu und speichert sie in `email_activities` – sichtbar als
+**Korrespondenz-Timeline** auf der Account-Detailseite.
+
+- **Schreiben nur serverseitig** über `SUPABASE_SERVICE_ROLE_KEY` (Webhook,
+  umgeht RLS – analog n8n). **Niemals im Frontend.** Lesen via ANON + RLS.
+- Optionaler Webhook-Schutz: Header `x-webhook-secret` == `EMAIL_WEBHOOK_SECRET`.
+- **Setup:** Inbound-Dienst auf eine (Sub-)Domain zeigen lassen, dessen
+  Inbound-Webhook auf `https://<deine-app>/api/email/inbound` setzen,
+  `EMAIL_INBOUND_DOMAIN` + `SUPABASE_SERVICE_ROLE_KEY` in Vercel hinterlegen.
+- Ohne Setup: Demo-Adresse + Beispiel-Timeline.
 
 ## Provisionslogik
 

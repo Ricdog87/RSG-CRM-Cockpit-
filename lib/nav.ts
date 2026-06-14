@@ -3,6 +3,7 @@ import {
   IconSpark,
   IconTarget,
   IconUsers,
+  IconMail,
   IconLayers,
   IconPhone,
   IconBriefcase,
@@ -56,6 +57,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Kunden",
         icon: IconUsers,
         description: "Accounts, Kontakte und Lifecycle",
+      },
+      {
+        href: "/cockpit/postfach",
+        label: "Postfach",
+        icon: IconMail,
+        description: "BCC-E-Mail-Tracking je Kunde",
       },
       {
         href: "/cockpit/segmente",

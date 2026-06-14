@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAccountDetail } from "@/lib/crm-data";
+import { getEmailActivitiesForAccount } from "@/lib/email-data";
+import { EmailTimeline } from "@/components/cockpit/EmailTimeline";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { LineBadge } from "@/components/cockpit/LineBadge";
@@ -51,6 +53,7 @@ export default async function AccountDetailPage({
   const detail = await getAccountDetail(params.id);
   if (!detail) notFound();
   const { account, opportunities, kiProjects, mandates, candidates } = detail;
+  const emails = await getEmailActivitiesForAccount(account.id, account.name);
 
   return (
     <div className="space-y-6">
@@ -108,6 +111,20 @@ export default async function AccountDetailPage({
           .filter(Boolean)
           .join(" · ")}
       />
+
+      {/* Korrespondenz (BCC-getrackte E-Mails) */}
+      <Card>
+        <CardBody>
+          <SectionHeader
+            title="Korrespondenz"
+            hint="per BCC automatisch getrackte E-Mails"
+          />
+          <EmailTimeline
+            activities={emails}
+            emptyText="Noch keine E-Mails. Setze deine BCC-Adresse (Postfach) ins BCC, um Mails automatisch hier zu protokollieren."
+          />
+        </CardBody>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Verkaufschancen */}

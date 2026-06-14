@@ -34,6 +34,10 @@ export function normalizeCompany(name: string): string {
     .trim();
 }
 
+export function isGenericDomain(domain: string): boolean {
+  return GENERIC_DOMAINS.has(domain.toLowerCase());
+}
+
 export function emailDomain(email?: string): string {
   if (!email) return "";
   const at = email.indexOf("@");

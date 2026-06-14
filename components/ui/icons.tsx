@@ -197,6 +197,20 @@ export const IconFolder = (p: IconProps) => (
   </Base>
 );
 
+export const IconMail = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" />
+    <path d="m3 7 9 6 9-6" />
+  </Base>
+);
+
+export const IconCopy = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="9" y="9" width="11" height="11" rx="2" />
+    <path d="M5 15a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2" />
+  </Base>
+);
+
 export const IconPencil = (p: IconProps) => (
   <Base {...p}>
     <path d="M12 20h9" />
