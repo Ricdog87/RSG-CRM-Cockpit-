@@ -68,6 +68,30 @@ export interface ScoredOpp {
   score: OppScore;
 }
 
+/** Ein von der KI vorgeschlagener Ziel-Account (Lead-Discovery). */
+export interface LeadCandidate {
+  company: string;
+  location: string;
+  industry: string;
+  why_fit: string;
+  recommended_line: RecommendedLine;
+  fit_score: number;
+}
+
+export interface DiscoveryCriteria {
+  branche?: string;
+  region?: string;
+  size?: string;
+  focus?: "ki" | "recruiting" | "beide";
+  notes?: string;
+}
+
+export interface DiscoveryResult {
+  candidates: LeadCandidate[];
+  mode: "live" | "demo";
+  grounded: boolean;
+}
+
 export interface LeadResult {
   analysis: LeadAnalysis;
   /** "live" = echtes LLM, "demo" = Mock ohne API-Key */

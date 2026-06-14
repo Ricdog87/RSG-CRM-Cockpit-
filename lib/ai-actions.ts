@@ -2,9 +2,12 @@
 
 import { analyzeLead } from "@/lib/ai/lead-intelligence";
 import { scoreOpportunity, heuristicScore } from "@/lib/ai/scoring";
+import { discoverLeads } from "@/lib/ai/discovery";
 import { getOpportunities } from "@/lib/crm-data";
 import { createAccount, type ActionResult } from "@/lib/crm-actions";
 import type {
+  DiscoveryCriteria,
+  DiscoveryResult,
   LeadInput,
   LeadResult,
   OppScore,
@@ -40,6 +43,28 @@ export async function runLeadAnalysis(
     return {
       ok: false,
       error: e instanceof Error ? e.message : "Analyse fehlgeschlagen.",
+    };
+  }
+}
+
+/** Findet passende Ziel-Accounts zum Idealprofil (Lead-Discovery). */
+export async function discoverLeadsAction(
+  _prev: { ok: boolean; result?: DiscoveryResult; error?: string } | null,
+  fd: FormData
+): Promise<{ ok: boolean; result?: DiscoveryResult; error?: string }> {
+  const criteria: DiscoveryCriteria = {
+    branche: String(fd.get("branche") ?? "").trim() || undefined,
+    region: String(fd.get("region") ?? "").trim() || undefined,
+    size: String(fd.get("size") ?? "").trim() || undefined,
+    focus: (String(fd.get("focus") ?? "beide") as DiscoveryCriteria["focus"]),
+    notes: String(fd.get("notes") ?? "").trim() || undefined,
+  };
+  try {
+    return { ok: true, result: await discoverLeads(criteria) };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Suche fehlgeschlagen.",
     };
   }
 }

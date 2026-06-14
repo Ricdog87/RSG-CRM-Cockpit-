@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { LeadIntelligence } from "@/components/cockpit/LeadIntelligence";
+import { LeadDiscovery } from "@/components/cockpit/LeadDiscovery";
 import { aiConfigured, webResearchEnabled } from "@/lib/ai/config";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,8 @@ export default function LeadsPage() {
         aiConfigured={aiConfigured}
         webResearchEnabled={webResearchEnabled}
       />
+
+      <LeadDiscovery />
     </div>
   );
 }
