@@ -22,7 +22,7 @@ export function Sidebar({ partnerName }: { partnerName: string }) {
     .toUpperCase();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 flex-none flex-col border-r border-border/70 bg-surface/40 px-4 py-5 backdrop-blur-xl lg:flex">
+    <aside className="sticky top-0 hidden h-screen w-64 flex-none flex-col border-r border-border bg-surface/80 px-4 py-5 backdrop-blur-xl lg:flex">
       <Link href="/cockpit" className="mb-8 flex items-center gap-2.5 px-2">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple to-cyan text-sm font-black text-white shadow-glow">
           RSG
@@ -54,7 +54,7 @@ export function Sidebar({ partnerName }: { partnerName: string }) {
                   <Icon
                     size={19}
                     className={cn(
-                      active ? "text-purple-soft" : "text-faint group-hover:text-muted"
+                      active ? "text-purple-deep" : "text-faint group-hover:text-muted"
                     )}
                   />
                   <span>{item.label}</span>

@@ -29,7 +29,7 @@ export function HeroBestand({
           <div>
             <p className="kpi-label">Wiederkehrender Bestand</p>
             <div className="mt-2 flex items-end gap-2">
-              <span className="bg-gradient-to-r from-purple-soft to-cyan-soft bg-clip-text text-4xl font-black tracking-tight text-transparent sm:text-5xl">
+              <span className="text-gradient text-4xl font-black tracking-tight sm:text-5xl">
                 {formatEur(bestand.monatl_bestandsprovision)}
               </span>
               <span className="mb-1 text-sm text-muted">/ Monat</span>

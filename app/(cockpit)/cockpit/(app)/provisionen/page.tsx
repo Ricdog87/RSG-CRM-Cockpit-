@@ -92,7 +92,7 @@ export default async function ProvisionenPage() {
                       <p className="text-sm font-medium text-ink">{p.name}</p>
                       <p className="text-xs text-faint">{p.note}</p>
                     </div>
-                    <span className="flex-none text-right text-sm font-semibold text-cyan-soft">
+                    <span className="flex-none text-right text-sm font-semibold text-cyan-deep">
                       {p.rate}
                     </span>
                   </li>

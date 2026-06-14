@@ -12,8 +12,8 @@ const accentDot: Record<Accent, string> = {
 };
 
 const accentIcon: Record<Accent, string> = {
-  purple: "bg-purple/10 text-purple-soft",
-  cyan: "bg-cyan/10 text-cyan-soft",
+  purple: "bg-purple/10 text-purple-deep",
+  cyan: "bg-cyan/10 text-cyan-deep",
   warning: "bg-warning/10 text-warning",
   success: "bg-success/10 text-success",
   neutral: "bg-elevated text-muted",

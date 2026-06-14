@@ -13,7 +13,7 @@ export function Topbar({ partnerName }: { partnerName: string }) {
   const isOverview = item.href === "/cockpit";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/70 bg-base/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-border bg-surface/80 backdrop-blur-xl">
       <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
         {/* Mobile-Logo */}
         <Link href="/cockpit" className="flex items-center gap-2 lg:hidden">

@@ -75,7 +75,7 @@ export function MandatesList({ mandates }: { mandates: RecruitingMandate[] }) {
                 </span>
                 <Link
                   href="/cockpit/kandidaten"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-soft hover:text-cyan"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-deep hover:text-cyan-ink"
                 >
                   Kandidaten <IconChevronRight size={14} />
                 </Link>

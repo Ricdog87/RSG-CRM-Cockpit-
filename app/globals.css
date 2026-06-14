@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   html,
@@ -18,17 +18,17 @@
 
   /* Sichtbarer Tastatur-Fokus auf der gesamten Oberfläche. */
   :focus-visible {
-    @apply outline-none ring-2 ring-cyan ring-offset-2 ring-offset-base rounded-md;
+    @apply outline-none ring-2 ring-purple ring-offset-2 ring-offset-base rounded-md;
   }
 
   ::selection {
-    @apply bg-purple/30 text-ink;
+    @apply bg-purple/20 text-purple-ink;
   }
 
-  /* Dezente Scrollbar im Markenlook. */
+  /* Dezente Scrollbar. */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #2a2a38 transparent;
+    scrollbar-color: #cdd4e2 transparent;
   }
   *::-webkit-scrollbar {
     width: 10px;
@@ -36,21 +36,17 @@
   }
   *::-webkit-scrollbar-thumb {
     @apply rounded-full border-2 border-solid border-transparent bg-clip-padding;
-    background-color: #2a2a38;
+    background-color: #cdd4e2;
   }
   *::-webkit-scrollbar-thumb:hover {
-    background-color: #3a3a4a;
+    background-color: #b6bfd2;
   }
 }
 
 @layer components {
-  /* Glassmorphism-Card mit feinem oberen Lichtsaum. */
+  /* Card: weiße Fläche, feine Kontur, weicher Schatten. */
   .card {
-    @apply relative rounded-2xl border border-border/80 bg-surface/70 shadow-card backdrop-blur-xl;
-  }
-  .card::before {
-    content: "";
-    @apply pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent;
+    @apply rounded-2xl border border-border bg-surface shadow-card;
   }
 
   .card-pad {
@@ -59,11 +55,11 @@
 
   /* Interaktive Card (Hover-Lift). */
   .card-hover {
-    @apply transition-all duration-200 hover:border-purple/40 hover:shadow-glow;
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-purple/40 hover:shadow-glow;
   }
 
   .eyebrow {
-    @apply text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-cyan;
+    @apply text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-cyan-deep;
   }
 
   .kpi-label {
@@ -76,7 +72,7 @@
 
   /* Gradient-Text für Heldenzahlen. */
   .text-gradient {
-    @apply bg-gradient-to-r from-purple-soft via-purple-soft to-cyan-soft bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-purple-deep to-cyan-deep bg-clip-text text-transparent;
   }
 
   /* Skeleton-Schimmer für Ladezustände. */
@@ -84,7 +80,7 @@
     @apply relative overflow-hidden rounded-md bg-elevated;
   }
   .skeleton::after {
-    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/5 to-transparent content-[''];
+    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/60 to-transparent content-[''];
   }
 
   /* Navigations-Link in der Sidebar. */
@@ -92,6 +88,6 @@
     @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-elevated hover:text-ink;
   }
   .nav-link[data-active="true"] {
-    @apply bg-purple/10 text-ink;
+    @apply bg-purple/10 text-purple-ink;
   }
 }

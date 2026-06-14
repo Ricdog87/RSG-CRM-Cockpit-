@@ -55,7 +55,7 @@ export function CareerLadder({ currentLevel }: { currentLevel: number }) {
                   className={cn(
                     "flex h-8 w-8 flex-none items-center justify-center rounded-lg text-sm font-bold",
                     active
-                      ? "bg-gradient-to-br from-purple to-cyan text-white"
+                      ? "bg-gradient-to-br from-purple-deep to-cyan-deep text-white"
                       : done
                         ? "bg-success/15 text-success"
                         : "bg-elevated text-faint"
@@ -76,7 +76,7 @@ export function CareerLadder({ currentLevel }: { currentLevel: number }) {
                     {active ? <Badge tone="purple">Aktuell</Badge> : null}
                   </div>
                   <p className="mt-0.5 text-xs text-faint">Aufstieg: {s.aufstieg}</p>
-                  <p className="text-xs text-cyan-soft">{s.override}</p>
+                  <p className="text-xs text-cyan-deep">{s.override}</p>
                 </div>
               </li>
             );

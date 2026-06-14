@@ -29,7 +29,7 @@ export function Leaderboard({ rows }: { rows: LeaderboardRow[] }) {
                   className={cn(
                     "flex h-7 w-7 flex-none items-center justify-center rounded-lg text-xs font-bold",
                     row.rank <= 3
-                      ? "bg-gradient-to-br from-purple to-cyan text-white"
+                      ? "bg-gradient-to-br from-purple-deep to-cyan-deep text-white"
                       : "bg-elevated text-muted"
                   )}
                 >
@@ -43,7 +43,7 @@ export function Leaderboard({ rows }: { rows: LeaderboardRow[] }) {
                 >
                   {row.full_name}
                   {row.is_self ? (
-                    <span className="ml-1.5 text-xs text-purple-soft">· du</span>
+                    <span className="ml-1.5 text-xs text-purple-deep">· du</span>
                   ) : null}
                 </span>
                 <div className="flex-none text-right">

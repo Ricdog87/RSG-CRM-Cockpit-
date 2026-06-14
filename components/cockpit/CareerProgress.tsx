@@ -70,7 +70,7 @@ export function CareerProgress({ career }: { career: CareerState }) {
               ) : (
                 <>
                   Noch{" "}
-                  <span className="font-semibold text-cyan-soft">
+                  <span className="font-semibold text-cyan-deep">
                     {fehlend} aktive:r Direktpartner:in
                   </span>{" "}
                   bis dein Override wieder aktiv ist.
@@ -79,7 +79,7 @@ export function CareerProgress({ career }: { career: CareerState }) {
             </p>
           </div>
         ) : (
-          <p className="rounded-xl border border-purple/20 bg-purple/5 px-4 py-3 text-sm text-purple-soft">
+          <p className="rounded-xl border border-purple/20 bg-purple/5 px-4 py-3 text-sm text-purple-deep">
             {next
               ? "Gewinne deine ersten aktiven Direktpartner:innen, um die nächste Stufe und deinen Override freizuschalten."
               : "Höchste Stufe erreicht. Jetzt zählt die Breite und Tiefe deines Teams."}

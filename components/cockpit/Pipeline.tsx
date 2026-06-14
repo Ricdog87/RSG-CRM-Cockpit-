@@ -76,7 +76,7 @@ export function Pipeline({
             viewAllHref ? (
               <Link
                 href={viewAllHref}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-soft hover:text-cyan"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-deep hover:text-cyan-ink"
               >
                 Alle ansehen <IconChevronRight size={14} />
               </Link>
