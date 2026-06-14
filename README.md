@@ -13,6 +13,7 @@ Gebaut mit **Next.js 14 (App Router)**, **TypeScript**, **Tailwind**,
 | Gruppe | Bereich | Quelle |
 | --- | --- | --- |
 | Start | **Übersicht** | Partner-Cockpit (Hero-Bestand, KPIs, Override, Vorschauen) |
+| KI | **Lead Intelligence** | Claude bewertet B2B-Leads (Fit-Score, Linie, Signale, Erstkontakt) |
 | Vertrieb | **Sales-Pipeline** | `opportunities` – Projekt-Chancen (Kanban, beide Linien) |
 | | **Kunden** | `accounts` – Customer Management (Kontakte, Segment, Lifecycle) |
 | | **Segmente** | `v_segments` – KI-Zielgruppen mit Accounts + MRR |
@@ -71,6 +72,26 @@ npm run dev
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase Projekt-URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon-Key (öffentlich, RLS-geschützt) |
 | `NEXT_PUBLIC_COCKPIT_USE_MOCK` | optional `true` → erzwingt Mock-Modus |
+| `ANTHROPIC_API_KEY` | KI-Brain (Claude Opus 4.8) für Lead Intelligence – **serverseitig** |
+| `AI_MODEL` | optional, Default `claude-opus-4-8` |
+| `PERPLEXITY_API_KEY` | optional, web-gestützte Lead-Recherche |
+| `OPENROUTER_API_KEY` | optional, alternativer LLM-Provider statt Anthropic |
+
+## KI / Lead Intelligence
+
+RSG-CRM ist als **intelligentes B2B-Lead-CRM** ausgelegt. Die KI-Schicht
+(`lib/ai/*`) läuft **ausschließlich serverseitig** (Keys nie im Browser):
+
+- **Brain:** Claude über das offizielle Anthropic-SDK (`claude-opus-4-8`,
+  adaptives Denken), strenger JSON-Vertrag → Fit-Score, empfohlene Linie
+  (RSG AI / Recruiting), Kaufsignale, Schmerzpunkte, Gesprächsaufhänger und ein
+  fertiger Erstkontakt – zugeschnitten auf die beiden RSG-Geschäftslinien.
+- **Web-Grounding (optional):** Perplexity (Sonar) reichert die Analyse mit
+  aktuellen Unternehmensfakten an.
+- **Provider-Wahl:** Ohne `ANTHROPIC_API_KEY`, aber mit `OPENROUTER_API_KEY`
+  wird über OpenRouter geroutet. Ohne jeden Key liefert die Seite eine
+  realistische **Demo-Analyse** (Banner sichtbar), damit die Preview läuft.
+- Analysierte Leads lassen sich per Klick als CRM-Account übernehmen.
 
 ## Provisionslogik
 
