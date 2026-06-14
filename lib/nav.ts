@@ -13,6 +13,7 @@ import {
   IconChart,
   IconEuro,
   IconTrophy,
+  IconSettings,
 } from "@/components/ui/icons";
 
 export interface NavItem {
@@ -129,6 +130,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Karriere",
         icon: IconTrophy,
         description: "Stufenplan, Override-Ebenen und Leaderboard",
+      },
+      {
+        href: "/cockpit/einstellungen",
+        label: "Einstellungen",
+        icon: IconSettings,
+        description: "Profil, Verbindungen und BCC-Adresse",
       },
     ],
   },
