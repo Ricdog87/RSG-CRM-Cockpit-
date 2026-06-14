@@ -1,7 +1,7 @@
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/components/ui/cn";
-import { formatEur, formatNumber } from "@/lib/format";
+import { formatEur } from "@/lib/format";
 import type { LeaderboardRow } from "@/lib/types";
 
 /** Leaderboard aus v_leaderboard. Eigene Zeile ist hervorgehoben. */
@@ -41,7 +41,7 @@ export function Leaderboard({ rows }: { rows: LeaderboardRow[] }) {
                     row.is_self ? "font-semibold text-ink" : "text-muted"
                   )}
                 >
-                  {row.display_name}
+                  {row.full_name}
                   {row.is_self ? (
                     <span className="ml-1.5 text-xs text-purple-soft">· du</span>
                   ) : null}
@@ -51,7 +51,7 @@ export function Leaderboard({ rows }: { rows: LeaderboardRow[] }) {
                     {formatEur(row.mrr_bestand)}
                   </p>
                   <p className="text-xs text-faint">
-                    {formatNumber(row.aktive_kunden)} Kund:innen
+                    {formatEur(row.provision_90d)} · 90 Tage
                   </p>
                 </div>
               </li>

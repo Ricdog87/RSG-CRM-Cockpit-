@@ -23,13 +23,18 @@ export interface PartnerEarnings {
   override_pausiert: number;
 }
 
-/** view v_leaderboard */
+/**
+ * view v_leaderboard (partner_id, full_name, level_id, mrr_bestand, provision_90d).
+ * `rank` wird clientseitig aus der Sortierung nach mrr_bestand abgeleitet.
+ */
 export interface LeaderboardRow {
   rank: number;
   partner_id: string;
-  display_name: string;
+  full_name: string;
+  level_id: number | null;
   mrr_bestand: number;
-  aktive_kunden: number;
+  /** Provision der letzten 90 Tage in € */
+  provision_90d: number;
   /** markiert die:den eingeloggte:n Partner:in */
   is_self?: boolean;
 }
@@ -56,38 +61,49 @@ export interface Deal {
   updated_at: string;
 }
 
-/** view v_override_eligibility + career_levels */
+/**
+ * view v_override_eligibility
+ * (partner_id, level_id, override_levels, min_active_directs,
+ *  active_direct_count, own_active).
+ */
 export interface OverrideEligibility {
   partner_id: string;
-  own_active: number;
-  active_direct_count: number;
+  level_id: number | null;
+  /** Tiefe, über die der Override läuft */
+  override_levels: number;
   min_active_directs: number;
+  active_direct_count: number;
+  /** eigene aktive Bestandskunden */
+  own_active: number;
 }
 
+/**
+ * career_levels (Stufenplan laut Provisionsordnung §2). Der Aufstieg ist
+ * struktur-/leistungsbasiert; die Stufe schaltet die Override-Ebenen frei.
+ */
 export interface CareerLevel {
   level: number;
   name: string;
-  /** benötigte aktive Direktpartner für diese Stufe */
-  min_active_directs: number;
-  /** benötigter eigener aktiver Bestand (Kunden) */
-  min_own_active: number;
+  /** freigeschaltete Override-Ebenen (RSG Partner 0 · Senior 1 · Director/Equity 2) */
+  override_levels: number;
 }
 
 export interface CareerState {
   current: CareerLevel;
   next: CareerLevel | null;
-  own_active: number;
+  /** aktive Direktpartner:innen (aus v_override_eligibility) */
   active_direct_count: number;
+  /** Schwelle der aktuellen Stufe für aktiven Override (§6 Mindestaktivität) */
+  min_active_directs: number;
 }
 
-/** partners where upline_id = own id */
+/** partners where upline_id = own id, Bestand via Join auf v_partner_bestand */
 export interface DownlinePartner {
   partner_id: string;
-  display_name: string;
+  full_name: string;
   aktive_kunden: number;
   mrr_bestand: number;
   is_active: boolean;
-  joined_at: string;
 }
 
 /** aus table commissions: closer_recurring je Monat */
@@ -109,6 +125,8 @@ export interface CockpitData {
   };
   bestand: PartnerBestand;
   earnings: PartnerEarnings;
+  /** Provision im laufenden Monat (commissions, Status offen/freigegeben) */
+  provisionAktuellerMonat: number;
   bestandsverlauf: BestandPoint[];
   pipeline: Deal[];
   career: CareerState;

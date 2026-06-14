@@ -27,7 +27,11 @@ export default async function CockpitPage() {
 
       {/* 2. KPI-Reihe */}
       <section className="animate-fade-up" aria-label="Kennzahlen">
-        <KpiRow bestand={data.bestand} earnings={data.earnings} />
+        <KpiRow
+          bestand={data.bestand}
+          earnings={data.earnings}
+          provisionAktuellerMonat={data.provisionAktuellerMonat}
+        />
       </section>
 
       {/* 3. Override-Nudge (nur wenn override_pausiert > 0) */}

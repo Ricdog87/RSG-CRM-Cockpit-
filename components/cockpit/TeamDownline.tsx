@@ -34,11 +34,11 @@ export function TeamDownline({ team }: { team: DownlinePartner[] }) {
                 className="flex items-center gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5"
               >
                 <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gradient-to-br from-purple/30 to-cyan/30 text-sm font-bold text-ink">
-                  {member.display_name.charAt(0).toUpperCase()}
+                  {member.full_name.charAt(0).toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">
-                    {member.display_name}
+                    {member.full_name}
                   </p>
                   <p className="truncate text-xs text-muted">
                     {formatNumber(member.aktive_kunden)} Kund:innen ·{" "}

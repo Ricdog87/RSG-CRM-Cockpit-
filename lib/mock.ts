@@ -12,12 +12,12 @@ import type {
  * Die Struktur entspricht 1:1 den echten Views.
  */
 
+// Stufenplan laut Provisionsordnung §2 (Override-Ebenen je Stufe).
 const careerLevels: CareerLevel[] = [
-  { level: 1, name: "Partner", min_active_directs: 0, min_own_active: 0 },
-  { level: 2, name: "Senior Partner", min_active_directs: 2, min_own_active: 15 },
-  { level: 3, name: "Teamleiter", min_active_directs: 4, min_own_active: 30 },
-  { level: 4, name: "Regionalleiter", min_active_directs: 8, min_own_active: 60 },
-  { level: 5, name: "Direktor", min_active_directs: 15, min_own_active: 120 },
+  { level: 1, name: "RSG Partner", override_levels: 0 },
+  { level: 2, name: "Senior Partner", override_levels: 1 },
+  { level: 3, name: "Director", override_levels: 2 },
+  { level: 4, name: "Equity Circle", override_levels: 2 },
 ];
 
 // Wachstumskurve: 12 Monate, monatliche Bestandsprovision (closer_recurring).
@@ -37,7 +37,7 @@ const monthLabels = [
 ];
 
 const bestandsverlauf = [
-  1280, 1410, 1530, 1675, 1740, 1880, 2010, 2120, 2260, 2380, 2510, 2680,
+  890, 980, 1060, 1140, 1220, 1310, 1400, 1500, 1600, 1690, 1770, 1843,
 ].map((amount, i) => {
   const monthIndex = (6 + i) % 12; // Start Juli 2025
   const year = 6 + i < 12 ? 2025 : 2026;
@@ -101,27 +101,24 @@ const pipeline: Deal[] = [
 const downline: DownlinePartner[] = [
   {
     partner_id: "p-anna",
-    display_name: "Anna Decker",
+    full_name: "Anna Decker",
     aktive_kunden: 22,
     mrr_bestand: 1840,
     is_active: true,
-    joined_at: "2025-02-14",
   },
   {
     partner_id: "p-jonas",
-    display_name: "Jonas Pfeiffer",
+    full_name: "Jonas Pfeiffer",
     aktive_kunden: 9,
     mrr_bestand: 720,
     is_active: true,
-    joined_at: "2025-06-01",
   },
   {
     partner_id: "p-mira",
-    display_name: "Mira Sahin",
+    full_name: "Mira Sahin",
     aktive_kunden: 3,
     mrr_bestand: 210,
     is_active: false,
-    joined_at: "2026-01-20",
   },
 ];
 
@@ -129,43 +126,51 @@ const leaderboard: LeaderboardRow[] = [
   {
     rank: 1,
     partner_id: "p-lead-1",
-    display_name: "Sandra König",
-    mrr_bestand: 7420,
-    aktive_kunden: 96,
+    full_name: "Sandra König",
+    level_id: 4,
+    mrr_bestand: 18900,
+    provision_90d: 9860,
   },
   {
     rank: 2,
     partner_id: "p-lead-2",
-    display_name: "Tobias Wenzel",
-    mrr_bestand: 5180,
-    aktive_kunden: 71,
+    full_name: "Tobias Wenzel",
+    level_id: 3,
+    mrr_bestand: 13200,
+    provision_90d: 6740,
   },
   {
     rank: 3,
     partner_id: "p-self",
-    display_name: "Du",
-    mrr_bestand: 2680,
-    aktive_kunden: 41,
+    full_name: "Du",
+    level_id: 2,
+    mrr_bestand: 10840,
+    provision_90d: 3520,
     is_self: true,
   },
   {
     rank: 4,
     partner_id: "p-lead-4",
-    display_name: "Lena Fischer",
-    mrr_bestand: 2310,
-    aktive_kunden: 35,
+    full_name: "Lena Fischer",
+    level_id: 3,
+    mrr_bestand: 8600,
+    provision_90d: 2980,
   },
   {
     rank: 5,
     partner_id: "p-lead-5",
-    display_name: "Marco Albrecht",
-    mrr_bestand: 1990,
-    aktive_kunden: 28,
+    full_name: "Marco Albrecht",
+    level_id: 2,
+    mrr_bestand: 6300,
+    provision_90d: 2540,
   },
 ];
 
-const own_active = 41;
+const own_active = 24; // eigene aktive Bestandskund:innen (KI-Verträge)
+// Senior Partner: Override-Ebene 1; Mindestaktivität ≥3 aktive Direkte (§6).
+// Aktuell nur 2 aktiv ⇒ Override ruht/„pausiert".
 const active_direct_count = 2; // Anna + Jonas aktiv, Mira inaktiv
+const min_active_directs = 3;
 
 export const mockCockpitData: CockpitData = {
   partner: {
@@ -176,30 +181,33 @@ export const mockCockpitData: CockpitData = {
   bestand: {
     partner_id: "p-self",
     aktive_kunden: own_active,
-    mrr_bestand: 2680,
-    monatl_bestandsprovision: 2680,
+    mrr_bestand: 10840, // zugrunde liegender monatlicher Kundenumsatz (MRR)
+    monatl_bestandsprovision: 1843, // ≈ 17 % MRR (Provisionsordnung §3.1)
   },
   earnings: {
     partner_id: "p-self",
-    offen_freigegeben: 1240,
-    ausgezahlt: 18650,
-    in_stornoreserve: 430,
-    // > 0 ⇒ Override pausiert (es fehlt ein aktiver Direktpartner für Stufe 3).
-    override_pausiert: 320,
+    offen_freigegeben: 1180,
+    ausgezahlt: 21450,
+    in_stornoreserve: 640,
+    // > 0 ⇒ Override pausiert (es fehlt ein aktiver Direktpartner, §6(2)).
+    override_pausiert: 480,
   },
+  provisionAktuellerMonat: 2310, // Bestand + Neugeschäft (Setup) im Monat
   bestandsverlauf,
   pipeline,
   career: {
     current: careerLevels[1], // Senior Partner
-    next: careerLevels[2], // Teamleiter
-    own_active,
+    next: careerLevels[2], // Director
     active_direct_count,
+    min_active_directs,
   },
   override: {
     partner_id: "p-self",
-    own_active,
+    level_id: 2,
+    override_levels: 1,
+    min_active_directs,
     active_direct_count,
-    min_active_directs: 4, // Stufe Teamleiter benötigt 4 aktive Direkte
+    own_active,
   },
   leaderboard,
   downline,

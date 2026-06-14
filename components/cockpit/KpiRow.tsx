@@ -38,9 +38,11 @@ function Kpi({
 export function KpiRow({
   bestand,
   earnings,
+  provisionAktuellerMonat,
 }: {
   bestand: PartnerBestand;
   earnings: PartnerEarnings;
+  provisionAktuellerMonat: number;
 }) {
   const overridePaused = earnings.override_pausiert > 0;
 
@@ -54,14 +56,14 @@ export function KpiRow({
       />
       <Kpi
         label="Provision diesen Monat"
-        value={formatEur(bestand.monatl_bestandsprovision)}
-        hint={`${formatEur(earnings.offen_freigegeben)} offen freigegeben`}
+        value={formatEur(provisionAktuellerMonat)}
+        hint={`${formatEur(earnings.offen_freigegeben)} freigegeben · Auszahlung zum 15.`}
         accent="purple"
       />
       <Kpi
         label="Stornoreserve"
         value={formatEur(earnings.in_stornoreserve)}
-        hint="wird nach Stornofrist ausgezahlt"
+        hint="Freigabe nach 6 Monaten Laufzeit"
         accent="warning"
       />
       <Kpi
