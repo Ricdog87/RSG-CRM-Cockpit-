@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { LineBadge } from "@/components/cockpit/LineBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconChevronRight } from "@/components/ui/icons";
+import { AccountEnrich } from "@/components/cockpit/AccountEnrich";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -98,6 +99,15 @@ export default async function AccountDetailPage({
           </div>
         </CardBody>
       </Card>
+
+      {/* KI-Analyse des Accounts */}
+      <AccountEnrich
+        company={account.name}
+        domain={account.contact_email ? account.contact_email.split("@")[1] : undefined}
+        notes={[account.branche, account.segment, account.ort]
+          .filter(Boolean)
+          .join(" · ")}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Verkaufschancen */}

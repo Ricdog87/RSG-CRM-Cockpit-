@@ -5,6 +5,7 @@ import { scoreOpportunity, heuristicScore } from "@/lib/ai/scoring";
 import { getOpportunities } from "@/lib/crm-data";
 import { createAccount, type ActionResult } from "@/lib/crm-actions";
 import type {
+  LeadInput,
   LeadResult,
   OppScore,
   OppScoreInput,
@@ -35,6 +36,21 @@ export async function runLeadAnalysis(
       notes: String(fd.get("notes") ?? "").trim() || undefined,
     });
     return { ok: true, result };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Analyse fehlgeschlagen.",
+    };
+  }
+}
+
+/** Reichert einen bestehenden Account mit einer KI-Analyse an. */
+export async function enrichAccountAction(
+  input: LeadInput
+): Promise<LeadActionState> {
+  if (!input.company?.trim()) return { ok: false, error: "Kein Account." };
+  try {
+    return { ok: true, result: await analyzeLead(input) };
   } catch (e) {
     return {
       ok: false,
