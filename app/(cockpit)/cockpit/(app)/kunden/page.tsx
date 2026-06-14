@@ -1,5 +1,6 @@
 import { getAccounts } from "@/lib/crm-data";
 import { createAccount } from "@/lib/crm-actions";
+import { autofillAccountAction } from "@/lib/ai-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { AccountsView } from "@/components/cockpit/views/AccountsView";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
@@ -33,6 +34,8 @@ export default async function KundenPage() {
             description="Unternehmen mit Kontakt und Geschäftslinie erfassen."
             fields={ACCOUNT_FIELDS}
             action={createAccount}
+            autofill={autofillAccountAction}
+            autofillFrom={["name", "contact_email"]}
           />
         }
       />

@@ -87,6 +87,43 @@ export async function discoverLeadsAction(
   }
 }
 
+/**
+ * Auto-Ausfüllen beim Anlegen: leitet aus Firmenname/Domain die übrigen
+ * Account-Felder ab (Branche, Segment, Ort, Linie, Kontakt-E-Mail-Muster).
+ */
+export async function autofillAccountAction(
+  input: Record<string, string>
+): Promise<{
+  ok: boolean;
+  values?: Record<string, string>;
+  mode?: "live" | "demo";
+  error?: string;
+}> {
+  const company = (input.name || input.company || "").trim();
+  if (!company) return { ok: false, error: "Erst einen Firmennamen eingeben." };
+  const rawDomain =
+    input.domain || (input.contact_email ? input.contact_email.split("@")[1] : "");
+  const domain = rawDomain?.trim() || undefined;
+  try {
+    const { analysis, mode } = await analyzeLead({ company, domain });
+    const values: Record<string, string> = {
+      branche: analysis.industry,
+      segment: analysis.industry,
+      ort: analysis.location,
+      line: analysis.recommended_line === "recruiting" ? "recruiting" : "ki",
+    };
+    if (domain) {
+      values.contact_email = `info@${domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "")}`;
+    }
+    return { ok: true, values, mode };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Auto-Ausfüllen fehlgeschlagen.",
+    };
+  }
+}
+
 /** Reichert einen bestehenden Account mit einer KI-Analyse an. */
 export async function enrichAccountAction(
   input: LeadInput

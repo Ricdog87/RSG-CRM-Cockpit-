@@ -3,13 +3,21 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
+import { findDuplicate } from "@/lib/dedupe";
+import { accounts as mockAccounts } from "@/lib/crm-mock";
 
 /**
  * Server Actions für Schreibvorgänge im CRM. Bei gesetzter Supabase-ENV wird
  * RLS-konform in die CRM-Tabellen geschrieben (partner_id = eigene Partner-ID).
  * Im Demo-Modus (keine ENV) wird nichts persistiert – die UI meldet das klar.
  */
-export type ActionResult = { ok: boolean; demo?: boolean; error?: string };
+export type ActionResult = {
+  ok: boolean;
+  demo?: boolean;
+  error?: string;
+  /** true ⇒ mögliche Dublette erkannt (mit force=1 überstimmbar) */
+  duplicate?: boolean;
+};
 
 const DEMO: ActionResult = { ok: true, demo: true };
 
@@ -52,11 +60,43 @@ async function insert(
   return { ok: true };
 }
 
+/** Bestehende Account-Schlüssel (Name + E-Mail) für den Dubletten-Abgleich. */
+async function accountKeys(): Promise<{ name: string; email?: string }[]> {
+  if (useMockData) {
+    return mockAccounts.map((a) => ({ name: a.name, email: a.contact_email }));
+  }
+  const supabase = createClient();
+  const { data } = await supabase.from("accounts").select("name, contact_email");
+  return (
+    (data as Array<{ name?: string; contact_email?: string }> | null) ?? []
+  ).map((r) => ({
+    name: String(r.name ?? ""),
+    email: r.contact_email ? String(r.contact_email) : undefined,
+  }));
+}
+
 export async function createAccount(
   _prev: ActionResult | null,
   fd: FormData
 ): Promise<ActionResult> {
-  if (!s(fd, "name")) return { ok: false, error: "Name ist erforderlich." };
+  const name = s(fd, "name");
+  if (!name) return { ok: false, error: "Name ist erforderlich." };
+
+  // Intelligenter Dubletten-Abgleich (mit „Trotzdem anlegen" überstimmbar).
+  if (s(fd, "force") !== "1") {
+    const dup = findDuplicate(
+      { name, email: s(fd, "contact_email") || undefined },
+      await accountKeys()
+    );
+    if (dup) {
+      return {
+        ok: false,
+        duplicate: true,
+        error: `Mögliche Dublette zu „${dup.name}". Erneut bestätigen, um trotzdem anzulegen.`,
+      };
+    }
+  }
+
   return insert(
     "accounts",
     {
