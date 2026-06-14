@@ -55,6 +55,19 @@ export interface OppScore {
   mode: "live" | "demo";
 }
 
+/** Eine Verkaufschance inkl. KI-Bewertung (für die Priorisierungsliste). */
+export interface ScoredOpp {
+  id: string;
+  account_name: string;
+  title: string;
+  line: string;
+  value: number;
+  value_type: string;
+  stage: string;
+  probability: number;
+  score: OppScore;
+}
+
 export interface LeadResult {
   analysis: LeadAnalysis;
   /** "live" = echtes LLM, "demo" = Mock ohne API-Key */

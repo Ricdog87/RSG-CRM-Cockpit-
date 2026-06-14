@@ -3,6 +3,7 @@ import { createOpportunity } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { SalesView } from "@/components/cockpit/views/SalesView";
+import { PipelinePriorities } from "@/components/cockpit/PipelinePriorities";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { OPPORTUNITY_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { IconTarget, IconEuro, IconTrendingUp } from "@/components/ui/icons";
@@ -73,6 +74,8 @@ export default async function SalesPage() {
           icon={IconTrendingUp}
         />
       </div>
+
+      <PipelinePriorities />
 
       <SalesView opportunities={opps} />
     </div>

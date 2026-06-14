@@ -1,9 +1,18 @@
 "use server";
 
 import { analyzeLead } from "@/lib/ai/lead-intelligence";
-import { scoreOpportunity } from "@/lib/ai/scoring";
+import { scoreOpportunity, heuristicScore } from "@/lib/ai/scoring";
+import { getOpportunities } from "@/lib/crm-data";
 import { createAccount, type ActionResult } from "@/lib/crm-actions";
-import type { LeadResult, OppScore, OppScoreInput } from "@/lib/ai/types";
+import type {
+  LeadResult,
+  OppScore,
+  OppScoreInput,
+  ScoredOpp,
+} from "@/lib/ai/types";
+
+// Maximale Anzahl live bewerteter Chancen (begrenzt Kosten/Latenz).
+const MAX_SCORED = 15;
 
 export type LeadActionState = {
   ok: boolean;
@@ -45,6 +54,55 @@ export async function scoreOpportunityAction(
     return {
       ok: false,
       error: e instanceof Error ? e.message : "Bewertung fehlgeschlagen.",
+    };
+  }
+}
+
+/**
+ * Priorisiert die offene Pipeline: bewertet die aussichtsreichsten Chancen
+ * und gibt eine nach Score sortierte „Heute zuerst"-Liste zurück.
+ */
+export async function prioritizePipelineAction(): Promise<{
+  ok: boolean;
+  items?: ScoredOpp[];
+  mode?: "live" | "demo";
+  error?: string;
+}> {
+  try {
+    const opps = await getOpportunities();
+    const open = opps.filter(
+      (o) => o.stage !== "gewonnen" && o.stage !== "verloren"
+    );
+    const toInput = (o: (typeof open)[number]): OppScoreInput => ({
+      account_name: o.account_name,
+      line: o.line,
+      title: o.title,
+      value: o.value,
+      value_type: o.value_type,
+      stage: o.stage,
+      probability: o.probability,
+    });
+
+    // Vorsortierung per Heuristik, dann nur die Top-N (ggf. live) bewerten.
+    const pre = open
+      .map((o) => ({ o, h: heuristicScore(toInput(o)).score }))
+      .sort((a, b) => b.h - a.h)
+      .slice(0, MAX_SCORED);
+
+    const items: ScoredOpp[] = await Promise.all(
+      pre.map(async ({ o }) => ({
+        id: o.id,
+        ...toInput(o),
+        score: await scoreOpportunity(toInput(o)),
+      }))
+    );
+    items.sort((a, b) => b.score.score - a.score.score);
+
+    return { ok: true, items, mode: items[0]?.score.mode ?? "demo" };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Priorisierung fehlgeschlagen.",
     };
   }
 }
