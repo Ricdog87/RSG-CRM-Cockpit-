@@ -30,7 +30,7 @@ export default async function AppShellLayout({
         ) : null}
 
         <main className="flex-1 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 lg:pb-10">
-          <div className="mx-auto w-full max-w-6xl">{children}</div>
+          <div className="mx-auto w-full max-w-7xl">{children}</div>
         </main>
       </div>
 
