@@ -37,19 +37,19 @@ export function KanbanBoard<S extends string, T>({
   }
 
   return (
-    <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 xl:overflow-visible">
+    <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2 xl:overflow-visible">
       {columns.map((col) => {
         const colItems = items.filter((i) => getStage(i) === col.stage);
         return (
           <div
             key={col.stage}
-            className="flex w-60 flex-none flex-col gap-3 rounded-2xl border border-border/60 bg-surface/40 p-3 xl:w-auto xl:flex-1"
+            className="flex w-72 flex-none flex-col gap-3 rounded-2xl border border-border/60 bg-surface/40 p-4 xl:w-auto xl:flex-1"
           >
             <div className="flex items-center justify-between">
               <Badge tone={col.tone}>{col.label}</Badge>
-              <span className="text-xs text-faint">{colItems.length}</span>
+              <span className="text-xs font-medium text-faint">{colItems.length}</span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {colItems.length === 0 ? (
                 <p className="px-1 py-4 text-center text-xs text-faint">—</p>
               ) : (
