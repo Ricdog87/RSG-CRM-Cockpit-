@@ -1,0 +1,71 @@
+import "server-only";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceClient, hasServiceRole } from "@/lib/supabase/service";
+
+/** Eine DSGVO-Einwilligung (Datensatz aus candidate_consents). */
+export interface Consent {
+  id: string;
+  candidate_id: string;
+  token: string;
+  status: "pending" | "granted" | "revoked";
+  text_version: string;
+  email_to: string | null;
+  sent_at: string | null;
+  granted_at: string | null;
+  revoked_at: string | null;
+  expires_at: string | null;
+}
+
+export interface ConsentWithCandidate extends Consent {
+  candidate_name: string;
+}
+
+type Row = Record<string, unknown>;
+const str = (v: unknown): string | null => (v == null ? null : String(v));
+
+function mapConsent(r: Row): Consent {
+  return {
+    id: String(r.id),
+    candidate_id: String(r.candidate_id),
+    token: String(r.token),
+    status: (String(r.status || "pending") as Consent["status"]),
+    text_version: String(r.text_version || ""),
+    email_to: str(r.email_to),
+    sent_at: str(r.sent_at),
+    granted_at: str(r.granted_at),
+    revoked_at: str(r.revoked_at),
+    expires_at: str(r.expires_at),
+  };
+}
+
+/** Neueste Einwilligung einer:s Kandidat:in (RLS: eigene Daten). */
+export async function getConsentForCandidate(candidateId: string): Promise<Consent | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("candidate_consents")
+    .select("*")
+    .eq("candidate_id", candidateId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  return mapConsent(data as Row);
+}
+
+/**
+ * Einwilligung per öffentlichem Token laden (für die /einwilligung-Seite).
+ * Läuft über den Service-Role-Client, da der/die Kandidat:in nicht eingeloggt ist.
+ */
+export async function getConsentByToken(token: string): Promise<ConsentWithCandidate | null> {
+  if (!hasServiceRole()) return null;
+  const svc = createServiceClient();
+  const { data, error } = await svc
+    .from("candidate_consents")
+    .select("*, candidates(name)")
+    .eq("token", token)
+    .maybeSingle();
+  if (error || !data) return null;
+  const row = data as Row;
+  const cand = (row.candidates as { name?: string } | null) ?? null;
+  return { ...mapConsent(row), candidate_name: cand?.name ? String(cand.name) : "" };
+}
