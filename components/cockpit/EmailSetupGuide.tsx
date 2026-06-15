@@ -55,12 +55,35 @@ export function EmailSetupGuide({
         </CardBody>
       </Card>
 
-      {/* Schritt 1: Workspace Auto-BCC */}
+      {/* Aktive Verbindung: n8n Gmail-Bridge */}
       <Card>
         <CardBody>
           <SectionHeader
-            title="1 · Auto-BCC in Google Workspace"
-            hint="jede gesendete Mail automatisch tracken – wie HubSpot"
+            title="Aktive Verbindung · n8n Gmail-Bridge"
+            hint="Inbox + Gesendet → Webhook (kein DNS/BCC nötig)"
+            action={<Badge tone="sky">empfohlen</Badge>}
+          />
+          <p className="text-sm text-muted">
+            Eine n8n-Bridge liest dein Gmail (Posteingang & Gesendet) direkt,
+            normalisiert jede Mail und meldet sie an den CRM-Webhook – mit deinem
+            Token und dem <code className="rounded bg-elevated px-1 text-ink">x-webhook-secret</code>.
+            So werden ein- und ausgehende Mails automatisch erfasst, ganz ohne
+            Inbound-Provider, MX/DNS oder Workspace-Regel.
+          </p>
+          <p className="mt-3 rounded-lg border border-border/60 bg-elevated/40 px-3 py-2 text-xs text-faint">
+            Wichtig fürs Mapping: Gmails <b className="text-ink">Message-ID</b> als Feld{" "}
+            <code className="rounded bg-elevated px-1 text-ink">message-id</code> mitsenden –
+            der Webhook dedupliziert darüber, sonst legt jeder Poll-Lauf Dubletten an.
+          </p>
+        </CardBody>
+      </Card>
+
+      {/* Alternativen (ohne n8n) */}
+      <Card>
+        <CardBody>
+          <SectionHeader
+            title="Alternative A · Auto-BCC in Google Workspace"
+            hint="ohne n8n – jede gesendete Mail per Workspace-Regel"
           />
           <ol className="space-y-2.5 text-sm text-muted">
             <Step>
@@ -100,8 +123,8 @@ export function EmailSetupGuide({
       <Card>
         <CardBody>
           <SectionHeader
-            title="2 · Inbound-Routing einrichten (DNS)"
-            hint="Mails an die Tracking-Adresse zum CRM-Webhook leiten"
+            title="Alternative B · Inbound-Routing (DNS)"
+            hint="ohne n8n – Mails per Provider/MX zum Webhook leiten"
           />
           <p className="mb-3 text-sm text-muted">
             Ein Inbound-Mail-Dienst (z.B. Mailgun Routes, SendGrid Inbound Parse
