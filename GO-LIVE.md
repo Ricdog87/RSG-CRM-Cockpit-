@@ -6,13 +6,20 @@ Von der Demo zum Echtbetrieb in 4 Schritten. Geschätzte Zeit: 15–20 Min.
 
 ## 0) Voraussetzung: RSG-Basisschema in Supabase
 
-Die CRM-Erweiterungen bauen auf dem bestehenden RSG-Vertriebsschema auf
-(Tabelle `partners` + Funktionen `current_partner_id()`, `fn_is_admin()`,
-`fn_is_descendant()`). Diese kommen aus **`rsg_vertrieb_schema.sql`** und
-**`rsg_engine_rpc.sql`** (von RSG).
+Die CRM-Erweiterungen bauen auf einem Basisschema auf (Tabelle `partners` +
+Funktionen `current_partner_id()`, `fn_is_admin()`, `fn_is_descendant()` sowie
+die Dashboard-Views `v_partner_bestand`, `v_partner_earnings`,
+`v_override_eligibility`, `v_leaderboard` und die Stammtabellen
+`career_levels`, `products`, `customers`, `deals`, `commissions`).
 
-- **Schon vorhanden?** (z.B. weil n8n bereits gegen Supabase läuft) → weiter zu Schritt 1.
-- **Noch nicht?** → erst diese beiden SQL-Dateien im Supabase SQL-Editor ausführen.
+- **Frisches Supabase-Projekt (z.B. neuer Free-Account)?** → im SQL-Editor
+  **`supabase/00_base_schema.sql`** ausführen. Das Skript legt alles oben
+  Genannte an (inkl. RLS + kanonischer Stammdaten), ist idempotent und wurde
+  gegen echtes Postgres 16 getestet (Basis + CRM + RLS-Isolation).
+- **Eigenes RSG-Vertriebsschema schon vorhanden?** (z.B. weil n8n bereits
+  gegen Supabase läuft) → Schritt 0 überspringen und direkt zu Schritt 1.
+
+> Reihenfolge im SQL-Editor: **`00_base_schema.sql`** → dann Schritt 1.
 
 ---
 
