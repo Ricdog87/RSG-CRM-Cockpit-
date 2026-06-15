@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { CandidatesView } from "@/components/cockpit/views/CandidatesView";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
+import { CvUploadDialog } from "@/components/cockpit/CvUploadDialog";
 import { CANDIDATE_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { IconUserCheck } from "@/components/ui/icons";
 import { formatNumber } from "@/lib/format";
@@ -28,13 +29,16 @@ export default async function KandidatenPage() {
         title="Kandidaten"
         description="Die Recruiting-Pipeline – von der Ansprache bis zur Platzierung."
         action={
-          <EntityFormDialog
-            triggerLabel="Kandidat:in anlegen"
-            title="Neue:n Kandidat:in anlegen"
-            description="Person der Recruiting-Pipeline hinzufügen."
-            fields={createFields}
-            action={createCandidate}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <CvUploadDialog />
+            <EntityFormDialog
+              triggerLabel="Kandidat:in anlegen"
+              title="Neue:n Kandidat:in anlegen"
+              description="Person der Recruiting-Pipeline hinzufügen."
+              fields={createFields}
+              action={createCandidate}
+            />
+          </div>
         }
       />
 
