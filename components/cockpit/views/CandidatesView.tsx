@@ -163,8 +163,14 @@ export function CandidatesView({
   }
 
   const mandates = Array.from(new Set(items.map((c) => c.mandate_account)));
+  const rejected = items.filter((c) => c.stage === "abgelehnt");
   const base = items.filter((c) => c.stage !== "abgelehnt");
-  const shown = filter === "all" ? base : base.filter((c) => c.mandate_account === filter);
+  const shown =
+    filter === "abgelehnt"
+      ? rejected
+      : filter === "all"
+      ? base
+      : base.filter((c) => c.mandate_account === filter);
 
   return (
     <div className="space-y-4">
@@ -178,6 +184,9 @@ export function CandidatesView({
             label: m,
             count: base.filter((c) => c.mandate_account === m).length,
           })),
+          ...(rejected.length > 0
+            ? [{ value: "abgelehnt", label: "Abgelehnte", count: rejected.length }]
+            : []),
         ]}
       />
       <KanbanBoard
