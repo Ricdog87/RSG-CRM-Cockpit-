@@ -51,33 +51,62 @@ export function AccountsTable({
             return (
               <li
                 key={a.id}
-                className="grid grid-cols-2 gap-2 px-5 py-3.5 lg:grid-cols-12 lg:items-center lg:gap-3"
+                className="px-4 py-4 lg:grid lg:grid-cols-12 lg:items-center lg:gap-3 lg:px-5 lg:py-3.5"
               >
-                <div className="col-span-2 min-w-0 lg:col-span-3">
+                {/* Mobile layout */}
+                <div className="flex items-start justify-between gap-3 lg:hidden">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/cockpit/kunden/${a.id}`}
+                        className="text-sm font-semibold text-ink hover:text-brand-deep hover:underline"
+                      >
+                        {a.name}
+                      </Link>
+                      <LineBadge line={a.line} />
+                    </div>
+                    {a.contact_name ? (
+                      <p className="mt-0.5 truncate text-xs text-muted">{a.contact_name}</p>
+                    ) : null}
+                    <p className="mt-0.5 truncate text-xs text-faint">
+                      {a.branche} · {a.ort}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <Badge tone={lc.tone}>{lc.label}</Badge>
+                    {a.mrr > 0 ? (
+                      <p className="text-sm font-semibold text-ink">{formatEur(a.mrr)}/M</p>
+                    ) : null}
+                    {renderActions ? renderActions(a) : null}
+                  </div>
+                </div>
+
+                {/* Desktop layout */}
+                <div className="col-span-3 hidden min-w-0 lg:block">
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/cockpit/kunden/${a.id}`}
-                      className="truncate text-sm font-medium text-ink hover:text-brand-deep hover:underline"
+                      className="truncate text-sm font-semibold text-ink hover:text-brand-deep hover:underline"
                     >
                       {a.name}
                     </Link>
                     <LineBadge line={a.line} />
                   </div>
-                  <p className="text-xs text-faint">
+                  <p className="truncate text-xs text-faint">
                     {a.branche} · {a.ort}
                   </p>
                 </div>
-                <div className="col-span-1 hidden min-w-0 lg:col-span-3 lg:block">
+                <div className="col-span-3 hidden min-w-0 lg:block">
                   <p className="truncate text-sm text-muted">{a.contact_name}</p>
                   <p className="truncate text-xs text-faint">{a.contact_email}</p>
                 </div>
-                <div className="col-span-1 hidden min-w-0 lg:col-span-2 lg:block">
+                <div className="col-span-2 hidden min-w-0 lg:block">
                   <p className="truncate text-sm text-muted">{a.segment}</p>
                 </div>
-                <div className="lg:col-span-2">
+                <div className="hidden lg:col-span-2 lg:block">
                   <Badge tone={lc.tone}>{lc.label}</Badge>
                 </div>
-                <div className="flex items-center justify-end gap-2 lg:col-span-2">
+                <div className="hidden items-center justify-end gap-2 lg:col-span-2 lg:flex">
                   <div className="text-right">
                     <p className="text-sm font-semibold text-ink">
                       {a.mrr > 0 ? `${formatEur(a.mrr)}/M` : "—"}
