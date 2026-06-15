@@ -121,6 +121,10 @@ export interface Candidate {
   /** Pfad der CV-Datei im privaten Storage-Bucket `candidate-cvs` */
   cv_path?: string;
   cv_filename?: string;
+  /** Zeitpunkt des CV-Uploads (ISO) */
+  cv_uploaded_at?: string;
+  /** Skill-Set (z.B. aus dem CV extrahiert) */
+  skills?: string[];
 }
 
 /** KI-Kundensegment (für Zielgruppen-/Use-Case-Steuerung). */

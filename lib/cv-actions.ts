@@ -159,3 +159,90 @@ export async function cvSignedUrl(
   if (error || !data) return { ok: false, error: error?.message ?? "Link konnte nicht erzeugt werden." };
   return { ok: true, url: data.signedUrl };
 }
+
+/** PDF an Claude geben und ein Skill-Set (Liste) extrahieren. */
+async function parseSkillsWithClaude(bytes: Uint8Array): Promise<string[] | null> {
+  if (AI.provider !== "anthropic" || !AI.anthropicKey) return null;
+  try {
+    const b64 = Buffer.from(bytes).toString("base64");
+    const client = new Anthropic({ apiKey: AI.anthropicKey });
+    const content: unknown[] = [
+      {
+        type: "document",
+        source: { type: "base64", media_type: "application/pdf", data: b64 },
+      },
+      {
+        type: "text",
+        text:
+          "Dies ist ein Lebenslauf. Extrahiere die wichtigsten fachlichen " +
+          "Fähigkeiten/Kompetenzen (Skills, Tools, Sprachen, Zertifikate) als " +
+          'JSON-Array kurzer Begriffe, z.B. {"skills": ["SAP", "Englisch C1", ' +
+          '"Projektleitung"]}. Maximal 20, keine ganzen Sätze. Antworte nur mit dem JSON.',
+      },
+    ];
+    const res = await client.messages.create({
+      model: AI.model,
+      max_tokens: 1024,
+      system: "Du extrahierst strukturierte Skill-Listen aus Lebensläufen.",
+      messages: [{ role: "user", content: content as unknown as Anthropic.MessageParam["content"] }],
+    });
+    const block = res.content.find((b) => b.type === "text");
+    const raw = block && block.type === "text" ? block.text : "";
+    const j = extractJson<{ skills?: unknown }>(raw);
+    if (!Array.isArray(j.skills)) return [];
+    return j.skills
+      .map((s) => String(s).trim())
+      .filter(Boolean)
+      .slice(0, 20);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Extrahiert die Skills aus dem hinterlegten CV einer:s Kandidat:in (Claude)
+ * und speichert sie in candidates.skills. Setzt die Migration
+ * 02_candidate_skills.sql voraus.
+ */
+export async function extractCandidateSkills(
+  id: string
+): Promise<ActionResult & { skills?: string[] }> {
+  if (useMockData) return { ok: true, demo: true };
+  const { id: pid, error } = await currentPartnerId();
+  if (!pid) return { ok: false, error };
+  const supabase = createClient();
+
+  const { data: cand, error: selErr } = await supabase
+    .from("candidates")
+    .select("cv_path, cv_filename")
+    .eq("id", id)
+    .maybeSingle();
+  if (selErr || !cand) return { ok: false, error: selErr?.message ?? "Kandidat:in nicht gefunden." };
+  const cvPath = (cand as { cv_path?: string }).cv_path;
+  const cvName = (cand as { cv_filename?: string }).cv_filename ?? "";
+  if (!cvPath) return { ok: false, error: "Kein CV hinterlegt." };
+  if (!/\.pdf$/i.test(cvName)) {
+    return { ok: false, error: "Skill-Extraktion derzeit nur für PDF-Lebensläufe." };
+  }
+
+  const { data: file, error: dlErr } = await supabase.storage.from(BUCKET).download(cvPath);
+  if (dlErr || !file) return { ok: false, error: dlErr?.message ?? "CV-Datei nicht gefunden." };
+
+  const skills = await parseSkillsWithClaude(new Uint8Array(await file.arrayBuffer()));
+  if (skills == null) {
+    return { ok: false, error: "KI nicht verbunden (ANTHROPIC_API_KEY fehlt)." };
+  }
+
+  const { error: updErr } = await supabase
+    .from("candidates")
+    .update({ skills })
+    .eq("id", id);
+  if (updErr) {
+    if (/column .*skills.* does not exist/i.test(updErr.message)) {
+      return { ok: false, error: "Spalte `skills` fehlt – Migration 02_candidate_skills.sql ausführen." };
+    }
+    return { ok: false, error: updErr.message };
+  }
+  revalidatePath(`/cockpit/kandidaten/${id}`);
+  return { ok: true, skills };
+}

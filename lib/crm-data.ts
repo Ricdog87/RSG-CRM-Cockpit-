@@ -147,26 +147,52 @@ export async function getMandates(): Promise<RecruitingMandate[]> {
   );
 }
 
+function mapCandidate(r: Row): Candidate {
+  return {
+    id: str(r.id),
+    name: str(r.name, "Kandidat:in"),
+    role: str(r.role),
+    mandate_account: str(r.mandate_account),
+    stage: (str(r.stage, "neu") as CandidateStage),
+    source: str(r.source),
+    updated_at: str(r.updated_at),
+    email: str(r.email),
+    phone: str(r.phone),
+    cv_path: str(r.cv_path),
+    cv_filename: str(r.cv_filename),
+    cv_uploaded_at: str(r.cv_uploaded_at),
+    skills: Array.isArray(r.skills)
+      ? (r.skills as unknown[]).map((s) => String(s)).filter(Boolean)
+      : [],
+  };
+}
+
 export async function getCandidates(): Promise<Candidate[]> {
-  return load(
-    "candidates",
-    mockCandidates,
-    (rows) =>
-      rows.map((r) => ({
-        id: str(r.id),
-        name: str(r.name, "Kandidat:in"),
-        role: str(r.role),
-        mandate_account: str(r.mandate_account),
-        stage: (str(r.stage, "neu") as CandidateStage),
-        source: str(r.source),
-        updated_at: str(r.updated_at),
-        email: str(r.email),
-        phone: str(r.phone),
-        cv_path: str(r.cv_path),
-        cv_filename: str(r.cv_filename),
-      })),
-    { column: "updated_at", ascending: false }
-  );
+  return load("candidates", mockCandidates, (rows) => rows.map(mapCandidate), {
+    column: "updated_at",
+    ascending: false,
+  });
+}
+
+/** Einzelne:r Kandidat:in für die Detailmaske (RLS-scoped). */
+export async function getCandidate(id: string): Promise<Candidate | null> {
+  if (useMockData) return mockCandidates.find((c) => c.id === id) ?? null;
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("candidates")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) {
+      if (!isMissingTable(error)) logDataError("crm-data:candidate", error);
+      return null;
+    }
+    return data ? mapCandidate(data as Row) : null;
+  } catch (e) {
+    logDataError("crm-data:candidate", e);
+    return null;
+  }
 }
 
 export async function getSegments(): Promise<Segment[]> {

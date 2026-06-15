@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
 import { MoveSelect } from "@/components/cockpit/MoveSelect";
@@ -63,10 +64,16 @@ function CandidateCard({
   return (
     <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
       <div className="flex items-start justify-between gap-1">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-ink">{c.name}</p>
+        <Link
+          href={`/cockpit/kandidaten/${c.id}`}
+          className="group min-w-0"
+          title="Profil öffnen"
+        >
+          <p className="truncate text-sm font-medium text-ink group-hover:text-brand-deep group-hover:underline">
+            {c.name}
+          </p>
           <p className="truncate text-xs text-muted">{c.role}</p>
-        </div>
+        </Link>
         <RowActions
           confirmText={`„${c.name}" wirklich löschen?`}
           onDelete={() => onDelete(c.id)}
