@@ -1,4 +1,4 @@
-üimport { getCandidates, getAccounts } from "@/lib/crm-data";
+import { getCandidates, getAccounts } from "@/lib/crm-data";
 import { createCandidate } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
