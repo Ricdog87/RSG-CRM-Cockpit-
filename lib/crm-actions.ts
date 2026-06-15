@@ -601,3 +601,41 @@ export async function updateKiProject(
     "/cockpit/projekte/ki"
   );
 }
+
+// ---------- Notizen je Kandidat:in ----------------------------------
+
+export async function addCandidateNote(
+  candidateId: string,
+  body: string
+): Promise<ActionResult> {
+  if (!body.trim()) return { ok: false, error: "Leere Notiz." };
+  if (useMockData) return DEMO;
+  const { id, error } = await currentPartnerId();
+  if (!id) return { ok: false, error };
+  const supabase = createClient();
+  const { error: insErr } = await supabase.from("candidate_notes").insert({
+    partner_id: id,
+    candidate_id: candidateId,
+    body: body.trim(),
+  });
+  if (insErr) {
+    if (/relation .*candidate_notes.* does not exist/i.test(insErr.message)) {
+      return { ok: false, error: "Tabelle candidate_notes fehlt – Migration 03_candidate_notes.sql ausführen." };
+    }
+    return { ok: false, error: insErr.message };
+  }
+  revalidatePath(`/cockpit/kandidaten/${candidateId}`);
+  return { ok: true };
+}
+
+export async function deleteCandidateNote(
+  id: string,
+  candidateId: string
+): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const supabase = createClient();
+  const { error } = await supabase.from("candidate_notes").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/cockpit/kandidaten/${candidateId}`);
+  return { ok: true };
+}

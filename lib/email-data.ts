@@ -164,6 +164,32 @@ export async function getEmailActivitiesForAccount(
   }
 }
 
+/** Getrackte E-Mails einer:s Kandidat:in (über ihre/seine E-Mail-Adresse). */
+export async function getEmailActivitiesForCandidate(
+  email: string | undefined
+): Promise<EmailActivity[]> {
+  if (!email) return [];
+  if (useMockData) return [];
+  try {
+    const supabase = createClient();
+    const e = email.toLowerCase();
+    const { data, error } = await supabase
+      .from("email_activities")
+      .select("*")
+      .or(`from_email.eq.${e},to_email.eq.${e}`)
+      .order("occurred_at", { ascending: false })
+      .limit(50);
+    if (error) {
+      if (!isMissingTable(error)) logDataError("email-data:candidate", error);
+      return [];
+    }
+    return ((data as Array<Record<string, unknown>>) ?? []).map(mapRow);
+  } catch (err) {
+    logDataError("email-data:candidate", err);
+    return [];
+  }
+}
+
 const mockEmails: EmailActivity[] = [
   {
     id: "e1",

@@ -47,3 +47,29 @@ const mockNotes: Note[] = [
     created_at: "2026-06-09T15:10:00Z",
   },
 ];
+
+/** Notizen zu einer:m Kandidat:in (neueste zuerst). */
+export async function getNotesForCandidate(candidateId: string): Promise<Note[]> {
+  if (useMockData) return [];
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("candidate_notes")
+      .select("id, body, created_at")
+      .eq("candidate_id", candidateId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) {
+      if (!isMissingTable(error)) logDataError("notes-data:candidate_notes", error);
+      return [];
+    }
+    return ((data as Array<Record<string, unknown>>) ?? []).map((r) => ({
+      id: String(r.id),
+      body: String(r.body ?? ""),
+      created_at: String(r.created_at ?? ""),
+    }));
+  } catch (e) {
+    logDataError("notes-data:candidate_notes", e);
+    return [];
+  }
+}
