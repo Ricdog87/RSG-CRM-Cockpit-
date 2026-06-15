@@ -7,8 +7,10 @@ import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
+import { IconMail, IconPhone, IconFolder } from "@/components/ui/icons";
 import { CANDIDATE_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { updateCandidateStage, updateCandidate, deleteCandidate } from "@/lib/crm-actions";
+import { cvSignedUrl } from "@/lib/cv-actions";
 import { formatDate } from "@/lib/format";
 import type { FormField } from "@/components/cockpit/EntityFormDialog";
 import type { Candidate, CandidateStage } from "@/lib/crm-types";
@@ -22,6 +24,30 @@ const COLUMNS: BoardColumn<CandidateStage>[] = [
 ];
 
 const STAGE_OPTIONS = COLUMNS.map((c) => ({ value: c.stage, label: c.label }));
+
+function CvLink({ path }: { path: string }) {
+  const [loading, setLoading] = useState(false);
+  async function open() {
+    setLoading(true);
+    try {
+      const res = await cvSignedUrl(path);
+      if (res.ok && res.url) window.open(res.url, "_blank", "noopener,noreferrer");
+    } finally {
+      setLoading(false);
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={open}
+      disabled={loading}
+      className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.7rem] font-medium text-brand transition-colors hover:bg-brand/10 disabled:opacity-60"
+      title="CV öffnen"
+    >
+      <IconFolder size={12} /> {loading ? "öffne …" : "CV"}
+    </button>
+  );
+}
 
 function CandidateCard({
   c,
@@ -53,6 +79,8 @@ function CandidateCard({
               initial={{
                 name: c.name,
                 role: c.role,
+                email: c.email ?? "",
+                phone: c.phone ?? "",
                 mandate_account: c.mandate_account,
                 stage: c.stage,
                 source: c.source,
@@ -61,9 +89,34 @@ function CandidateCard({
           }
         />
       </div>
+
+      {c.email || c.phone ? (
+        <div className="mt-2 space-y-0.5">
+          {c.email ? (
+            <a
+              href={`mailto:${c.email}`}
+              className="flex items-center gap-1.5 truncate text-xs text-muted hover:text-brand"
+            >
+              <IconMail size={12} /> <span className="truncate">{c.email}</span>
+            </a>
+          ) : null}
+          {c.phone ? (
+            <a
+              href={`tel:${c.phone.replace(/\s+/g, "")}`}
+              className="flex items-center gap-1.5 truncate text-xs text-muted hover:text-brand"
+            >
+              <IconPhone size={12} /> <span className="truncate">{c.phone}</span>
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+
       <p className="mt-2 truncate text-xs text-faint">{c.mandate_account}</p>
       <div className="mt-2 flex items-center justify-between text-[0.7rem] text-faint">
-        <span>{c.source}</span>
+        <span className="flex items-center gap-1.5">
+          <span className="truncate">{c.source}</span>
+          {c.cv_path ? <CvLink path={c.cv_path} /> : null}
+        </span>
         <span>{formatDate(c.updated_at)}</span>
       </div>
       <MoveSelect<CandidateStage>
