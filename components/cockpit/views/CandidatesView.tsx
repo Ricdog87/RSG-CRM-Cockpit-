@@ -62,14 +62,14 @@ function CandidateCard({
   editFields: FormField[];
 }) {
   return (
-    <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
+    <div className="rounded-2xl border border-border bg-elevated/60 p-4 shadow-sm transition-all hover:border-brand/40 hover:shadow">
       <div className="flex items-start justify-between gap-1">
         <Link
           href={`/cockpit/kandidaten/${c.id}`}
           className="group min-w-0"
           title="Profil öffnen"
         >
-          <p className="truncate text-sm font-medium text-ink group-hover:text-brand-deep group-hover:underline">
+          <p className="truncate text-sm font-semibold text-ink group-hover:text-brand-deep group-hover:underline">
             {c.name}
           </p>
           <p className="truncate text-xs text-muted">{c.role}</p>
@@ -98,7 +98,7 @@ function CandidateCard({
       </div>
 
       {c.email || c.phone ? (
-        <div className="mt-2 space-y-0.5">
+        <div className="mt-3 space-y-1">
           {c.email ? (
             <a
               href={`mailto:${c.email}`}
@@ -118,8 +118,10 @@ function CandidateCard({
         </div>
       ) : null}
 
-      <p className="mt-2 truncate text-xs text-faint">{c.mandate_account}</p>
-      <div className="mt-2 flex items-center justify-between text-[0.7rem] text-faint">
+      {c.mandate_account ? (
+        <p className="mt-2.5 truncate text-xs font-medium text-faint">{c.mandate_account}</p>
+      ) : null}
+      <div className="mt-3 flex items-center justify-between text-[0.7rem] text-faint">
         <span className="flex items-center gap-1.5">
           <span className="truncate">{c.source}</span>
           {c.cv_path ? <CvLink path={c.cv_path} /> : null}
