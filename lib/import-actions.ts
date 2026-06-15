@@ -43,6 +43,20 @@ function toDate(v: string): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
 }
 
+function toDateTime(v: string): string | null {
+  if (!v) return null;
+  // dd.mm.yyyy [hh:mm] → ISO
+  const de = v.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[ T](\d{1,2}):(\d{2}))?/);
+  if (de) {
+    const [, d, m, y, hh = "00", mm = "00"] = de;
+    const iso = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}T${hh.padStart(2, "0")}:${mm}:00`;
+    const dt = new Date(iso);
+    return Number.isNaN(dt.getTime()) ? null : dt.toISOString();
+  }
+  const dt = new Date(v.replace(" ", "T"));
+  return Number.isNaN(dt.getTime()) ? null : dt.toISOString();
+}
+
 async function currentPartnerId(): Promise<{ id: string | null; error?: string }> {
   const supabase = createClient();
   const {
@@ -88,7 +102,14 @@ export async function importRows(input: {
         rec[f.key] = null;
         continue;
       }
-      rec[f.key] = f.type === "number" ? toNumber(raw) : f.type === "date" ? toDate(raw) : raw;
+      rec[f.key] =
+        f.type === "number"
+          ? toNumber(raw)
+          : f.type === "date"
+            ? toDate(raw)
+            : f.type === "datetime"
+              ? toDateTime(raw)
+              : raw;
     }
     if (missingRequired) {
       errors.push({ row: i + 2, message: `Pflichtfeld fehlt: ${missingRequired}` });
@@ -110,23 +131,28 @@ export async function importRows(input: {
   if (!pid) return { ...empty, ok: false, error: pErr, errors };
   const supabase = createClient();
 
-  // Account-Auflösung (Name → id) für Ansprechpartner.
-  let accountMap: Map<string, string> | null = null;
-  if (obj.accountRefField) {
-    const { data } = await supabase.from("accounts").select("id, name");
-    accountMap = new Map(
-      ((data as Array<{ id: string; name: string }> | null) ?? []).map((a) => [
-        a.name.trim().toLowerCase(),
-        a.id,
-      ])
-    );
+  // Eltern-Auflösung (Account/Kandidat → id [+ Name]) über Name/E-Mail.
+  let parentMap: Map<string, { id: string; name: string }> | null = null;
+  if (obj.parentRef) {
+    const cols = Array.from(new Set(["id", "name", ...obj.parentRef.matchColumns]));
+    const { data } = await supabase.from(obj.parentRef.table).select(cols.join(", "));
+    parentMap = new Map();
+    for (const r of (data as unknown as Array<Record<string, unknown>>) ?? []) {
+      const id = String(r.id);
+      const name = String(r.name ?? "");
+      for (const mc of obj.parentRef.matchColumns) {
+        const val = String(r[mc] ?? "").trim().toLowerCase();
+        if (val && !parentMap.has(val)) parentMap.set(val, { id, name });
+      }
+    }
   }
 
   // Dublettenschlüssel: vorhandene Werte → Datensatz-id vorab laden.
   const dedupeCol = input.dedupe === "id" ? "id" : input.dedupe;
   let existing: Map<string, string> | null = null;
   if (dedupeCol) {
-    const { data, error } = await supabase.from(obj.table).select(`id, ${dedupeCol}`);
+    const sel = dedupeCol === "id" ? "id" : `id, ${dedupeCol}`;
+    const { data, error } = await supabase.from(obj.table).select(sel);
     if (error)
       return { ...empty, ok: false, error: `Abgleich fehlgeschlagen: ${error.message}`, errors };
     existing = new Map(
@@ -143,17 +169,20 @@ export async function importRows(input: {
   const toUpdate: { idx: number; id: string; rec: Record<string, unknown> }[] = [];
 
   for (const b of built) {
-    const rec = { ...b.rec };
-    // virtuelles Account-Feld → account_id
-    if (obj.accountRefField) {
-      const accName = String(rec[obj.accountRefField] ?? "").trim().toLowerCase();
-      delete rec[obj.accountRefField];
-      const accId = accountMap?.get(accName);
-      if (!accId) {
-        errors.push({ row: b.idx, message: `Account nicht gefunden: ${b.rec[obj.accountRefField] ?? ""}` });
+    const rec = { ...b.rec, ...(obj.fixed ?? {}) };
+    // virtuelles Eltern-Feld → id (+ Name) auflösen
+    if (obj.parentRef) {
+      const pr = obj.parentRef;
+      const key = String(rec[pr.field] ?? "").trim().toLowerCase();
+      const raw = String(b.rec[pr.field] ?? "");
+      delete rec[pr.field];
+      const hitParent = parentMap?.get(key);
+      if (!hitParent) {
+        errors.push({ row: b.idx, message: `${pr.table === "accounts" ? "Account" : "Kandidat:in"} nicht gefunden: ${raw}` });
         continue;
       }
-      rec.account_id = accId;
+      rec[pr.setId] = hitParent.id;
+      if (pr.setLabel) rec[pr.setLabel] = hitParent.name;
     }
     const hit = existing && b.dedupeVal ? existing.get(b.dedupeVal.toLowerCase()) : undefined;
     if (hit) {

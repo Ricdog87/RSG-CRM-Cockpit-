@@ -9,7 +9,7 @@ export default function ImportPage() {
       <PageHeader
         eyebrow="Datenintegration"
         title="Import"
-        description="CSV-Direktimport für Kunden, Kandidaten, Ansprechpartner und Projekte – mit Spaltenzuordnung, Dublettenabgleich und Aktualisierung vorhandener Datensätze."
+        description="CSV-Direktimport für Datensätze (Kunden, Kandidaten, Ansprechpartner, Projekte) und Aktivitäten (Notizen, Anrufe, Meetings, Aufgaben) – mit Spaltenzuordnung, Dublettenabgleich, Aktualisierung und Beispieldateien."
       />
       <ImportWizard />
     </div>

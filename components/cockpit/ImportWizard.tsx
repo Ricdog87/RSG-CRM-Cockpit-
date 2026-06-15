@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/components/ui/cn";
 import { IconFolder, IconCheck, IconAlert } from "@/components/ui/icons";
 import { parseCsv } from "@/lib/csv";
-import { IMPORT_OBJECTS, findImportObject, guessColumn } from "@/lib/import-config";
+import { IMPORT_OBJECTS, findImportObject, guessColumn, sampleCsv } from "@/lib/import-config";
 import { importRows, type ImportResult } from "@/lib/import-actions";
 
 const IGNORE = -1;
@@ -77,30 +77,48 @@ export function ImportWizard() {
 
   const preview = rows.slice(0, 5);
 
+  function downloadSample() {
+    if (!obj) return;
+    const blob = new Blob([sampleCsv(obj)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `beispiel-${obj.key}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const groups = ["Datensätze", "Aktivitäten"] as const;
+
   return (
     <div className="space-y-6">
       {/* 1) Objekt wählen */}
       <Card>
-        <CardBody>
+        <CardBody className="space-y-4">
           <SectionHeader title="1 · Was möchtest du importieren?" />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {IMPORT_OBJECTS.map((o) => (
-              <button
-                key={o.key}
-                type="button"
-                onClick={() => selectObject(o.key)}
-                className={cn(
-                  "rounded-xl border p-3 text-left transition-colors",
-                  objectKey === o.key
-                    ? "border-brand bg-brand/[0.06] ring-1 ring-brand/30"
-                    : "border-border bg-elevated/40 hover:border-brand/40"
-                )}
-              >
-                <p className="text-sm font-semibold text-ink">{o.label}</p>
-                <p className="mt-0.5 text-xs text-muted">{o.description}</p>
-              </button>
-            ))}
-          </div>
+          {groups.map((g) => (
+            <div key={g}>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-faint">{g}</p>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {IMPORT_OBJECTS.filter((o) => o.group === g).map((o) => (
+                  <button
+                    key={o.key}
+                    type="button"
+                    onClick={() => selectObject(o.key)}
+                    className={cn(
+                      "rounded-xl border p-3 text-left transition-colors",
+                      objectKey === o.key
+                        ? "border-brand bg-brand/[0.06] ring-1 ring-brand/30"
+                        : "border-border bg-elevated/40 hover:border-brand/40"
+                    )}
+                  >
+                    <p className="text-sm font-semibold text-ink">{o.label}</p>
+                    <p className="mt-0.5 text-xs text-muted">{o.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </CardBody>
       </Card>
 
@@ -111,6 +129,11 @@ export function ImportWizard() {
             <SectionHeader
               title="2 · CSV-Datei hochladen"
               hint="erste Zeile = Spaltenüberschriften · Komma oder Semikolon"
+              action={
+                <Button variant="subtle" onClick={downloadSample} type="button">
+                  <IconFolder size={15} /> Beispiel-CSV
+                </Button>
+              }
             />
             <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-elevated/40 px-6 py-8 text-center hover:border-brand/40">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand-deep">
