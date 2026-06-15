@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient, hasServiceRole } from "@/lib/supabase/service";
+import { useMockData } from "@/lib/env";
 
 /** Eine DSGVO-Einwilligung (Datensatz aus candidate_consents). */
 export interface Consent {
@@ -50,6 +51,35 @@ export async function getConsentForCandidate(candidateId: string): Promise<Conse
     .maybeSingle();
   if (error || !data) return null;
   return mapConsent(data as Row);
+}
+
+export interface ConsentRow extends Consent {
+  candidate_name: string;
+  candidate_email: string | null;
+}
+
+/** Alle Einwilligungen der:des Partner:in (+ Downline) für die Übersicht. */
+export async function getConsents(): Promise<ConsentRow[]> {
+  if (useMockData) return [];
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("candidate_consents")
+      .select("*, candidates(name, email)")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error || !data) return [];
+    return (data as Row[]).map((r) => {
+      const cand = (r.candidates as { name?: string; email?: string } | null) ?? null;
+      return {
+        ...mapConsent(r),
+        candidate_name: cand?.name ? String(cand.name) : "—",
+        candidate_email: cand?.email ? String(cand.email) : null,
+      };
+    });
+  } catch {
+    return [];
+  }
 }
 
 /**

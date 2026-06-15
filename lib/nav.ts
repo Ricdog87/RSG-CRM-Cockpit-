@@ -17,6 +17,7 @@ import {
   IconTrophy,
   IconSettings,
   IconFolder,
+  IconCheck,
 } from "@/components/ui/icons";
 
 export interface NavItem {
@@ -128,6 +129,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Kandidaten",
         icon: IconUserCheck,
         description: "Recruiting-Pipeline der Kandidat:innen",
+      },
+      {
+        href: "/cockpit/einwilligungen",
+        label: "Einwilligungen",
+        icon: IconCheck,
+        description: "DSGVO-Einwilligungen der Kandidat:innen",
       },
     ],
   },
