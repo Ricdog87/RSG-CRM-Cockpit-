@@ -1,4 +1,4 @@
-import { getCandidates, getAccounts } from "@/lib/crm-data";
+üimport { getCandidates, getAccounts } from "@/lib/crm-data";
 import { createCandidate } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
@@ -6,7 +6,7 @@ import { CandidatesView } from "@/components/cockpit/views/CandidatesView";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { CvUploadDialog } from "@/components/cockpit/CvUploadDialog";
 import { CANDIDATE_FIELDS, withDatalist } from "@/lib/crm-forms";
-import { IconUserCheck } from "@/components/ui/icons";
+import { IconUsers, IconCalendar, IconTrophy } from "@/components/ui/icons";
 import { formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -48,21 +48,21 @@ export default async function KandidatenPage() {
           value={formatNumber(aktiv)}
           hint="aktiv in Bearbeitung"
           accent="sky"
-          icon={IconUserCheck}
+          icon={IconUsers}
         />
         <StatCard
           label="In Interviews"
           value={formatNumber(interviews)}
           hint="laufende Gespräche"
           accent="brand"
-          icon={IconUserCheck}
+          icon={IconCalendar}
         />
         <StatCard
           label="Platziert"
           value={formatNumber(platziert)}
           hint="erfolgreich vermittelt"
           accent="success"
-          icon={IconUserCheck}
+          icon={IconTrophy}
         />
       </div>
 
