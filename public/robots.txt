@@ -1,0 +1,3 @@
+# Suchmaschinen-Crawling deaktivieren – internes Business-Tool
+User-agent: *
+Disallow: /
