@@ -175,10 +175,10 @@ export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 /** Kuratiierte Primär-Einträge für die Mobile-Tab-Bar. */
 export const MOBILE_NAV_HREFS = [
   "/cockpit",
-  "/cockpit/sales",
   "/cockpit/kunden",
   "/cockpit/kandidaten",
-  "/cockpit/provisionen",
+  "/cockpit/sales",
+  "/cockpit/aufgaben",
 ];
 
 /** Findet den aktiven Nav-Eintrag zum aktuellen Pfad (längster Präfix-Match). */
