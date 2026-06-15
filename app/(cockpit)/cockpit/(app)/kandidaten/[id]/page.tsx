@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCandidate, getAccounts } from "@/lib/crm-data";
 import { getNotesForCandidate } from "@/lib/notes-data";
+import { getConsentForCandidate } from "@/lib/consent-data";
 import { getTasksForRelated } from "@/lib/tasks-data";
 import { getEmailActivitiesForCandidate } from "@/lib/email-data";
 import { updateCandidate } from "@/lib/crm-actions";
@@ -15,6 +16,7 @@ import { CandidateStageControl } from "@/components/cockpit/CandidateStageContro
 import { CvDownloadButton } from "@/components/cockpit/CvDownloadButton";
 import { CandidateSkills } from "@/components/cockpit/CandidateSkills";
 import { CandidateActivity } from "@/components/cockpit/CandidateActivity";
+import { CandidateConsent } from "@/components/cockpit/CandidateConsent";
 import {
   IconChevronRight,
   IconMail,
@@ -63,11 +65,12 @@ export default async function KandidatDetailPage({
   const c = await getCandidate(params.id);
   if (!c) notFound();
 
-  const [notes, tasks, emails, accounts] = await Promise.all([
+  const [notes, tasks, emails, accounts, consent] = await Promise.all([
     getNotesForCandidate(c.id),
     getTasksForRelated("candidate", c.id),
     getEmailActivitiesForCandidate(c.email),
     getAccounts(),
+    getConsentForCandidate(c.id).catch(() => null),
   ]);
 
   // Mandat/Account klickbar verknüpfen (Abgleich über den Namen).
@@ -206,6 +209,19 @@ export default async function KandidatDetailPage({
 
         {/* Rechte Spalte: Verknüpfungen / Dokumente */}
         <div className="space-y-5 lg:col-span-3">
+          <Card>
+            <CardBody>
+              <SectionHeader title="DSGVO-Einwilligung" hint="Datenverarbeitung" />
+              <CandidateConsent
+                candidateId={c.id}
+                hasEmail={Boolean(c.email)}
+                status={consent?.status ?? "none"}
+                sentAt={consent?.sent_at}
+                grantedAt={consent?.granted_at}
+              />
+            </CardBody>
+          </Card>
+
           <Card>
             <CardBody>
               <SectionHeader title="Mandat / Account" hint="verknüpftes Unternehmen" />
