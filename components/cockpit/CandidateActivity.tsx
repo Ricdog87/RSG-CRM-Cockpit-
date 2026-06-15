@@ -6,7 +6,15 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/components/ui/cn";
-import { IconMail, IconCheck, IconTrash, IconPencil, IconTasks } from "@/components/ui/icons";
+import {
+  IconMail,
+  IconCheck,
+  IconTrash,
+  IconPencil,
+  IconTasks,
+  IconPhone,
+  IconCalendar,
+} from "@/components/ui/icons";
 import { formatDate } from "@/lib/format";
 import {
   addCandidateNote,
@@ -15,18 +23,29 @@ import {
   setTaskDone,
   deleteTask,
 } from "@/lib/crm-actions";
-import type { Note } from "@/lib/notes-data";
+import type { CandidateNote, CandidateNoteKind } from "@/lib/notes-data";
 import type { Task } from "@/lib/tasks-data";
 import type { EmailActivity } from "@/lib/email-data";
 
-type Tab = "alle" | "notizen" | "aufgaben" | "emails";
+type Tab = "alle" | "notizen" | "anrufe" | "meetings" | "aufgaben" | "emails";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "alle", label: "Alle" },
   { key: "notizen", label: "Notizen" },
+  { key: "anrufe", label: "Anrufe" },
+  { key: "meetings", label: "Meetings" },
   { key: "aufgaben", label: "Aufgaben" },
   { key: "emails", label: "E-Mails" },
 ];
+
+const KIND_META: Record<
+  CandidateNoteKind,
+  { label: string; icon: (p: { size?: number }) => JSX.Element; chip: string }
+> = {
+  note: { label: "Notiz", icon: IconPencil, chip: "bg-brand/10 text-brand-deep" },
+  call: { label: "Anruf", icon: IconPhone, chip: "bg-success/10 text-success" },
+  meeting: { label: "Meeting", icon: IconCalendar, chip: "bg-sky/10 text-sky-deep" },
+};
 
 function isOverdue(due: string | null): boolean {
   if (!due) return false;
@@ -38,7 +57,8 @@ function isOverdue(due: string | null): boolean {
 
 /**
  * Aktivitäts-Center der Kandidaten-Detailmaske (HubSpot-Vorbild):
- * Notizen + Aufgaben anlegen, E-Mail-Verlauf, alles als gefilterte Timeline.
+ * Notizen, Anrufe, Meetings & Aufgaben protokollieren, E-Mail-Verlauf,
+ * alles als gefilterte Timeline.
  */
 export function CandidateActivity({
   candidateId,
@@ -49,13 +69,13 @@ export function CandidateActivity({
 }: {
   candidateId: string;
   candidateName: string;
-  notes: Note[];
+  notes: CandidateNote[];
   tasks: Task[];
   emails: EmailActivity[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("alle");
-  const [noteItems, setNoteItems] = useState<Note[]>(notes);
+  const [noteItems, setNoteItems] = useState<CandidateNote[]>(notes);
   const [taskItems, setTaskItems] = useState<Task[]>(tasks);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -64,19 +84,28 @@ export function CandidateActivity({
   const taskRef = useRef<HTMLInputElement>(null);
   const dueRef = useRef<HTMLInputElement>(null);
 
+  // Welcher Eintragstyp wird im Composer protokolliert?
+  const logKind: CandidateNoteKind =
+    tab === "anrufe" ? "call" : tab === "meetings" ? "meeting" : "note";
+
   function saveNote() {
     const body = noteRef.current?.value.trim();
     if (!body) return;
     setError(null);
-    const optimistic: Note = { id: `tmp-${Date.now()}`, body, created_at: new Date().toISOString() };
+    const optimistic: CandidateNote = {
+      id: `tmp-${Date.now()}`,
+      body,
+      created_at: new Date().toISOString(),
+      kind: logKind,
+    };
     setNoteItems((p) => [optimistic, ...p]);
     if (noteRef.current) noteRef.current.value = "";
     start(async () => {
-      const res = await addCandidateNote(candidateId, body);
+      const res = await addCandidateNote(candidateId, body, logKind);
       if (res.ok && !res.demo) router.refresh();
       else if (!res.ok) {
         setNoteItems((p) => p.filter((n) => n.id !== optimistic.id));
-        setError(res.error ?? "Notiz fehlgeschlagen.");
+        setError(res.error ?? "Eintrag fehlgeschlagen.");
       }
     });
   }
@@ -140,35 +169,41 @@ export function CandidateActivity({
     });
   }
 
-  const showNotes = tab === "alle" || tab === "notizen";
+  // Welche Notiz-Arten zeigt der aktive Tab?
+  const noteKindFilter: CandidateNoteKind | null =
+    tab === "notizen" ? "note" : tab === "anrufe" ? "call" : tab === "meetings" ? "meeting" : null;
+  const showNotes = tab === "alle" || noteKindFilter !== null;
   const showTasks = tab === "alle" || tab === "aufgaben";
   const showEmails = tab === "alle" || tab === "emails";
 
-  // Vereinte, chronologische Timeline für „Alle".
-  type Feed =
-    | { kind: "note"; at: string; node: React.ReactNode }
-    | { kind: "task"; at: string; node: React.ReactNode }
-    | { kind: "email"; at: string; node: React.ReactNode };
-
+  type Feed = { at: string; node: React.ReactNode };
   const feed: Feed[] = [];
-  if (showNotes) noteItems.forEach((n) => feed.push({ kind: "note", at: n.created_at, node: renderNote(n) }));
-  if (showTasks) taskItems.forEach((t) => feed.push({ kind: "task", at: t.due_date ?? "", node: renderTask(t) }));
-  if (showEmails) emails.forEach((e) => feed.push({ kind: "email", at: e.occurred_at, node: renderEmail(e) }));
+  if (showNotes) {
+    noteItems
+      .filter((n) => (noteKindFilter ? n.kind === noteKindFilter : true))
+      .forEach((n) => feed.push({ at: n.created_at, node: renderNote(n) }));
+  }
+  if (showTasks) taskItems.forEach((t) => feed.push({ at: t.due_date ?? "", node: renderTask(t) }));
+  if (showEmails) emails.forEach((e) => feed.push({ at: e.occurred_at, node: renderEmail(e) }));
   feed.sort((a, b) => (b.at || "").localeCompare(a.at || ""));
 
-  function renderNote(n: Note) {
+  function renderNote(n: CandidateNote) {
+    const meta = KIND_META[n.kind];
+    const Icon = meta.icon;
     return (
       <div className="group flex items-start gap-3">
-        <span className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full bg-brand/10 text-brand-deep">
-          <IconPencil size={14} />
+        <span className={cn("mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full", meta.chip)}>
+          <Icon size={14} />
         </span>
         <div className="min-w-0 flex-1 rounded-xl border border-border bg-elevated/40 px-3 py-2.5">
           <p className="whitespace-pre-line text-sm text-ink">{n.body}</p>
-          <p className="mt-1 text-[0.7rem] text-faint">Notiz · {formatDate(n.created_at)}</p>
+          <p className="mt-1 text-[0.7rem] text-faint">
+            {meta.label} · {formatDate(n.created_at)}
+          </p>
         </div>
         <button
           type="button"
-          aria-label="Notiz löschen"
+          aria-label="Eintrag löschen"
           onClick={() => removeNote(n.id)}
           className="mt-1 flex-none rounded-lg p-1.5 text-faint opacity-0 transition-opacity hover:bg-danger/10 hover:text-danger group-hover:opacity-100"
         >
@@ -234,18 +269,26 @@ export function CandidateActivity({
     );
   }
 
+  const composer = KIND_META[logKind];
+  const placeholder =
+    logKind === "call"
+      ? "Anruf protokollieren …"
+      : logKind === "meeting"
+        ? "Meeting protokollieren …"
+        : "Notiz hinzufügen …";
+
   return (
     <Card>
       <CardBody className="space-y-4">
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-border">
+        <div className="-mx-1 flex gap-1 overflow-x-auto border-b border-border px-1">
           {TABS.map((t) => (
             <button
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
               className={cn(
-                "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                "-mb-px flex-none border-b-2 px-3 py-2 text-sm font-medium transition-colors",
                 tab === t.key
                   ? "border-brand text-brand-deep"
                   : "border-transparent text-muted hover:text-ink"
@@ -257,42 +300,40 @@ export function CandidateActivity({
         </div>
 
         {/* Composer (kontextabhängig) */}
-        {tab !== "emails" ? (
-          tab === "aufgaben" ? (
-            <div className="flex flex-wrap gap-2">
-              <input
-                ref={taskRef}
-                placeholder="Aufgabe …"
-                onKeyDown={(e) => e.key === "Enter" && addTaskItem()}
-                className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand"
-              />
-              <input
-                ref={dueRef}
-                type="date"
-                className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-muted focus-visible:ring-2 focus-visible:ring-brand"
-              />
-              <Button onClick={addTaskItem} disabled={pending}>
-                <IconTasks size={15} /> Aufgabe
+        {tab === "aufgaben" ? (
+          <div className="flex flex-wrap gap-2">
+            <input
+              ref={taskRef}
+              placeholder="Aufgabe …"
+              onKeyDown={(e) => e.key === "Enter" && addTaskItem()}
+              className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand"
+            />
+            <input
+              ref={dueRef}
+              type="date"
+              className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-muted focus-visible:ring-2 focus-visible:ring-brand"
+            />
+            <Button onClick={addTaskItem} disabled={pending}>
+              <IconTasks size={15} /> Aufgabe
+            </Button>
+          </div>
+        ) : tab !== "emails" ? (
+          <div className="space-y-2">
+            <textarea
+              ref={noteRef}
+              rows={2}
+              placeholder={placeholder}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") saveNote();
+              }}
+              className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand"
+            />
+            <div className="flex justify-end">
+              <Button onClick={saveNote} disabled={pending}>
+                <composer.icon size={15} /> {composer.label} speichern
               </Button>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <textarea
-                ref={noteRef}
-                rows={2}
-                placeholder="Notiz hinzufügen …"
-                onKeyDown={(e) => {
-                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") saveNote();
-                }}
-                className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand"
-              />
-              <div className="flex justify-end">
-                <Button onClick={saveNote} disabled={pending}>
-                  <IconPencil size={15} /> Notiz speichern
-                </Button>
-              </div>
-            </div>
-          )
+          </div>
         ) : null}
 
         {error ? (

@@ -49,25 +49,35 @@ const mockNotes: Note[] = [
 ];
 
 /** Notizen zu einer:m Kandidat:in (neueste zuerst). */
-export async function getNotesForCandidate(candidateId: string): Promise<Note[]> {
+export type CandidateNoteKind = "note" | "call" | "meeting";
+
+export interface CandidateNote extends Note {
+  kind: CandidateNoteKind;
+}
+
+export async function getNotesForCandidate(candidateId: string): Promise<CandidateNote[]> {
   if (useMockData) return [];
   try {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("candidate_notes")
-      .select("id, body, created_at")
+      .select("*")
       .eq("candidate_id", candidateId)
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(200);
     if (error) {
       if (!isMissingTable(error)) logDataError("notes-data:candidate_notes", error);
       return [];
     }
-    return ((data as Array<Record<string, unknown>>) ?? []).map((r) => ({
-      id: String(r.id),
-      body: String(r.body ?? ""),
-      created_at: String(r.created_at ?? ""),
-    }));
+    return ((data as Array<Record<string, unknown>>) ?? []).map((r) => {
+      const k = String(r.kind ?? "note");
+      return {
+        id: String(r.id),
+        body: String(r.body ?? ""),
+        created_at: String(r.created_at ?? ""),
+        kind: (k === "call" || k === "meeting" ? k : "note") as CandidateNoteKind,
+      };
+    });
   } catch (e) {
     logDataError("notes-data:candidate_notes", e);
     return [];

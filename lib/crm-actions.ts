@@ -606,18 +606,22 @@ export async function updateKiProject(
 
 export async function addCandidateNote(
   candidateId: string,
-  body: string
+  body: string,
+  kind: "note" | "call" | "meeting" = "note"
 ): Promise<ActionResult> {
-  if (!body.trim()) return { ok: false, error: "Leere Notiz." };
+  if (!body.trim()) return { ok: false, error: "Leerer Eintrag." };
   if (useMockData) return DEMO;
   const { id, error } = await currentPartnerId();
   if (!id) return { ok: false, error };
   const supabase = createClient();
-  const { error: insErr } = await supabase.from("candidate_notes").insert({
-    partner_id: id,
-    candidate_id: candidateId,
-    body: body.trim(),
-  });
+  const base = { partner_id: id, candidate_id: candidateId, body: body.trim() };
+
+  let { error: insErr } = await supabase.from("candidate_notes").insert({ ...base, kind });
+  // Migration 04 (kind-Spalte) noch nicht eingespielt → ohne kind speichern,
+  // damit Einträge nicht verloren gehen.
+  if (insErr && /column .*kind.* does not exist/i.test(insErr.message)) {
+    ({ error: insErr } = await supabase.from("candidate_notes").insert(base));
+  }
   if (insErr) {
     if (/relation .*candidate_notes.* does not exist/i.test(insErr.message)) {
       return { ok: false, error: "Tabelle candidate_notes fehlt – Migration 03_candidate_notes.sql ausführen." };
