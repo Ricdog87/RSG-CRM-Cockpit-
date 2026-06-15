@@ -16,6 +16,7 @@ import {
   IconEuro,
   IconTrophy,
   IconSettings,
+  IconFolder,
 } from "@/components/ui/icons";
 
 export interface NavItem {
@@ -63,6 +64,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Automatisierungen",
         icon: IconBolt,
         description: "Regelbasierte Workflows im Hintergrund",
+      },
+      {
+        href: "/cockpit/import",
+        label: "Import",
+        icon: IconFolder,
+        description: "CSV-Direktimport für Kunden, Kandidaten & mehr",
       },
     ],
   },
