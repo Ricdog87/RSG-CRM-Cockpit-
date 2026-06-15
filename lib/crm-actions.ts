@@ -6,6 +6,7 @@ import { useMockData } from "@/lib/env";
 import { findDuplicate } from "@/lib/dedupe";
 import { accounts as mockAccounts } from "@/lib/crm-mock";
 import { automationEnabled, AUTOMATIONS } from "@/lib/automations";
+import { logDataError } from "@/lib/log";
 import type { RelatedType } from "@/lib/task-link";
 
 /**
@@ -124,18 +125,22 @@ export async function createAccount(
   if (insErr) return { ok: false, error: insErr.message };
   revalidatePath("/cockpit/kunden");
 
-  // Workflow: neuer Lead → Erstkontakt-Aufgabe.
+  // Workflow: neuer Lead → Erstkontakt-Aufgabe (darf das Anlegen nie blockieren).
   const accountId = (ins as { id: string }).id;
-  if (lifecycle === "lead" && (await automationEnabled(supabase, pid, "lead_followup"))) {
-    const due = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
-    await supabase.from("crm_tasks").insert({
-      partner_id: pid,
-      related_type: "customer",
-      related_id: accountId,
-      related_label: name,
-      title: "Erstkontakt vereinbaren",
-      due_date: due,
-    });
+  try {
+    if (lifecycle === "lead" && (await automationEnabled(supabase, pid, "lead_followup"))) {
+      const due = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
+      await supabase.from("crm_tasks").insert({
+        partner_id: pid,
+        related_type: "customer",
+        related_id: accountId,
+        related_label: name,
+        title: "Erstkontakt vereinbaren",
+        due_date: due,
+      });
+    }
+  } catch (e) {
+    logDataError("automation:lead_followup", e);
   }
   return { ok: true };
 }
@@ -274,8 +279,9 @@ export async function updateOpportunityStage(
           }
         }
       }
-    } catch {
-      /* Automation darf den Phasenwechsel nie blockieren */
+    } catch (e) {
+      // Automation darf den Phasenwechsel nie blockieren – aber sichtbar loggen.
+      logDataError("automation:won_onboarding", e);
     }
   }
   return res;

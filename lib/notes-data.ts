@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
+import { logDataError, isMissingTable } from "@/lib/log";
 
 export interface Note {
   id: string;
@@ -19,13 +20,17 @@ export async function getNotesForAccount(accountId: string): Promise<Note[]> {
       .eq("account_id", accountId)
       .order("created_at", { ascending: false })
       .limit(100);
-    if (error) return [];
+    if (error) {
+      if (!isMissingTable(error)) logDataError("notes-data:account_notes", error);
+      return [];
+    }
     return ((data as Array<Record<string, unknown>>) ?? []).map((r) => ({
       id: String(r.id),
       body: String(r.body ?? ""),
       created_at: String(r.created_at ?? ""),
     }));
-  } catch {
+  } catch (e) {
+    logDataError("notes-data:account_notes", e);
     return [];
   }
 }

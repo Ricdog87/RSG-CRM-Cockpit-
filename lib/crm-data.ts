@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
+import { logDataError, isMissingTable } from "@/lib/log";
 import {
   accounts as mockAccounts,
   candidates as mockCandidates,
@@ -46,11 +47,18 @@ async function load<T>(
     let query = supabase.from(table).select("*");
     if (order) query = query.order(order.column, { ascending: order.ascending ?? true });
     const { data, error } = await query;
-    // Fehlt die Tabelle (Migration noch nicht eingespielt), Mock zeigen.
-    if (error) return mock;
+    if (error) {
+      // Fehlt die Tabelle (Migration noch nicht eingespielt) → Mock zeigen.
+      if (isMissingTable(error)) return mock;
+      // Echter Query-Fehler (z.B. RLS/Verbindung): NICHT Mock zeigen – sonst
+      // sähen echte Nutzer:innen Demo-Daten. Leer zurückgeben + loggen.
+      logDataError(`crm-data:${table}`, error);
+      return [];
+    }
     return map((data as Row[] | null) ?? []);
-  } catch {
-    return mock;
+  } catch (e) {
+    logDataError(`crm-data:${table}`, e);
+    return [];
   }
 }
 

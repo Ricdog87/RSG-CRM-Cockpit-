@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
+import { logDataError, isMissingTable } from "@/lib/log";
 import type { RelatedType } from "@/lib/task-link";
 
 export interface Task {
@@ -49,9 +50,13 @@ export async function getTasksForRelated(
       .order("done", { ascending: true })
       .order("due_date", { ascending: true, nullsFirst: false })
       .limit(100);
-    if (error) return [];
+    if (error) {
+      if (!isMissingTable(error)) logDataError("tasks-data:crm_tasks", error);
+      return [];
+    }
     return ((data as Array<Record<string, unknown>>) ?? []).map(mapTask);
-  } catch {
+  } catch (e) {
+    logDataError("tasks-data:crm_tasks", e);
     return [];
   }
 }
@@ -67,9 +72,13 @@ export async function getOpenTasks(): Promise<Task[]> {
       .eq("done", false)
       .order("due_date", { ascending: true, nullsFirst: false })
       .limit(300);
-    if (error) return [];
+    if (error) {
+      if (!isMissingTable(error)) logDataError("tasks-data:crm_tasks", error);
+      return [];
+    }
     return ((data as Array<Record<string, unknown>>) ?? []).map(mapTask);
-  } catch {
+  } catch (e) {
+    logDataError("tasks-data:crm_tasks", e);
     return [];
   }
 }
@@ -85,17 +94,24 @@ export async function getCalendarTasks(): Promise<Task[]> {
       .not("due_date", "is", null)
       .order("due_date", { ascending: true })
       .limit(500);
-    if (error) return [];
+    if (error) {
+      if (!isMissingTable(error)) logDataError("tasks-data:crm_tasks", error);
+      return [];
+    }
     return ((data as Array<Record<string, unknown>>) ?? []).map(mapTask);
-  } catch {
+  } catch (e) {
+    logDataError("tasks-data:crm_tasks", e);
     return [];
   }
 }
 
 function randomToken(): string {
   const c = globalThis.crypto;
-  if (c?.randomUUID) return c.randomUUID().replace(/-/g, "").slice(0, 18);
-  return Math.random().toString(36).slice(2, 18);
+  // Voller 128-Bit-Token (32 Hex-Zeichen) – nicht praktikabel zu erraten.
+  if (c?.randomUUID) return c.randomUUID().replace(/-/g, "");
+  return (
+    Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+  ).slice(0, 32);
 }
 
 /** Persönliches Kalender-Token für den ICS-Abo-Link (lazy angelegt). */
@@ -125,7 +141,8 @@ export async function getCalendarToken(): Promise<{ token: string; demo: boolean
       await supabase.from("calendar_tokens").insert({ partner_id: partner.id, token });
     }
     return { token, demo: false };
-  } catch {
+  } catch (e) {
+    logDataError("tasks-data:calendar_token", e);
     return { token: "", demo: false };
   }
 }

@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
+import { logDataError, isMissingTable } from "@/lib/log";
 
 export interface EmailActivity {
   id: string;
@@ -20,8 +21,11 @@ export const INBOUND_DOMAIN =
 
 function randomToken(): string {
   const c = globalThis.crypto;
-  if (c?.randomUUID) return c.randomUUID().replace(/-/g, "").slice(0, 14);
-  return Math.random().toString(36).slice(2, 16);
+  // Voller 128-Bit-Token (32 Hex-Zeichen) – nicht praktikabel zu erraten.
+  if (c?.randomUUID) return c.randomUUID().replace(/-/g, "");
+  return (
+    Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+  ).slice(0, 32);
 }
 
 /**
@@ -91,9 +95,13 @@ export async function getEmailActivities(limit = 25): Promise<EmailActivity[]> {
       .select("*")
       .order("occurred_at", { ascending: false })
       .limit(limit);
-    if (error) return [];
+    if (error) {
+      if (!isMissingTable(error)) logDataError("email-data:email_activities", error);
+      return [];
+    }
     return ((data as Array<Record<string, unknown>>) ?? []).map(mapRow);
-  } catch {
+  } catch (e) {
+    logDataError("email-data:email_activities", e);
     return [];
   }
 }
@@ -115,9 +123,13 @@ export async function getEmailActivitiesForAccount(
       .eq("account_id", accountId)
       .order("occurred_at", { ascending: false })
       .limit(50);
-    if (error) return [];
+    if (error) {
+      if (!isMissingTable(error)) logDataError("email-data:email_activities", error);
+      return [];
+    }
     return ((data as Array<Record<string, unknown>>) ?? []).map(mapRow);
-  } catch {
+  } catch (e) {
+    logDataError("email-data:email_activities", e);
     return [];
   }
 }

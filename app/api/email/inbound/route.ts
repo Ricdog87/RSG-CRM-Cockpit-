@@ -89,7 +89,17 @@ function matchAccount(
 
 export async function POST(req: NextRequest) {
   const secret = process.env.EMAIL_WEBHOOK_SECRET;
-  if (secret && req.headers.get("x-webhook-secret") !== secret) {
+  // Fail-closed: In Produktion MUSS ein Secret gesetzt sein – ein ungeschützter
+  // Webhook, der per Service-Role schreibt, wäre sonst frei missbrauchbar.
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      return json(
+        { ok: false, error: "Webhook deaktiviert: EMAIL_WEBHOOK_SECRET nicht gesetzt." },
+        503
+      );
+    }
+    // Nicht-Produktion (lokal/Preview): zu Testzwecken ohne Secret erlaubt.
+  } else if (req.headers.get("x-webhook-secret") !== secret) {
     return json({ ok: false, error: "unauthorized" }, 401);
   }
 

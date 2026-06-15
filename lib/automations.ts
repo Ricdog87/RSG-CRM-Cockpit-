@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
+import { logDataError, isMissingTable } from "@/lib/log";
 
 export interface AutomationDef {
   key: string;
@@ -54,7 +55,8 @@ export async function automationEnabled(
       .maybeSingle();
     const row = data as { enabled?: boolean } | null;
     return row ? Boolean(row.enabled) : true;
-  } catch {
+  } catch (e) {
+    if (!isMissingTable(e)) logDataError("automations:enabled", e);
     return true;
   }
 }
@@ -71,7 +73,8 @@ export async function getAutomationsMap(): Promise<Record<string, boolean>> {
       if (r.key) map[r.key] = Boolean(r.enabled);
     }
     return map;
-  } catch {
+  } catch (e) {
+    if (!isMissingTable(e)) logDataError("automations:map", e);
     return defaults;
   }
 }

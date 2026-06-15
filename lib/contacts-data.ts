@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
+import { logDataError, isMissingTable } from "@/lib/log";
 
 export interface Contact {
   id: string;
@@ -21,7 +22,10 @@ export async function getContactsForAccount(accountId: string): Promise<Contact[
       .eq("account_id", accountId)
       .order("created_at", { ascending: true })
       .limit(100);
-    if (error) return [];
+    if (error) {
+      if (!isMissingTable(error)) logDataError("contacts-data:account_contacts", error);
+      return [];
+    }
     return ((data as Array<Record<string, unknown>>) ?? []).map((r) => ({
       id: String(r.id),
       name: String(r.name ?? ""),
@@ -29,7 +33,8 @@ export async function getContactsForAccount(accountId: string): Promise<Contact[
       email: String(r.email ?? ""),
       phone: String(r.phone ?? ""),
     }));
-  } catch {
+  } catch (e) {
+    logDataError("contacts-data:account_contacts", e);
     return [];
   }
 }
