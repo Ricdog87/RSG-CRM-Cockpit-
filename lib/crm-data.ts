@@ -160,6 +160,10 @@ export async function getCandidates(): Promise<Candidate[]> {
         stage: (str(r.stage, "neu") as CandidateStage),
         source: str(r.source),
         updated_at: str(r.updated_at),
+        email: str(r.email),
+        phone: str(r.phone),
+        cv_path: str(r.cv_path),
+        cv_filename: str(r.cv_filename),
       })),
     { column: "updated_at", ascending: false }
   );

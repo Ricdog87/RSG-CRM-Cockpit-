@@ -177,6 +177,8 @@ export async function createCandidate(
     {
       name: s(fd, "name"),
       role: s(fd, "role"),
+      email: s(fd, "email") || null,
+      phone: s(fd, "phone") || null,
       mandate_account: s(fd, "mandate_account"),
       stage: s(fd, "stage") || "neu",
       source: s(fd, "source"),
@@ -525,6 +527,8 @@ export async function updateCandidate(
     {
       name: s(fd, "name"),
       role: s(fd, "role"),
+      email: s(fd, "email") || null,
+      phone: s(fd, "phone") || null,
       mandate_account: s(fd, "mandate_account"),
       stage: s(fd, "stage") || "neu",
       source: s(fd, "source"),

@@ -34,6 +34,8 @@ export const ACCOUNT_FIELDS: FormField[] = [
 export const CANDIDATE_FIELDS: FormField[] = [
   { name: "name", label: "Name", required: true, placeholder: "Vor- und Nachname" },
   { name: "role", label: "Position", placeholder: "z.B. Pflegefachkraft" },
+  { name: "email", label: "E-Mail", type: "email", placeholder: "name@beispiel.de" },
+  { name: "phone", label: "Telefon", placeholder: "+49 …" },
   { name: "mandate_account", label: "Mandat (Account)", full: true },
   {
     name: "stage",

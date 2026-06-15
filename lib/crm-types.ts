@@ -115,6 +115,12 @@ export interface Candidate {
   stage: CandidateStage;
   source: string;
   updated_at: string;
+  /** Kontaktdaten (z.B. automatisch aus dem CV extrahiert) */
+  email?: string;
+  phone?: string;
+  /** Pfad der CV-Datei im privaten Storage-Bucket `candidate-cvs` */
+  cv_path?: string;
+  cv_filename?: string;
 }
 
 /** KI-Kundensegment (für Zielgruppen-/Use-Case-Steuerung). */
