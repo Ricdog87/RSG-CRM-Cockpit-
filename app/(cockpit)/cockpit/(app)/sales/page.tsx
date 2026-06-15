@@ -7,7 +7,7 @@ import { PipelinePriorities } from "@/components/cockpit/PipelinePriorities";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { OPPORTUNITY_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { IconTarget, IconEuro, IconTrendingUp } from "@/components/ui/icons";
-import { formatEur } from "@/lib/format";
+import { formatEur, formatPercent } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +26,11 @@ export default async function SalesPage() {
   const recVolume = open
     .filter((o) => o.line === "recruiting")
     .reduce((s, o) => s + o.value, 0);
+
+  // Echte Abschlussquote aus allen abgeschlossenen Chancen.
+  const won = opps.filter((o) => o.stage === "gewonnen").length;
+  const lost = opps.filter((o) => o.stage === "verloren").length;
+  const winRate = won + lost > 0 ? formatPercent((won / (won + lost)) * 100) : "—";
 
   return (
     <div className="space-y-6">
@@ -68,9 +73,9 @@ export default async function SalesPage() {
           icon={IconEuro}
         />
         <StatCard
-          label="Abschlussquote (90T)"
-          value="42 %"
-          hint="gewonnen vs. qualifiziert"
+          label="Abschlussquote"
+          value={winRate}
+          hint={`${won} gew. · ${lost} verl.`}
           accent="neutral"
           icon={IconTrendingUp}
         />
