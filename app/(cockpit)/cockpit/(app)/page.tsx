@@ -6,15 +6,15 @@ import {
   getCandidates,
 } from "@/lib/crm-data";
 import { getOpenTasks } from "@/lib/tasks-data";
-import { HeroBestand } from "@/components/cockpit/HeroBestand";
 import { KpiRow } from "@/components/cockpit/KpiRow";
 import { CrmOverview } from "@/components/cockpit/CrmOverview";
-import { TasksToday } from "@/components/cockpit/TasksToday";
 import { OverrideNudge } from "@/components/cockpit/OverrideNudge";
 import { Pipeline } from "@/components/cockpit/Pipeline";
 import { CareerProgress } from "@/components/cockpit/CareerProgress";
 import { Leaderboard } from "@/components/cockpit/Leaderboard";
 import { TeamDownline } from "@/components/cockpit/TeamDownline";
+import { TodayAgenda } from "@/components/cockpit/TodayAgenda";
+import { QuickActions } from "@/components/cockpit/QuickActions";
 
 // Immer frisch rendern – Daten sind nutzer- und sessionspezifisch.
 export const dynamic = "force-dynamic";
@@ -32,12 +32,22 @@ export default async function CockpitPage() {
 
   return (
     <div className="space-y-6">
-      {/* 1. Hero: wiederkehrender Bestand + Wachstumskurve */}
-      <section className="animate-fade-up" aria-label="Wiederkehrender Bestand">
-        <HeroBestand bestand={data.bestand} verlauf={data.bestandsverlauf} />
+      {/* 1. Schnellzugriff */}
+      <section className="animate-fade-up" aria-label="Schnellzugriff">
+        <QuickActions />
       </section>
 
-      {/* 2. KPI-Reihe */}
+      {/* 2. Tagesordnung + Pipeline */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <section className="animate-fade-up lg:col-span-2" aria-label="Tagesordnung">
+          <TodayAgenda tasks={openTasks} />
+        </section>
+        <section className="animate-fade-up" aria-label="Pipeline">
+          <Pipeline deals={data.pipeline} limit={5} viewAllHref="/cockpit/pipeline" />
+        </section>
+      </div>
+
+      {/* 3. KPI-Reihe */}
       <section className="animate-fade-up" aria-label="Kennzahlen">
         <KpiRow
           bestand={data.bestand}
@@ -46,7 +56,7 @@ export default async function CockpitPage() {
         />
       </section>
 
-      {/* 3. CRM-Kennzahlen: Vertrieb & Projekte */}
+      {/* 4. CRM-Kennzahlen */}
       <section className="animate-fade-up" aria-label="Vertrieb & Projekte">
         <CrmOverview
           opportunities={opportunities}
@@ -56,31 +66,17 @@ export default async function CockpitPage() {
         />
       </section>
 
-      {/* 4. Override-Nudge (nur wenn override_pausiert > 0) */}
+      {/* 5. Override-Nudge */}
       <OverrideNudge earnings={data.earnings} override={data.override} />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Aufgaben heute */}
-        <section className="animate-fade-up" aria-label="Aufgaben heute">
-          <TasksToday tasks={openTasks} />
-        </section>
-
-        {/* Pipeline-Vorschau */}
-        <section className="animate-fade-up" aria-label="Pipeline">
-          <Pipeline deals={data.pipeline} limit={4} viewAllHref="/cockpit/pipeline" />
-        </section>
-
-        {/* Karriere */}
+      {/* 6. Team & Karriere */}
+      <div className="grid gap-6 lg:grid-cols-3">
         <section className="animate-fade-up" aria-label="Karriere">
           <CareerProgress career={data.career} />
         </section>
-
-        {/* 6. Leaderboard */}
         <section className="animate-fade-up" aria-label="Leaderboard">
           <Leaderboard rows={data.leaderboard} />
         </section>
-
-        {/* 7. Team/Downline-Vorschau */}
         <section className="animate-fade-up" aria-label="Team">
           <TeamDownline team={data.downline} limit={3} viewAllHref="/cockpit/team" />
         </section>
