@@ -15,9 +15,28 @@ export interface EmailActivity {
   account_id?: string | null;
 }
 
-/** Domain für die BCC-Adresse (track+<token>@<domain>). */
-export const INBOUND_DOMAIN =
-  process.env.EMAIL_INBOUND_DOMAIN || "inbox.rsg-crm.de";
+/**
+ * Domain(s) für die BCC-Adresse (track+<token>@<domain>).
+ * Mehrere Domains kommagetrennt in EMAIL_INBOUND_DOMAIN, z.B.
+ * "inbox.rsg-ai.de,inbox.recruiting-sg.de". Der Webhook erkennt den Token
+ * unabhängig von der Domain – so lassen sich beliebig viele Domains anbinden.
+ */
+export const INBOUND_DOMAINS: string[] = (
+  process.env.EMAIL_INBOUND_DOMAIN || "inbox.rsg-ai.de"
+)
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+/** Primäre Domain (erste in der Liste) – Rückwärtskompatibilität. */
+export const INBOUND_DOMAIN = INBOUND_DOMAINS[0] ?? "inbox.rsg-ai.de";
+
+function buildAddresses(token: string): { domain: string; address: string }[] {
+  return INBOUND_DOMAINS.map((domain) => ({
+    domain,
+    address: `track+${token}@${domain}`,
+  }));
+}
 
 function randomToken(): string {
   const c = globalThis.crypto;
@@ -32,27 +51,37 @@ function randomToken(): string {
  * Liefert die persönliche BCC-Adresse der:des eingeloggten Partner:in
  * (legt den Token beim ersten Aufruf an). Im Demo-Modus ein fester Token.
  */
-export async function getInboxAddress(): Promise<{
+export interface InboxAddress {
+  /** Primäre Adresse (erste Domain). */
   address: string;
+  /** Eine Adresse je konfigurierter Domain. */
+  addresses: { domain: string; address: string }[];
   token: string;
   demo: boolean;
-}> {
+}
+
+export async function getInboxAddress(): Promise<InboxAddress> {
   if (useMockData) {
-    return { address: `track+demo@${INBOUND_DOMAIN}`, token: "demo", demo: true };
+    return {
+      address: `track+demo@${INBOUND_DOMAIN}`,
+      addresses: buildAddresses("demo"),
+      token: "demo",
+      demo: true,
+    };
   }
 
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { address: "", token: "", demo: false };
+  if (!user) return { address: "", addresses: [], token: "", demo: false };
 
   const { data: partner } = await supabase
     .from("partners")
     .select("id")
     .eq("auth_user_id", user.id)
     .single();
-  if (!partner) return { address: "", token: "", demo: false };
+  if (!partner) return { address: "", addresses: [], token: "", demo: false };
 
   const { data: existing } = await supabase
     .from("partner_inbox")
@@ -68,7 +97,8 @@ export async function getInboxAddress(): Promise<{
       .insert({ partner_id: partner.id, token });
   }
 
-  return { address: `track+${token}@${INBOUND_DOMAIN}`, token, demo: false };
+  const addresses = buildAddresses(token);
+  return { address: addresses[0]?.address ?? "", addresses, token, demo: false };
 }
 
 function mapRow(r: Record<string, unknown>): EmailActivity {
