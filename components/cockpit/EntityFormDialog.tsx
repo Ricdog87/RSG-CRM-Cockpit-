@@ -82,8 +82,10 @@ export function EntityFormDialog({
 
   useEffect(() => {
     if (state?.ok && !state.demo) {
-      setOpen(false);
+      // Bei Warnung (verworfene Felder) Dialog offen lassen, aber gespeicherte
+      // Felder im Hintergrund aktualisieren.
       router.refresh();
+      if (!state.warning) setOpen(false);
     }
   }, [state, router]);
 
@@ -256,6 +258,11 @@ export function EntityFormDialog({
                 </button>
               ) : null}
             </div>
+          ) : null}
+          {state?.ok && state.warning ? (
+            <p className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
+              {state.warning}
+            </p>
           ) : null}
           {state?.ok && state.demo ? (
             <p className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">

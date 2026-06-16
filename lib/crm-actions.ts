@@ -20,6 +20,12 @@ export type ActionResult = {
   error?: string;
   /** true ⇒ mögliche Dublette erkannt (mit force=1 überstimmbar) */
   duplicate?: boolean;
+  /**
+   * Gesetzt, wenn der Datensatz gespeichert wurde, aber einzelne Felder
+   * verworfen werden mussten (Spalte fehlt – Migration noch nicht eingespielt).
+   * Der Dialog bleibt dann offen und zeigt den Hinweis an.
+   */
+  warning?: string;
 };
 
 const DEMO: ActionResult = { ok: true, demo: true };
@@ -65,28 +71,46 @@ async function insert(
 
 const MISSING_COL = /column "?([a-z_]+)"? .*does not exist/i;
 
+/** Hinweis, der angezeigt wird, wenn Felder mangels DB-Spalte verworfen wurden. */
+function strippedWarning(table: string, stripped: string[]): string | undefined {
+  if (stripped.length === 0) return undefined;
+  const fields = stripped.filter((c) => c !== "partner_id");
+  if (fields.length === 0) return undefined;
+  const mig =
+    table === "candidates"
+      ? "08_candidate_matching.sql"
+      : table === "accounts"
+        ? "07_account_phone.sql"
+        : "die passende Migration";
+  return `Gespeichert – aber diese Felder konnten nicht abgelegt werden, weil die Spalten in der Datenbank fehlen: ${fields.join(
+    ", "
+  )}. Bitte ${mig} im Supabase SQL-Editor ausführen und erneut speichern.`;
+}
+
 /** Insert, das fehlende (noch nicht migrierte) Spalten automatisch weglässt. */
 async function insertGraceful(
   table: string,
   row: Record<string, unknown>,
-  revalidate: string
+  revalidate: string | string[]
 ): Promise<ActionResult & { id?: string }> {
   if (useMockData) return DEMO;
   const { id, error } = await currentPartnerId();
   if (!id) return { ok: false, error };
   const supabase = createClient();
   let payload: Record<string, unknown> = { ...row, partner_id: id };
+  const stripped: string[] = [];
   for (let attempt = 0; attempt < 8; attempt++) {
     const { data, error: insErr } = await supabase.from(table).insert(payload).select("id").single();
     if (!insErr) {
-      revalidatePath(revalidate);
-      return { ok: true, id: (data as { id?: string } | null)?.id };
+      revalidateMany(revalidate);
+      return { ok: true, id: (data as { id?: string } | null)?.id, warning: strippedWarning(table, stripped) };
     }
     const m = insErr.message.match(MISSING_COL);
     if (m && m[1] in payload) {
       const next = { ...payload };
       delete next[m[1]];
       payload = next;
+      stripped.push(m[1]);
       continue;
     }
     return { ok: false, error: insErr.message };
@@ -99,29 +123,35 @@ async function updateGraceful(
   table: string,
   id: string,
   patch: Record<string, unknown>,
-  revalidate: string
+  revalidate: string | string[]
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
   const { id: pid, error } = await currentPartnerId();
   if (!pid) return { ok: false, error };
   const supabase = createClient();
   let payload: Record<string, unknown> = { ...patch };
+  const stripped: string[] = [];
   for (let attempt = 0; attempt < 8; attempt++) {
     const { error: updErr } = await supabase.from(table).update(payload).eq("id", id);
     if (!updErr) {
-      revalidatePath(revalidate);
-      return { ok: true };
+      revalidateMany(revalidate);
+      return { ok: true, warning: strippedWarning(table, stripped) };
     }
     const m = updErr.message.match(MISSING_COL);
     if (m && m[1] in payload) {
       const next = { ...payload };
       delete next[m[1]];
       payload = next;
+      stripped.push(m[1]);
       continue;
     }
     return { ok: false, error: updErr.message };
   }
   return { ok: false, error: "Speichern fehlgeschlagen." };
+}
+
+function revalidateMany(paths: string | string[]) {
+  for (const p of Array.isArray(paths) ? paths : [paths]) revalidatePath(p);
 }
 
 /** Bestehende Account-Schlüssel (Name + E-Mail) für den Dubletten-Abgleich. */
@@ -647,7 +677,7 @@ export async function updateCandidate(
       availability: s(fd, "availability") || null,
       updated_at: new Date().toISOString(),
     },
-    "/cockpit/kandidaten"
+    ["/cockpit/kandidaten", `/cockpit/kandidaten/${id}`]
   );
 }
 
