@@ -107,70 +107,67 @@ export default async function KandidatDetailPage({
         <span className="truncate text-ink">{c.name}</span>
       </nav>
 
+      {/* Profil-Header (volle Breite, mobil zuerst) */}
+      <Card>
+        <CardBody className="space-y-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <CandidatePhoto
+                candidateId={c.id}
+                name={c.name}
+                photoPath={c.photo_path}
+                hasCv={Boolean(c.cv_path)}
+                size={56}
+              />
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-bold text-ink">{[c.salutation, c.title, c.name].filter(Boolean).join(" ")}</h1>
+                <p className="truncate text-sm text-muted">{c.role || "Position offen"}</p>
+                {c.candidate_no != null ? (
+                  <p className="mt-0.5 font-mono text-[0.7rem] font-medium text-faint">{candNo(c.candidate_no)}</p>
+                ) : null}
+              </div>
+            </div>
+            <EditDialog
+              id={c.id}
+              title="Kandidat:in bearbeiten"
+              fields={CANDIDATE_FIELDS}
+              action={updateCandidate}
+              initial={candidateInitial(c)}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone={stage.tone}>{stage.label}</Badge>
+            {c.source ? <Badge tone="neutral">{c.source}</Badge> : null}
+            <a
+              href={c.email ? `mailto:${c.email}` : undefined}
+              aria-disabled={!c.email}
+              className={
+                c.email
+                  ? "ml-auto inline-flex items-center gap-1.5 rounded-xl border border-border bg-elevated/60 px-3 py-1.5 text-xs font-medium text-ink hover:border-brand/40 hover:text-brand-deep"
+                  : "ml-auto inline-flex items-center gap-1.5 rounded-xl border border-border bg-elevated/30 px-3 py-1.5 text-xs font-medium text-faint"
+              }
+            >
+              <IconMail size={14} /> E-Mail
+            </a>
+            <a
+              href={c.phone ? `tel:${c.phone.replace(/\s+/g, "")}` : undefined}
+              aria-disabled={!c.phone}
+              className={
+                c.phone
+                  ? "inline-flex items-center gap-1.5 rounded-xl border border-border bg-elevated/60 px-3 py-1.5 text-xs font-medium text-ink hover:border-brand/40 hover:text-brand-deep"
+                  : "inline-flex items-center gap-1.5 rounded-xl border border-border bg-elevated/30 px-3 py-1.5 text-xs font-medium text-faint"
+              }
+            >
+              <IconPhone size={14} /> Anruf
+            </a>
+          </div>
+        </CardBody>
+      </Card>
+
       <div className="grid gap-5 lg:grid-cols-12">
-        {/* Linke Spalte: Identität + Eigenschaften */}
-        <div className="space-y-5 lg:col-span-3">
-          <Card>
-            <CardBody className="space-y-4">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  <CandidatePhoto
-                    candidateId={c.id}
-                    name={c.name}
-                    photoPath={c.photo_path}
-                    hasCv={Boolean(c.cv_path)}
-                    size={56}
-                  />
-                  <div className="min-w-0">
-                    <h1 className="truncate text-lg font-bold text-ink">{[c.salutation, c.title, c.name].filter(Boolean).join(" ")}</h1>
-                    <p className="truncate text-sm text-muted">{c.role || "Position offen"}</p>
-                    {c.candidate_no != null ? (
-                      <p className="mt-0.5 font-mono text-[0.7rem] font-medium text-faint">{candNo(c.candidate_no)}</p>
-                    ) : null}
-                  </div>
-                </div>
-                <EditDialog
-                  id={c.id}
-                  title="Kandidat:in bearbeiten"
-                  fields={CANDIDATE_FIELDS}
-                  action={updateCandidate}
-                  initial={candidateInitial(c)}
-                />
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Badge tone={stage.tone}>{stage.label}</Badge>
-                {c.source ? <Badge tone="neutral">{c.source}</Badge> : null}
-              </div>
-
-              {/* Schnellaktionen */}
-              <div className="grid grid-cols-2 gap-2">
-                <a
-                  href={c.email ? `mailto:${c.email}` : undefined}
-                  aria-disabled={!c.email}
-                  className={
-                    c.email
-                      ? "flex items-center justify-center gap-1.5 rounded-xl border border-border bg-elevated/60 py-2 text-xs font-medium text-ink hover:border-brand/40 hover:text-brand-deep"
-                      : "flex items-center justify-center gap-1.5 rounded-xl border border-border bg-elevated/30 py-2 text-xs font-medium text-faint"
-                  }
-                >
-                  <IconMail size={14} /> E-Mail
-                </a>
-                <a
-                  href={c.phone ? `tel:${c.phone.replace(/\s+/g, "")}` : undefined}
-                  aria-disabled={!c.phone}
-                  className={
-                    c.phone
-                      ? "flex items-center justify-center gap-1.5 rounded-xl border border-border bg-elevated/60 py-2 text-xs font-medium text-ink hover:border-brand/40 hover:text-brand-deep"
-                      : "flex items-center justify-center gap-1.5 rounded-xl border border-border bg-elevated/30 py-2 text-xs font-medium text-faint"
-                  }
-                >
-                  <IconPhone size={14} /> Anruf
-                </a>
-              </div>
-            </CardBody>
-          </Card>
-
+        {/* Eigenschaften – mobil NACH dem Aktivitäts-Center */}
+        <div className="order-2 space-y-5 lg:order-1 lg:col-span-3">
           {/* Wichtige Informationen */}
           <Card>
             <CardBody>
@@ -231,8 +228,8 @@ export default async function KandidatDetailPage({
           </Card>
         </div>
 
-        {/* Mittlere Spalte: Aktivitäts-Center */}
-        <div className="lg:col-span-6">
+        {/* Aktivitäts-Center – mobil direkt nach dem Header */}
+        <div className="order-1 lg:order-2 lg:col-span-6">
           <CandidateActivity
             candidateId={c.id}
             candidateName={c.name}
@@ -243,7 +240,7 @@ export default async function KandidatDetailPage({
         </div>
 
         {/* Rechte Spalte: Verknüpfungen / Dokumente */}
-        <div className="space-y-5 lg:col-span-3">
+        <div className="order-3 space-y-5 lg:order-3 lg:col-span-3">
           <Card>
             <CardBody>
               <SectionHeader title="DSGVO-Einwilligung" hint="Datenverarbeitung" />
