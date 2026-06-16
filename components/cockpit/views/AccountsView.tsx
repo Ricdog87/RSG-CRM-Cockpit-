@@ -9,16 +9,17 @@ import { FilterTabs } from "@/components/ui/FilterTabs";
 import { IconSearch } from "@/components/ui/icons";
 import { ACCOUNT_FIELDS } from "@/lib/crm-forms";
 import { updateAccount, deleteAccount } from "@/lib/crm-actions";
-import type { Account, BusinessLine } from "@/lib/crm-types";
+import type { Account, BusinessLine, Lifecycle } from "@/lib/crm-types";
 
-type Filter = "all" | BusinessLine;
+type LineFilter = "all" | BusinessLine;
 type Sort = "mrr" | "name" | "lifecycle";
 
-/** Account-Liste mit Suche, Sortierung, Linien-Filter, Bearbeiten und Löschen. */
+/** Account-Liste mit Suche, Sortierung, Linien-Filter, Lifecycle-Filter, Bearbeiten und Löschen. */
 export function AccountsView({ accounts }: { accounts: Account[] }) {
   const router = useRouter();
   const [items, setItems] = useState(accounts);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<LineFilter>("all");
+  const [lifecycle, setLifecycle] = useState<Lifecycle | "all">("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("mrr");
 
@@ -29,8 +30,18 @@ export function AccountsView({ accounts }: { accounts: Account[] }) {
   }
 
   const q = query.trim().toLowerCase();
+
+  // Nach Line-Filter (Basis für Lifecycle-Counts)
+  const afterLineFilter = useMemo(
+    () => (filter === "all" ? items : items.filter((a) => a.line === filter)),
+    [items, filter]
+  );
+
   const shown = useMemo(() => {
-    let pool = filter === "all" ? items : items.filter((a) => a.line === filter);
+    let pool = afterLineFilter;
+    if (lifecycle !== "all") {
+      pool = pool.filter((a) => a.lifecycle === lifecycle);
+    }
     if (q) {
       pool = pool.filter((a) =>
         [a.name, a.branche, a.segment, a.ort, a.contact_name, a.contact_email]
@@ -43,7 +54,7 @@ export function AccountsView({ accounts }: { accounts: Account[] }) {
     else if (sort === "lifecycle") arr.sort((a, b) => a.lifecycle.localeCompare(b.lifecycle));
     else arr.sort((a, b) => (b.mrr ?? 0) - (a.mrr ?? 0));
     return arr;
-  }, [items, filter, q, sort]);
+  }, [afterLineFilter, lifecycle, q, sort]);
 
   return (
     <div className="space-y-4">
@@ -69,7 +80,7 @@ export function AccountsView({ accounts }: { accounts: Account[] }) {
         </select>
       </div>
 
-      <FilterTabs<Filter>
+      <FilterTabs<LineFilter>
         value={filter}
         onChange={setFilter}
         options={[
@@ -82,11 +93,24 @@ export function AccountsView({ accounts }: { accounts: Account[] }) {
           },
         ]}
       />
+
+      <FilterTabs<Lifecycle | "all">
+        value={lifecycle}
+        onChange={setLifecycle}
+        options={[
+          { value: "all", label: "Alle", count: afterLineFilter.length },
+          { value: "lead", label: "Lead", count: afterLineFilter.filter((a) => a.lifecycle === "lead").length },
+          { value: "opportunity", label: "Opportunity", count: afterLineFilter.filter((a) => a.lifecycle === "opportunity").length },
+          { value: "kunde", label: "Kunde", count: afterLineFilter.filter((a) => a.lifecycle === "kunde").length },
+          { value: "bestand", label: "Bestand", count: afterLineFilter.filter((a) => a.lifecycle === "bestand").length },
+        ]}
+      />
+
       <AccountsTable
         accounts={shown}
         renderActions={(a) => (
           <RowActions
-            confirmText={`„${a.name}" wirklich löschen?`}
+            confirmText={`„${a.name}“ wirklich löschen?`}
             onDelete={() => onDelete(a.id)}
             editNode={
               <EditDialog

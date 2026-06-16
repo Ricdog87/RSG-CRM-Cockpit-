@@ -7,15 +7,17 @@ import { MandateFormDialog } from "@/components/cockpit/MandateFormDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
 import { IconPencil } from "@/components/ui/icons";
 import { deleteMandate } from "@/lib/crm-actions";
-import type { RecruitingMandate } from "@/lib/crm-types";
+import type { RecruitingMandate, Candidate } from "@/lib/crm-types";
 
 /** Mandatsliste mit Bearbeiten und Löschen. */
 export function MandatesView({
   mandates,
   accountNames = [],
+  candidates = [],
 }: {
   mandates: RecruitingMandate[];
   accountNames?: string[];
+  candidates?: Candidate[];
 }) {
   const router = useRouter();
   const [items, setItems] = useState(mandates);
@@ -29,6 +31,7 @@ export function MandatesView({
   return (
     <MandatesList
       mandates={items}
+      candidates={candidates}
       renderActions={(m) => (
         <RowActions
           confirmText={`Mandat „${m.role}" wirklich löschen?`}
