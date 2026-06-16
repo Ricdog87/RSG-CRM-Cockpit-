@@ -19,6 +19,10 @@ interface Hit {
   subtitle: string;
 }
 
+function candNo(n?: number): string {
+  return n != null ? `RSG-${String(n).padStart(5, "0")}` : "";
+}
+
 function match(q: string, ...fields: (string | undefined)[]) {
   return fields.some((f) => (f ?? "").toLowerCase().includes(q));
 }
@@ -90,11 +94,13 @@ export default async function SuchePage({
     }));
 
   const candHits: Hit[] = candidates
-    .filter((c) => match(q, c.name, c.role, c.mandate_account, c.source))
+    .filter((c) =>
+      match(q, c.name, c.role, c.mandate_account, c.source, candNo(c.candidate_no), String(c.candidate_no ?? ""))
+    )
     .map((c) => ({
-      href: "/cockpit/kandidaten",
-      title: c.name,
-      subtitle: [c.role, c.mandate_account].filter(Boolean).join(" · "),
+      href: `/cockpit/kandidaten/${c.id}`,
+      title: [c.title, c.name].filter(Boolean).join(" "),
+      subtitle: [candNo(c.candidate_no), c.role, c.mandate_account].filter(Boolean).join(" · "),
     }));
 
   const mandateHits: Hit[] = mandates
