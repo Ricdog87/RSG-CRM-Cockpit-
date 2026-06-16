@@ -210,15 +210,21 @@ export async function createAccount(
     mrr: n(fd, "mrr"),
     ort: s(fd, "ort"),
   };
-  let { data: ins, error: insErr } = await supabase
-    .from("accounts")
-    .insert(row)
-    .select("id")
-    .single();
-  // contact_phone-Spalte evtl. noch nicht migriert → ohne erneut versuchen.
-  if (insErr && /contact_phone.*does not exist/i.test(insErr.message)) {
-    delete row.contact_phone;
-    ({ data: ins, error: insErr } = await supabase.from("accounts").insert(row).select("id").single());
+  // Robust gegen noch nicht migrierte Spalten: fehlende Spalten werden
+  // automatisch weggelassen, damit das Anlegen nie komplett scheitert.
+  let ins: { id?: string } | null = null;
+  let insErr: { message: string } | null = null;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const res = await supabase.from("accounts").insert(row).select("id").single();
+    ins = res.data as { id?: string } | null;
+    insErr = res.error;
+    if (!insErr) break;
+    const m = insErr.message.match(MISSING_COL);
+    if (m && m[1] in row) {
+      delete row[m[1]];
+      continue;
+    }
+    break;
   }
   if (insErr) return { ok: false, error: insErr.message };
   revalidatePath("/cockpit/kunden");
@@ -322,7 +328,7 @@ export async function createMandate(
 ): Promise<ActionResult> {
   if (!s(fd, "account_name")) return { ok: false, error: "Account ist erforderlich." };
   const pricing = s(fd, "pricing_model") === "percent" ? "percent" : "fixed";
-  return insert(
+  return insertGraceful(
     "recruiting_mandates",
     {
       account_name: s(fd, "account_name"),
@@ -446,30 +452,23 @@ export async function updateAccount(
   const id = s(fd, "id");
   if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
   if (!s(fd, "name")) return { ok: false, error: "Name ist erforderlich." };
-  if (useMockData) return DEMO;
-  const { id: pid, error } = await currentPartnerId();
-  if (!pid) return { ok: false, error };
-  const supabase = createClient();
-  const patch: Record<string, unknown> = {
-    name: s(fd, "name"),
-    branche: s(fd, "branche"),
-    segment: s(fd, "segment"),
-    line: s(fd, "line") || "ki",
-    lifecycle: s(fd, "lifecycle") || "lead",
-    contact_name: s(fd, "contact_name"),
-    contact_email: s(fd, "contact_email"),
-    contact_phone: s(fd, "contact_phone") || null,
-    mrr: n(fd, "mrr"),
-    ort: s(fd, "ort"),
-  };
-  let { error: updErr } = await supabase.from("accounts").update(patch).eq("id", id);
-  if (updErr && /contact_phone.*does not exist/i.test(updErr.message)) {
-    delete patch.contact_phone;
-    ({ error: updErr } = await supabase.from("accounts").update(patch).eq("id", id));
-  }
-  if (updErr) return { ok: false, error: updErr.message };
-  revalidatePath("/cockpit/kunden");
-  return { ok: true };
+  return updateGraceful(
+    "accounts",
+    id,
+    {
+      name: s(fd, "name"),
+      branche: s(fd, "branche"),
+      segment: s(fd, "segment"),
+      line: s(fd, "line") || "ki",
+      lifecycle: s(fd, "lifecycle") || "lead",
+      contact_name: s(fd, "contact_name"),
+      contact_email: s(fd, "contact_email"),
+      contact_phone: s(fd, "contact_phone") || null,
+      mrr: n(fd, "mrr"),
+      ort: s(fd, "ort"),
+    },
+    ["/cockpit/kunden", `/cockpit/kunden/${id}`]
+  );
 }
 
 // ---------- Löschen --------------------------------------------------
@@ -689,7 +688,7 @@ export async function updateMandate(
   if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
   if (!s(fd, "account_name")) return { ok: false, error: "Account ist erforderlich." };
   const pricing = s(fd, "pricing_model") === "percent" ? "percent" : "fixed";
-  return update(
+  return updateGraceful(
     "recruiting_mandates",
     id,
     {
@@ -704,7 +703,7 @@ export async function updateMandate(
       fee_percent: pricing === "percent" ? n(fd, "fee_percent") || 25 : null,
       deadline: s(fd, "deadline") || null,
     },
-    "/cockpit/projekte/recruiting"
+    ["/cockpit/projekte/recruiting", `/cockpit/projekte/recruiting/${id}`]
   );
 }
 
