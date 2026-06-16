@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
@@ -8,11 +8,13 @@ import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
-import { IconMail, IconPhone, IconFolder } from "@/components/ui/icons";
+import { Badge } from "@/components/ui/Badge";
+import { IconMail, IconPhone, IconFolder, IconSearch, IconDashboard, IconLayers } from "@/components/ui/icons";
 import { CANDIDATE_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { updateCandidateStage, updateCandidate, deleteCandidate } from "@/lib/crm-actions";
 import { cvSignedUrl } from "@/lib/cv-actions";
 import { formatDate } from "@/lib/format";
+import { cn } from "@/components/ui/cn";
 import type { FormField } from "@/components/cockpit/EntityFormDialog";
 import type { Candidate, CandidateStage } from "@/lib/crm-types";
 
@@ -25,6 +27,65 @@ const COLUMNS: BoardColumn<CandidateStage>[] = [
 ];
 
 const STAGE_OPTIONS = COLUMNS.map((c) => ({ value: c.stage, label: c.label }));
+
+const STAGE_TONE: Record<CandidateStage, "neutral" | "sky" | "brand" | "success" | "danger"> = {
+  neu: "neutral",
+  screening: "sky",
+  interview: "brand",
+  angebot: "brand",
+  platziert: "success",
+  abgelehnt: "danger",
+};
+const STAGE_LABEL: Record<CandidateStage, string> = {
+  neu: "Neu",
+  screening: "Screening",
+  interview: "Interview",
+  angebot: "Angebot",
+  platziert: "Platziert",
+  abgelehnt: "Abgelehnt",
+};
+
+function initials(name: string): string {
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+function Avatar({ name, size = 40 }: { name: string; size?: number }) {
+  return (
+    <span
+      className="flex flex-none items-center justify-center rounded-full bg-gradient-to-br from-brand to-sky font-bold text-white"
+      style={{ height: size, width: size, fontSize: size * 0.36 }}
+    >
+      {initials(name) || "?"}
+    </span>
+  );
+}
+
+function Stars({ value }: { value: number }) {
+  if (!value) return null;
+  return (
+    <span className="inline-flex items-center" aria-label={`${value} von 5 Sternen`}>
+      {[1, 2, 3, 4, 5].map((v) => (
+        <svg
+          key={v}
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill={v <= value ? "#f59e0b" : "none"}
+          stroke={v <= value ? "#f59e0b" : "#cbd5e1"}
+          strokeWidth="1.5"
+        >
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14l-5-4.87 6.91-1.01L12 2z" />
+        </svg>
+      ))}
+    </span>
+  );
+}
 
 function CvLink({ path }: { path: string }) {
   const [loading, setLoading] = useState(false);
@@ -50,6 +111,22 @@ function CvLink({ path }: { path: string }) {
   );
 }
 
+function TagChips({ tags, max = 3 }: { tags: string[]; max?: number }) {
+  if (!tags.length) return null;
+  const shown = tags.slice(0, max);
+  const rest = tags.length - shown.length;
+  return (
+    <span className="flex flex-wrap items-center gap-1">
+      {shown.map((t) => (
+        <span key={t} className="rounded-full border border-border bg-elevated px-1.5 py-0.5 text-[0.65rem] text-muted">
+          {t}
+        </span>
+      ))}
+      {rest > 0 ? <span className="text-[0.65rem] text-faint">+{rest}</span> : null}
+    </span>
+  );
+}
+
 function CandidateCard({
   c,
   onMove,
@@ -62,17 +139,14 @@ function CandidateCard({
   editFields: FormField[];
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-elevated/60 p-4 shadow-sm transition-all hover:border-brand/40 hover:shadow">
-      <div className="flex items-start justify-between gap-1">
-        <Link
-          href={`/cockpit/kandidaten/${c.id}`}
-          className="group min-w-0"
-          title="Profil öffnen"
-        >
+    <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm transition-all hover:border-brand/40 hover:shadow">
+      <div className="flex items-start gap-3">
+        <Avatar name={c.name} />
+        <Link href={`/cockpit/kandidaten/${c.id}`} className="group min-w-0 flex-1" title="Profil öffnen">
           <p className="truncate text-sm font-semibold text-ink group-hover:text-brand-deep group-hover:underline">
             {c.name}
           </p>
-          <p className="truncate text-xs text-muted">{c.role}</p>
+          <p className="truncate text-xs text-muted">{c.role || "Position offen"}</p>
         </Link>
         <RowActions
           confirmText={`„${c.name}" wirklich löschen?`}
@@ -97,21 +171,22 @@ function CandidateCard({
         />
       </div>
 
+      {(c.rating ?? 0) > 0 || (c.tags?.length ?? 0) > 0 ? (
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <Stars value={c.rating ?? 0} />
+          <TagChips tags={c.tags ?? []} />
+        </div>
+      ) : null}
+
       {c.email || c.phone ? (
         <div className="mt-3 space-y-1">
           {c.email ? (
-            <a
-              href={`mailto:${c.email}`}
-              className="flex items-center gap-1.5 truncate text-xs text-muted hover:text-brand"
-            >
+            <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 truncate text-xs text-muted hover:text-brand">
               <IconMail size={12} /> <span className="truncate">{c.email}</span>
             </a>
           ) : null}
           {c.phone ? (
-            <a
-              href={`tel:${c.phone.replace(/\s+/g, "")}`}
-              className="flex items-center gap-1.5 truncate text-xs text-muted hover:text-brand"
-            >
+            <a href={`tel:${c.phone.replace(/\s+/g, "")}`} className="flex items-center gap-1.5 truncate text-xs text-muted hover:text-brand">
               <IconPhone size={12} /> <span className="truncate">{c.phone}</span>
             </a>
           ) : null}
@@ -137,7 +212,36 @@ function CandidateCard({
   );
 }
 
-/** Kandidaten-Board mit Mandats-Filter und Phasenwechsel. */
+function CandidateRow({ c }: { c: Candidate }) {
+  return (
+    <Link
+      href={`/cockpit/kandidaten/${c.id}`}
+      className="group flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-elevated/50"
+    >
+      <Avatar name={c.name} size={36} />
+      <div className="min-w-0 flex-[2]">
+        <p className="truncate text-sm font-semibold text-ink group-hover:text-brand-deep">{c.name}</p>
+        <p className="truncate text-xs text-muted">{c.role || "Position offen"}</p>
+      </div>
+      <div className="hidden min-w-0 flex-[2] md:block">
+        <p className="truncate text-xs text-muted">{c.email || "—"}</p>
+        <p className="truncate text-[0.7rem] text-faint">{c.mandate_account || ""}</p>
+      </div>
+      <div className="hidden flex-1 lg:flex">
+        <Stars value={c.rating ?? 0} />
+      </div>
+      <div className="hidden min-w-0 flex-[1.5] xl:block">
+        <TagChips tags={c.tags ?? []} max={2} />
+      </div>
+      <div className="flex flex-none items-center gap-2">
+        {c.cv_path ? <IconFolder size={13} className="text-faint" /> : null}
+        <Badge tone={STAGE_TONE[c.stage]}>{STAGE_LABEL[c.stage]}</Badge>
+      </div>
+    </Link>
+  );
+}
+
+/** Kandidaten-Ansicht: Board (Kanban) oder Liste, mit Suche & Mandats-Filter. */
 export function CandidatesView({
   candidates,
   accountNames = [],
@@ -148,6 +252,8 @@ export function CandidatesView({
   const router = useRouter();
   const [items, setItems] = useState(candidates);
   const [filter, setFilter] = useState<string>("all");
+  const [view, setView] = useState<"board" | "liste">("liste");
+  const [query, setQuery] = useState("");
   const editFields = withDatalist(CANDIDATE_FIELDS, "mandate_account", accountNames);
 
   async function move(id: string, stage: CandidateStage) {
@@ -162,18 +268,65 @@ export function CandidatesView({
     if (res.ok && !res.demo) router.refresh();
   }
 
-  const mandates = Array.from(new Set(items.map((c) => c.mandate_account)));
+  const mandates = useMemo(
+    () => Array.from(new Set(items.map((c) => c.mandate_account).filter(Boolean))),
+    [items]
+  );
   const rejected = items.filter((c) => c.stage === "abgelehnt");
   const base = items.filter((c) => c.stage !== "abgelehnt");
-  const shown =
-    filter === "abgelehnt"
-      ? rejected
-      : filter === "all"
-      ? base
-      : base.filter((c) => c.mandate_account === filter);
+
+  const q = query.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    const pool =
+      filter === "abgelehnt"
+        ? rejected
+        : filter === "all"
+          ? base
+          : base.filter((c) => c.mandate_account === filter);
+    if (!q) return pool;
+    return pool.filter((c) =>
+      [c.name, c.role, c.email, c.mandate_account, ...(c.tags ?? [])]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [filter, q, base, rejected]);
+
+  const listSorted = useMemo(
+    () => [...filtered].sort((a, b) => (b.updated_at ?? "").localeCompare(a.updated_at ?? "")),
+    [filtered]
+  );
 
   return (
     <div className="space-y-4">
+      {/* Toolbar: Suche + Ansicht-Umschalter */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-0 flex-1">
+          <IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Kandidat:in suchen (Name, Rolle, E-Mail, Tag) …"
+            className="w-full rounded-xl border border-border bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand"
+          />
+        </div>
+        <div className="flex items-center gap-1 rounded-xl border border-border bg-elevated/60 p-1">
+          {(["liste", "board"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setView(v)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+                view === v ? "bg-surface text-ink shadow-sm" : "text-muted hover:text-ink"
+              )}
+            >
+              {v === "liste" ? <IconLayers size={14} /> : <IconDashboard size={14} />}
+              {v === "liste" ? "Liste" : "Board"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <FilterTabs<string>
         value={filter}
         onChange={setFilter}
@@ -189,15 +342,38 @@ export function CandidatesView({
             : []),
         ]}
       />
-      <KanbanBoard
-        columns={COLUMNS}
-        items={shown}
-        getStage={(c) => c.stage}
-        renderCard={(c) => (
-          <CandidateCard c={c} onMove={move} onDelete={onDelete} editFields={editFields} />
-        )}
-        emptyText="Keine Kandidat:innen in diesem Filter."
-      />
+
+      {view === "board" ? (
+        <KanbanBoard
+          columns={COLUMNS}
+          items={filtered}
+          getStage={(c) => c.stage}
+          renderCard={(c) => (
+            <CandidateCard c={c} onMove={move} onDelete={onDelete} editFields={editFields} />
+          )}
+          emptyText="Keine Kandidat:innen in diesem Filter."
+        />
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+          <div className="flex items-center justify-between border-b border-border px-3 py-2 text-[0.7rem] font-medium uppercase tracking-wider text-faint">
+            <span>{listSorted.length} Kandidat:innen</span>
+            <span className="hidden lg:inline">Bewertung · Phase</span>
+          </div>
+          {listSorted.length === 0 ? (
+            <p className="px-3 py-10 text-center text-sm text-muted">
+              Keine Kandidat:innen in dieser Auswahl.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border/70">
+              {listSorted.map((c) => (
+                <li key={c.id}>
+                  <CandidateRow c={c} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
