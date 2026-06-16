@@ -9,6 +9,7 @@ import { IconUserCheck, IconChevronRight } from "@/components/ui/icons";
 import { formatDate, formatEur } from "@/lib/format";
 import {
   mandateRevenue,
+  mandatePaymentSchedule,
   type MandateStatus,
   type RecruitingMandate,
   type Candidate,
@@ -89,6 +90,7 @@ export function MandatesList({
           m.pricing_model === "percent"
             ? `${m.fee_percent ?? 0} % von ${formatEur(m.target_salary ?? 0)}`
             : `Festpreis ${formatEur(m.fee)}`;
+        const schedule = mandatePaymentSchedule(m);
 
         // Kandidaten dieses Mandats
         const mandateCandidates = candidates.filter(
@@ -182,6 +184,18 @@ export function MandatesList({
                   )}
                 </div>
               )}
+
+              {/* Zahlungsplan (Anzahlung / Erfolgshonorar / Splittung) */}
+              {schedule.length > 1 ? (
+                <div className="space-y-1 rounded-lg border border-border/60 bg-elevated/30 px-3 py-2">
+                  {schedule.map((p, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 text-[0.7rem]">
+                      <span className="truncate text-faint">{p.label}</span>
+                      <span className="flex-none font-medium text-ink">{formatEur(p.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
 
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">

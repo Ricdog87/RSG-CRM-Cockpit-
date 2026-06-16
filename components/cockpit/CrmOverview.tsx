@@ -3,7 +3,7 @@ import { StatCard } from "@/components/cockpit/StatCard";
 import { SectionHeader } from "@/components/ui/Card";
 import { IconChevronRight, IconTarget, IconPhone, IconBriefcase, IconUserCheck } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
-import type { Candidate, KiProject, Opportunity, RecruitingMandate } from "@/lib/crm-types";
+import { mandateFeePerPosition, type Candidate, type KiProject, type Opportunity, type RecruitingMandate } from "@/lib/crm-types";
 
 /** CRM-Kennzahlen über Vertrieb & Projekte für die Übersicht. */
 export function CrmOverview({
@@ -30,7 +30,7 @@ export function CrmOverview({
     0
   );
   const openVolume = mandates.reduce(
-    (s, m) => s + Math.max(0, m.positions - m.filled) * m.fee,
+    (s, m) => s + Math.max(0, m.positions - m.filled) * mandateFeePerPosition(m),
     0
   );
 

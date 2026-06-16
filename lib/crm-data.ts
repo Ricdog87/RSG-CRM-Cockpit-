@@ -144,6 +144,8 @@ export async function getMandates(): Promise<RecruitingMandate[]> {
         pricing_model: (str(r.pricing_model, "fixed") as "fixed" | "percent"),
         target_salary: r.target_salary != null ? Number(r.target_salary) : undefined,
         fee_percent: r.fee_percent != null ? Number(r.fee_percent) : undefined,
+        deposit: r.deposit != null ? Number(r.deposit) : undefined,
+        split_payment: r.split_payment == null ? undefined : Boolean(r.split_payment),
       })),
     { column: "deadline", ascending: true }
   );

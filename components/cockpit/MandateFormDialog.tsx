@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { IconPlus } from "@/components/ui/icons";
 import { createMandate, updateMandate, type ActionResult } from "@/lib/crm-actions";
 import { formatEur } from "@/lib/format";
-import type { RecruitingMandate } from "@/lib/crm-types";
+import { mandatePaymentSchedule, type RecruitingMandate } from "@/lib/crm-types";
 
 const inputClass =
   "w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand";
@@ -37,6 +37,8 @@ export function MandateFormDialog({
   const [fee, setFee] = useState<number>(mandate?.fee ?? 9999);
   const [targetSalary, setTargetSalary] = useState<number>(mandate?.target_salary ?? 60000);
   const [feePercent, setFeePercent] = useState<number>(mandate?.fee_percent ?? 25);
+  const [deposit, setDeposit] = useState<number>(mandate?.deposit ?? 2500);
+  const [split, setSplit] = useState<boolean>(mandate?.split_payment ?? false);
 
   useEffect(() => {
     if (state?.ok && !state.demo) {
@@ -47,6 +49,16 @@ export function MandateFormDialog({
 
   const perPosition = pricing === "percent" ? targetSalary * (feePercent / 100) : fee;
   const expected = Math.round(perPosition * (positions || 1));
+  // Live-Zahlungsplan aus den aktuellen Eingaben.
+  const schedule = mandatePaymentSchedule({
+    positions,
+    fee,
+    pricing_model: pricing,
+    target_salary: targetSalary,
+    fee_percent: feePercent,
+    deposit: pricing === "fixed" ? deposit : 0,
+    split_payment: split,
+  } as RecruitingMandate);
 
   return (
     <>
@@ -131,16 +143,30 @@ export function MandateFormDialog({
             </div>
 
             {pricing === "fixed" ? (
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted">Festpreis je Stelle (€)</label>
-                <input
-                  name="fee"
-                  type="number"
-                  min={0}
-                  value={fee}
-                  onChange={(e) => setFee(Number(e.target.value) || 0)}
-                  className={inputClass}
-                />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted">Festpreis je Stelle (€)</label>
+                  <input
+                    name="fee"
+                    type="number"
+                    min={0}
+                    value={fee}
+                    onChange={(e) => setFee(Number(e.target.value) || 0)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted">Anzahlung je Stelle (€)</label>
+                  <input
+                    name="deposit"
+                    type="number"
+                    min={0}
+                    value={deposit}
+                    onChange={(e) => setDeposit(Number(e.target.value) || 0)}
+                    className={inputClass}
+                  />
+                  <p className="mt-1 text-[0.7rem] text-faint">fix bei Auftrag, Rest bei Vermittlung</p>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -187,9 +213,36 @@ export function MandateFormDialog({
               </div>
             )}
 
-            <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-2 text-sm">
-              <span className="text-muted">Erwarteter Umsatz</span>
-              <span className="font-bold text-brand-deep">{formatEur(expected)}</span>
+            {/* Erfolgshonorar splitten (50 % Unterzeichnung / 50 % nach 3 Monaten) */}
+            <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-lg border border-border bg-surface px-3 py-2">
+              <input
+                type="checkbox"
+                checked={split}
+                onChange={(e) => setSplit(e.target.checked)}
+                className="mt-0.5 h-4 w-4 flex-none accent-brand"
+              />
+              <span className="text-xs text-ink">
+                Erfolgshonorar splitten
+                <span className="block text-[0.7rem] text-faint">
+                  50 % bei Vertragsunterzeichnung · 50 % nach 3 Monaten Betriebszugehörigkeit
+                </span>
+              </span>
+            </label>
+            <input type="hidden" name="split_payment" value={split ? "1" : "0"} />
+
+            <div className="mt-3 border-t border-border/60 pt-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted">Erwarteter Umsatz</span>
+                <span className="font-bold text-brand-deep">{formatEur(expected)}</span>
+              </div>
+              <ul className="mt-2 space-y-1">
+                {schedule.map((p, i) => (
+                  <li key={i} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-faint">{p.label}</span>
+                    <span className="flex-none font-medium text-ink">{formatEur(p.amount)}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 

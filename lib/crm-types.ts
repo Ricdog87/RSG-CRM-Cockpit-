@@ -106,15 +106,59 @@ export interface RecruitingMandate {
   target_salary?: number;
   /** Honorarsatz in % – für pricing_model "percent". */
   fee_percent?: number;
+  /** Anzahlung je Stelle (€) – fix bei Auftrag, Rest bei Vermittlung. */
+  deposit?: number;
+  /**
+   * Erfolgshonorar 50/50 splitten: 50 % bei Vertragsunterzeichnung,
+   * 50 % nach 3 Monaten Betriebszugehörigkeit.
+   */
+  split_payment?: boolean;
+}
+
+/** Honorar je Stelle (Festpreis ODER % vom Zielgehalt). */
+export function mandateFeePerPosition(m: RecruitingMandate): number {
+  return m.pricing_model === "percent"
+    ? (m.target_salary ?? 0) * ((m.fee_percent ?? 0) / 100)
+    : m.fee;
 }
 
 /** Erwarteter Umsatz eines Mandats (über alle Stellen). */
 export function mandateRevenue(m: RecruitingMandate): number {
-  const perPosition =
-    m.pricing_model === "percent"
-      ? (m.target_salary ?? 0) * ((m.fee_percent ?? 0) / 100)
-      : m.fee;
-  return Math.round(perPosition * (m.positions || 1));
+  return Math.round(mandateFeePerPosition(m) * (m.positions || 1));
+}
+
+export interface PaymentMilestone {
+  label: string;
+  amount: number;
+}
+
+/**
+ * Zahlungsplan eines Mandats (über alle Stellen): Anzahlung bei Auftrag,
+ * danach Erfolgshonorar – optional 50/50 gesplittet (Unterzeichnung /
+ * nach 3 Monaten Betriebszugehörigkeit).
+ */
+export function mandatePaymentSchedule(m: RecruitingMandate): PaymentMilestone[] {
+  const positions = m.positions || 1;
+  const total = mandateRevenue(m);
+  const deposit = Math.round((m.deposit ?? 0) * positions);
+  const plan: PaymentMilestone[] = [];
+
+  if (deposit > 0) {
+    plan.push({ label: "Anzahlung bei Auftrag", amount: Math.min(deposit, total) });
+  }
+  const success = Math.max(0, total - deposit);
+
+  if (m.split_payment) {
+    const first = Math.round(success / 2);
+    plan.push({ label: "50 % bei Vertragsunterzeichnung", amount: first });
+    plan.push({ label: "50 % nach 3 Monaten Betriebszugehörigkeit", amount: success - first });
+  } else if (success > 0) {
+    plan.push({
+      label: deposit > 0 ? "Restbetrag bei erfolgreicher Vermittlung" : "Honorar bei erfolgreicher Vermittlung",
+      amount: success,
+    });
+  }
+  return plan;
 }
 
 export type CandidateStage =

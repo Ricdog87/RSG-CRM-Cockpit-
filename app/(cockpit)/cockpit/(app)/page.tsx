@@ -11,6 +11,7 @@ import { CrmOverview } from "@/components/cockpit/CrmOverview";
 import { OverrideNudge } from "@/components/cockpit/OverrideNudge";
 import { Pipeline } from "@/components/cockpit/Pipeline";
 import { OpenMandates } from "@/components/cockpit/OpenMandates";
+import { OneTimeRevenue } from "@/components/cockpit/OneTimeRevenue";
 import { CareerProgress } from "@/components/cockpit/CareerProgress";
 import { Leaderboard } from "@/components/cockpit/Leaderboard";
 import { TeamDownline } from "@/components/cockpit/TeamDownline";
@@ -52,6 +53,11 @@ export default async function CockpitPage() {
           <OpenMandates mandates={mandates} limit={5} />
         </section>
       </div>
+
+      {/* 3b. Einmalumsatz (Implementierung & Anzahlungen) */}
+      <section className="animate-fade-up" aria-label="Einmalumsatz">
+        <OneTimeRevenue kiProjects={kiProjects} mandates={mandates} />
+      </section>
 
       {/* 3. KPI-Reihe */}
       <section className="animate-fade-up" aria-label="Kennzahlen">
