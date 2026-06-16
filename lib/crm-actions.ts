@@ -106,22 +106,29 @@ export async function createAccount(
   const supabase = createClient();
   const lifecycle = s(fd, "lifecycle") || "lead";
 
-  const { data: ins, error: insErr } = await supabase
+  const row: Record<string, unknown> = {
+    partner_id: pid,
+    name,
+    branche: s(fd, "branche"),
+    segment: s(fd, "segment"),
+    line: s(fd, "line") || "ki",
+    lifecycle,
+    contact_name: s(fd, "contact_name"),
+    contact_email: s(fd, "contact_email"),
+    contact_phone: s(fd, "contact_phone") || null,
+    mrr: n(fd, "mrr"),
+    ort: s(fd, "ort"),
+  };
+  let { data: ins, error: insErr } = await supabase
     .from("accounts")
-    .insert({
-      partner_id: pid,
-      name,
-      branche: s(fd, "branche"),
-      segment: s(fd, "segment"),
-      line: s(fd, "line") || "ki",
-      lifecycle,
-      contact_name: s(fd, "contact_name"),
-      contact_email: s(fd, "contact_email"),
-      mrr: n(fd, "mrr"),
-      ort: s(fd, "ort"),
-    })
+    .insert(row)
     .select("id")
     .single();
+  // contact_phone-Spalte evtl. noch nicht migriert → ohne erneut versuchen.
+  if (insErr && /contact_phone.*does not exist/i.test(insErr.message)) {
+    delete row.contact_phone;
+    ({ data: ins, error: insErr } = await supabase.from("accounts").insert(row).select("id").single());
+  }
   if (insErr) return { ok: false, error: insErr.message };
   revalidatePath("/cockpit/kunden");
 
@@ -336,22 +343,30 @@ export async function updateAccount(
   const id = s(fd, "id");
   if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
   if (!s(fd, "name")) return { ok: false, error: "Name ist erforderlich." };
-  return update(
-    "accounts",
-    id,
-    {
-      name: s(fd, "name"),
-      branche: s(fd, "branche"),
-      segment: s(fd, "segment"),
-      line: s(fd, "line") || "ki",
-      lifecycle: s(fd, "lifecycle") || "lead",
-      contact_name: s(fd, "contact_name"),
-      contact_email: s(fd, "contact_email"),
-      mrr: n(fd, "mrr"),
-      ort: s(fd, "ort"),
-    },
-    "/cockpit/kunden"
-  );
+  if (useMockData) return DEMO;
+  const { id: pid, error } = await currentPartnerId();
+  if (!pid) return { ok: false, error };
+  const supabase = createClient();
+  const patch: Record<string, unknown> = {
+    name: s(fd, "name"),
+    branche: s(fd, "branche"),
+    segment: s(fd, "segment"),
+    line: s(fd, "line") || "ki",
+    lifecycle: s(fd, "lifecycle") || "lead",
+    contact_name: s(fd, "contact_name"),
+    contact_email: s(fd, "contact_email"),
+    contact_phone: s(fd, "contact_phone") || null,
+    mrr: n(fd, "mrr"),
+    ort: s(fd, "ort"),
+  };
+  let { error: updErr } = await supabase.from("accounts").update(patch).eq("id", id);
+  if (updErr && /contact_phone.*does not exist/i.test(updErr.message)) {
+    delete patch.contact_phone;
+    ({ error: updErr } = await supabase.from("accounts").update(patch).eq("id", id));
+  }
+  if (updErr) return { ok: false, error: updErr.message };
+  revalidatePath("/cockpit/kunden");
+  return { ok: true };
 }
 
 // ---------- Löschen --------------------------------------------------

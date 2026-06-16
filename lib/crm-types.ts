@@ -26,6 +26,7 @@ export interface Account {
   lifecycle: Lifecycle;
   contact_name: string;
   contact_email: string;
+  contact_phone?: string;
   /** monatlich wiederkehrender Umsatz (KI), 0 bei Recruiting */
   mrr: number;
   ort: string;

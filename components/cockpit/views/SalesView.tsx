@@ -11,7 +11,7 @@ import { updateOpportunityStage } from "@/lib/crm-actions";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 import type { BusinessLine, Opportunity, SalesStage } from "@/lib/crm-types";
 
-type Filter = "all" | BusinessLine;
+type Filter = "all" | BusinessLine | "verloren";
 
 const COLUMNS: BoardColumn<SalesStage>[] = [
   { stage: "neu", label: "Neu", tone: "neutral" },
@@ -22,7 +22,10 @@ const COLUMNS: BoardColumn<SalesStage>[] = [
   { stage: "gewonnen", label: "Gewonnen", tone: "success" },
 ];
 
-const STAGE_OPTIONS = COLUMNS.map((c) => ({ value: c.stage, label: c.label }));
+const STAGE_OPTIONS = [
+  ...COLUMNS.map((c) => ({ value: c.stage as SalesStage, label: c.label })),
+  { value: "verloren" as SalesStage, label: "Verloren" },
+];
 
 function value(o: Opportunity) {
   return o.value_type === "mrr" ? `${formatEur(o.value)}/M` : formatEur(o.value);
@@ -81,8 +84,10 @@ export function SalesView({ opportunities }: { opportunities: Opportunity[] }) {
     if (res.ok && !res.demo) router.refresh();
   }
 
+  const lost = items.filter((o) => o.stage === "verloren");
   const base = items.filter((o) => o.stage !== "verloren");
-  const shown = filter === "all" ? base : base.filter((o) => o.line === filter);
+  const shown =
+    filter === "verloren" ? [] : filter === "all" ? base : base.filter((o) => o.line === filter);
 
   return (
     <div className="space-y-4">
@@ -97,16 +102,44 @@ export function SalesView({ opportunities }: { opportunities: Opportunity[] }) {
             label: "Recruiting",
             count: base.filter((o) => o.line === "recruiting").length,
           },
+          ...(lost.length > 0
+            ? [{ value: "verloren" as Filter, label: "Verloren", count: lost.length }]
+            : []),
         ]}
       />
-      <KanbanBoard
-        columns={COLUMNS}
-        items={shown}
-        getStage={(o) => o.stage}
-        renderCard={(o) => <OppCard o={o} onMove={move} />}
-        columnFooter={(its) => <>{formatEur(its.reduce((s, o) => s + o.value, 0))}</>}
-        emptyText="Keine Verkaufschancen in diesem Filter."
-      />
+
+      {filter === "verloren" ? (
+        <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+          <ul className="divide-y divide-border/70">
+            {lost.map((o) => (
+              <li key={o.id} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-ink">{o.account_name}</p>
+                  <p className="truncate text-xs text-muted">
+                    {o.title} · {value(o)}
+                  </p>
+                </div>
+                <div className="w-40">
+                  <MoveSelect<SalesStage>
+                    value={o.stage}
+                    options={STAGE_OPTIONS}
+                    onMove={(stage) => move(o.id, stage)}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <KanbanBoard
+          columns={COLUMNS}
+          items={shown}
+          getStage={(o) => o.stage}
+          renderCard={(o) => <OppCard o={o} onMove={move} />}
+          columnFooter={(its) => <>{formatEur(its.reduce((s, o) => s + o.value, 0))}</>}
+          emptyText="Keine Verkaufschancen in diesem Filter."
+        />
+      )}
     </div>
   );
 }

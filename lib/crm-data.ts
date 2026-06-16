@@ -76,6 +76,7 @@ export async function getAccounts(): Promise<Account[]> {
         lifecycle: (str(r.lifecycle, "lead") as Lifecycle),
         contact_name: str(r.contact_name),
         contact_email: str(r.contact_email),
+        contact_phone: str(r.contact_phone),
         mrr: num(r.mrr),
         ort: str(r.ort),
         since: str(r.since),

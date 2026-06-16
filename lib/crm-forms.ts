@@ -28,6 +28,7 @@ export const ACCOUNT_FIELDS: FormField[] = [
   { name: "ort", label: "Ort" },
   { name: "contact_name", label: "Ansprechpartner:in" },
   { name: "contact_email", label: "E-Mail", type: "email" },
+  { name: "contact_phone", label: "Telefon", placeholder: "+49 …" },
   { name: "mrr", label: "MRR (€)", type: "number", placeholder: "0" },
 ];
 

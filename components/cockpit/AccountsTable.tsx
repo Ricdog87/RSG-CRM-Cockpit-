@@ -98,7 +98,17 @@ export function AccountsTable({
                 </div>
                 <div className="col-span-3 hidden min-w-0 lg:block">
                   <p className="truncate text-sm text-muted">{a.contact_name}</p>
-                  <p className="truncate text-xs text-faint">{a.contact_email}</p>
+                  {a.contact_phone ? (
+                    <a
+                      href={`tel:${a.contact_phone.replace(/\s+/g, "")}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="truncate text-xs text-faint hover:text-brand"
+                    >
+                      {a.contact_phone}
+                    </a>
+                  ) : (
+                    <p className="truncate text-xs text-faint">{a.contact_email}</p>
+                  )}
                 </div>
                 <div className="col-span-2 hidden min-w-0 lg:block">
                   <p className="truncate text-sm text-muted">{a.segment}</p>
