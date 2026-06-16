@@ -10,9 +10,8 @@ import {
   TableRow,
   TableCell,
   WidthType,
-  AlignmentType,
-  HeadingLevel,
   BorderStyle,
+  ShadingType,
 } from "docx";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
@@ -99,23 +98,54 @@ async function parseAnon(bytes: Uint8Array): Promise<AnonProfile | null> {
 
 // ---------- docx-Bausteine ----------
 
+const INK = "1F2937";
+const MUTED = "64748B";
+const LINE = "E5E7EB";
+const LIGHT = "F1F5F9";
+
+/** Abschnitts-Band (blau, weiße Schrift, voller Breite mit Innenabstand). */
 function bandHeading(text: string): Paragraph {
   return new Paragraph({
-    spacing: { before: 240, after: 120 },
-    shading: { type: "clear", fill: BRAND, color: "auto" },
-    children: [new TextRun({ text: ` ${text}`, bold: true, color: "FFFFFF", size: 24 })],
+    spacing: { before: 280, after: 140, line: 300 },
+    indent: { left: 140, right: 140 },
+    shading: { type: ShadingType.CLEAR, fill: BRAND, color: "auto" },
+    children: [new TextRun({ text, bold: true, color: "FFFFFF", size: 24 })],
   });
 }
 
-function para(text: string, opts: { bold?: boolean; size?: number; color?: string } = {}): Paragraph {
+function para(
+  text: string,
+  opts: { bold?: boolean; size?: number; color?: string; after?: number; italics?: boolean } = {}
+): Paragraph {
   return new Paragraph({
-    spacing: { after: 80 },
-    children: [new TextRun({ text, bold: opts.bold, size: opts.size ?? 20, color: opts.color })],
+    spacing: { after: opts.after ?? 100, line: 276 },
+    children: [
+      new TextRun({
+        text,
+        bold: opts.bold,
+        italics: opts.italics,
+        size: opts.size ?? 21,
+        color: opts.color ?? INK,
+      }),
+    ],
   });
 }
 
 function bullet(text: string): Paragraph {
-  return new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text, size: 20 })] });
+  return new Paragraph({
+    bullet: { level: 0 },
+    spacing: { after: 40, line: 276 },
+    children: [new TextRun({ text, size: 21, color: INK })],
+  });
+}
+
+function cell(content: Paragraph, width: number, shaded = false): TableCell {
+  return new TableCell({
+    width: { size: width, type: WidthType.PERCENTAGE },
+    margins: { top: 60, bottom: 60, left: 140, right: 140 },
+    shading: shaded ? { type: ShadingType.CLEAR, fill: LIGHT, color: "auto" } : undefined,
+    children: [content],
+  });
 }
 
 function eckdatenTable(e: AnonProfile["eckdaten"]): Table {
@@ -129,19 +159,19 @@ function eckdatenTable(e: AnonProfile["eckdaten"]): Table {
     ["Gehaltsvorstellung", e.salary],
     ["Sprachen", e.languages],
   ];
+  const b = { style: BorderStyle.SINGLE, size: 2, color: LINE };
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
+    columnWidths: [3200, 6600],
+    borders: { top: b, bottom: b, left: b, right: b, insideHorizontal: b, insideVertical: b },
     rows: rows
       .filter(([, v]) => v)
       .map(
         ([k, v]) =>
           new TableRow({
             children: [
-              new TableCell({
-                width: { size: 32, type: WidthType.PERCENTAGE },
-                children: [para(k, { bold: true })],
-              }),
-              new TableCell({ children: [para(String(v))] }),
+              cell(para(k, { bold: true, after: 0 }), 32, true),
+              cell(para(String(v), { after: 0 }), 68),
             ],
           })
       ),
@@ -151,15 +181,19 @@ function eckdatenTable(e: AnonProfile["eckdaten"]): Table {
 function buildDocx(p: AnonProfile, candNo: string): Document {
   const children: (Paragraph | Table)[] = [];
 
+  // Kopf-Band
   children.push(
     new Paragraph({
-      spacing: { after: 60 },
-      shading: { type: "clear", fill: BRAND, color: "auto" },
-      children: [new TextRun({ text: " RSG · Anonymisiertes Kandidatenprofil", bold: true, color: "FFFFFF", size: 30 })],
+      spacing: { after: 60, line: 360 },
+      indent: { left: 140, right: 140 },
+      shading: { type: ShadingType.CLEAR, fill: BRAND, color: "auto" },
+      children: [
+        new TextRun({ text: "RSG · Anonymisiertes Kandidatenprofil", bold: true, color: "FFFFFF", size: 30 }),
+      ],
     })
   );
-  children.push(para(candNo, { color: "64748B" }));
-  children.push(para(p.headline, { bold: true, size: 26 }));
+  children.push(para(candNo, { color: MUTED, size: 18, after: 60 }));
+  children.push(para(p.headline, { bold: true, size: 28, after: 100 }));
 
   if (Object.values(p.eckdaten).some(Boolean)) {
     children.push(bandHeading("Eckdaten"));
@@ -172,23 +206,23 @@ function buildDocx(p: AnonProfile, candNo: string): Document {
   if (p.competencies.length) {
     children.push(bandHeading("Kernkompetenzen"));
     for (const c of p.competencies) {
-      children.push(para(c.group, { bold: true }));
+      children.push(para(c.group, { bold: true, after: 40 }));
       for (const it of c.items) children.push(bullet(it));
     }
   }
   if (p.projects.length) {
     children.push(bandHeading("Ausgewählte Projekte (anonymisiert)"));
     for (const pr of p.projects) {
-      children.push(para(pr.title, { bold: true }));
-      if (pr.desc) children.push(para(pr.desc));
+      children.push(para(pr.title, { bold: true, after: 40 }));
+      if (pr.desc) children.push(para(pr.desc, { after: 140 }));
     }
   }
   if (p.experience.length) {
     children.push(bandHeading("Beruflicher Werdegang"));
     for (const ex of p.experience) {
-      children.push(para(`${ex.period} · ${ex.role}`, { bold: true }));
-      if (ex.company_generic) children.push(para(ex.company_generic, { color: "64748B" }));
-      if (ex.desc) children.push(para(ex.desc));
+      children.push(para(`${ex.period} · ${ex.role}`, { bold: true, after: 20 }));
+      if (ex.company_generic) children.push(para(ex.company_generic, { color: MUTED, size: 19, after: 40 }));
+      if (ex.desc) children.push(para(ex.desc, { after: 140 }));
     }
   }
   if (p.education.length) {
@@ -198,14 +232,14 @@ function buildDocx(p: AnonProfile, candNo: string): Document {
 
   children.push(
     new Paragraph({
-      spacing: { before: 320 },
-      border: { top: { style: BorderStyle.SINGLE, size: 6, color: "E2E8F0" } },
+      spacing: { before: 360, after: 0 },
+      border: { top: { style: BorderStyle.SINGLE, size: 6, color: LINE } },
       children: [
         new TextRun({
           text:
             "Anonymisiert gem. Art. 5 & 6 DSGVO. Klardaten/Identität ausschließlich über RSG Recruiting Solutions Group GmbH.",
           size: 16,
-          color: "64748B",
+          color: MUTED,
           italics: true,
         }),
       ],
@@ -213,7 +247,17 @@ function buildDocx(p: AnonProfile, candNo: string): Document {
   );
 
   return new Document({
-    sections: [{ properties: {}, children }],
+    styles: {
+      default: {
+        document: { run: { font: "Calibri", size: 21, color: INK } },
+      },
+    },
+    sections: [
+      {
+        properties: { page: { margin: { top: 900, bottom: 900, left: 1000, right: 1000 } } },
+        children,
+      },
+    ],
   });
 }
 
