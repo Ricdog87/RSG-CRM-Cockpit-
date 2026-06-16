@@ -16,7 +16,6 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import { AI } from "@/lib/ai/config";
-import { extractJson } from "@/lib/ai/llm";
 
 const BUCKET = "candidate-cvs";
 const BRAND = "1D4ED8";
@@ -59,32 +58,51 @@ async function parseAnon(bytes: Uint8Array): Promise<AnonProfile | null> {
   if (AI.provider !== "anthropic" || !AI.anthropicKey) return null;
   const b64 = Buffer.from(bytes).toString("base64");
   const client = new Anthropic({ apiKey: AI.anthropicKey });
-  const content: unknown[] = [
-    { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } },
-    {
-      type: "text",
-      text:
-        "Erzeuge ein anonymisiertes Kurzprofil (Blindprofil) aus diesem Lebenslauf als JSON: " +
-        '{ "headline": kurze Berufsüberschrift, "eckdaten": {"position","seniority",' +
-        '"experience","availability","location","travel","salary","languages"}, "profile": ' +
-        "2-4 Sätze Kurzprofil, " +
-        '"competencies": [{"group": Kategorie, "items": [Begriffe]}], "projects": ' +
-        '[{"title","desc"}], "experience": [{"period","role","company_generic","desc"}], ' +
-        '"education": [Strings] }. ' +
-        "WICHTIG: KEIN Name, KEINE Kontaktdaten, KEIN Geburtsdatum, KEINE Adresse. " +
-        "Arbeitgeber- und Produktnamen generalisieren (z.B. 'mittelständischer Automobilzulieferer'). " +
-        "Antworte nur mit dem JSON.",
+  const tool = {
+    name: "anon_profile",
+    description: "DSGVO-konformes anonymisiertes Kandidaten-Kurzprofil (Blindprofil).",
+    input_schema: {
+      type: "object",
+      properties: {
+        headline: { type: "string" },
+        eckdaten: {
+          type: "object",
+          properties: {
+            position: { type: "string" }, seniority: { type: "string" }, experience: { type: "string" },
+            availability: { type: "string" }, location: { type: "string" }, travel: { type: "string" },
+            salary: { type: "string" }, languages: { type: "string" },
+          },
+        },
+        profile: { type: "string" },
+        competencies: { type: "array", items: { type: "object", properties: { group: { type: "string" }, items: { type: "array", items: { type: "string" } } }, required: ["group", "items"] } },
+        projects: { type: "array", items: { type: "object", properties: { title: { type: "string" }, desc: { type: "string" } }, required: ["title"] } },
+        experience: { type: "array", items: { type: "object", properties: { period: { type: "string" }, role: { type: "string" }, company_generic: { type: "string" }, desc: { type: "string" } }, required: ["role"] } },
+        education: { type: "array", items: { type: "string" } },
+      },
+      required: ["headline", "profile"],
     },
-  ];
+  };
   const res = await client.messages.create({
     model: AI.model,
-    max_tokens: 3000,
-    system: "Du erstellst DSGVO-konforme, anonymisierte Kandidaten-Kurzprofile für die Personalvermittlung.",
-    messages: [{ role: "user", content: content as unknown as Anthropic.MessageParam["content"] }],
+    max_tokens: 8000,
+    system:
+      "Du erstellst DSGVO-konforme, anonymisierte Kandidaten-Kurzprofile fuer die Personalvermittlung. " +
+      "KEIN Name, KEINE Kontaktdaten, KEIN Geburtsdatum, KEINE Adresse. " +
+      "Arbeitgeber- und Produktnamen generalisieren.",
+    tools: [tool] as unknown as Anthropic.Tool[],
+    tool_choice: { type: "tool", name: "anon_profile" } as unknown as Anthropic.MessageCreateParams["tool_choice"],
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } },
+          { type: "text", text: "Erzeuge aus diesem Lebenslauf das anonymisierte Kurzprofil und gib es ausschliesslich ueber das Tool 'anon_profile' zurueck. Arbeitgeber generalisieren, Klardaten weglassen." },
+        ] as unknown as Anthropic.MessageParam["content"],
+      },
+    ],
   });
-  const block = res.content.find((b) => b.type === "text");
-  const raw = block && block.type === "text" ? block.text : "";
-  const j = extractJson<Partial<AnonProfile>>(raw);
+  const tu = res.content.find((b) => b.type === "tool_use");
+  const j = (tu && tu.type === "tool_use" ? tu.input : {}) as Partial<AnonProfile>;
   return {
     headline: String(j.headline ?? "Kandidatenprofil"),
     eckdaten: (j.eckdaten as AnonProfile["eckdaten"]) ?? {},
