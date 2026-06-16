@@ -1,4 +1,4 @@
-import { getMandates, getAccounts } from "@/lib/crm-data";
+import { getMandates, getAccounts, getCandidates } from "@/lib/crm-data";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { MandatesView } from "@/components/cockpit/views/MandatesView";
 import { StatCard } from "@/components/cockpit/StatCard";
@@ -10,7 +10,11 @@ import { formatEur, formatNumber } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function RecruitingProjektePage() {
-  const [mandates, accounts] = await Promise.all([getMandates(), getAccounts()]);
+  const [mandates, accounts, candidates] = await Promise.all([
+    getMandates(),
+    getAccounts(),
+    getCandidates(),
+  ]);
   const accountNames = accounts.map((a) => a.name);
 
   const offenePositionen = mandates.reduce(
@@ -66,7 +70,11 @@ export default async function RecruitingProjektePage() {
         />
       </div>
 
-      <MandatesView mandates={mandates} accountNames={accountNames} />
+      <MandatesView
+        mandates={mandates}
+        accountNames={accountNames}
+        candidates={candidates}
+      />
     </div>
   );
 }
