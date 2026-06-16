@@ -139,6 +139,9 @@ export async function getMandates(): Promise<RecruitingMandate[]> {
         fee: num(r.fee),
         candidate_count: num(r.candidate_count),
         deadline: str(r.deadline),
+        pricing_model: (str(r.pricing_model, "fixed") as "fixed" | "percent"),
+        target_salary: r.target_salary != null ? Number(r.target_salary) : undefined,
+        fee_percent: r.fee_percent != null ? Number(r.fee_percent) : undefined,
       })),
     { column: "deadline", ascending: true }
   );
@@ -150,6 +153,7 @@ function mapCandidate(r: Row): Candidate {
     name: str(r.name, "Kandidat:in"),
     role: str(r.role),
     mandate_account: str(r.mandate_account),
+    mandate_id: str(r.mandate_id) || undefined,
     stage: (str(r.stage, "neu") as CandidateStage),
     source: str(r.source),
     updated_at: str(r.updated_at),

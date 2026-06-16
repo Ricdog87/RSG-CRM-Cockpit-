@@ -2,6 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
 
+  // mupdf (PDF→Foto-Extraktion) ist ESM mit top-level await – nicht bundlen.
+  experimental: {
+    serverComponentsExternalPackages: ["mupdf"],
+  },
+
   async headers() {
     return [
       {

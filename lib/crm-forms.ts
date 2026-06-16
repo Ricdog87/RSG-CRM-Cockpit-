@@ -50,6 +50,13 @@ export const CANDIDATE_FIELDS: FormField[] = [
   { name: "phone", label: "Telefon", placeholder: "+49 …" },
   { name: "mandate_account", label: "Mandat (Account)", full: true },
   {
+    name: "mandate_id",
+    label: "Mandat / Suchprojekt",
+    type: "select",
+    full: true,
+    options: [{ value: "", label: "— kein Mandat —" }],
+  },
+  {
     name: "stage",
     label: "Phase",
     type: "select",
@@ -177,4 +184,13 @@ export function withDatalist(
   return fields.map((f) =>
     f.name === fieldName ? { ...f, type: "datalist" as const, options } : f
   );
+}
+
+/** Setzt die Optionen eines Select-Feldes (z.B. Mandate fürs Kandidaten-Formular). */
+export function withSelectOptions(
+  fields: FormField[],
+  fieldName: string,
+  options: { value: string; label: string }[]
+): FormField[] {
+  return fields.map((f) => (f.name === fieldName ? { ...f, options } : f));
 }

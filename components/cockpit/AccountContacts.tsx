@@ -23,6 +23,8 @@ export function AccountContacts({
   const [items, setItems] = useState<Contact[]>(contacts);
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
+  const salutation = useRef<HTMLSelectElement>(null);
+  const title = useRef<HTMLInputElement>(null);
   const name = useRef<HTMLInputElement>(null);
   const role = useRef<HTMLInputElement>(null);
   const email = useRef<HTMLInputElement>(null);
@@ -33,6 +35,8 @@ export function AccountContacts({
     if (!n) return;
     const c: Contact = {
       id: `tmp-${Date.now()}`,
+      salutation: salutation.current?.value ?? "",
+      title: title.current?.value.trim() ?? "",
       name: n,
       role: role.current?.value.trim() ?? "",
       email: email.current?.value.trim() ?? "",
@@ -40,10 +44,13 @@ export function AccountContacts({
     };
     setItems((p) => [...p, c]);
     setOpen(false);
-    [name, role, email, phone].forEach((r) => r.current && (r.current.value = ""));
+    [title, name, role, email, phone].forEach((r) => r.current && (r.current.value = ""));
+    if (salutation.current) salutation.current.value = "";
     start(async () => {
       const res = await addContact(accountId, {
         name: c.name,
+        salutation: c.salutation,
+        title: c.title,
         role: c.role,
         email: c.email,
         phone: c.phone,
@@ -79,6 +86,13 @@ export function AccountContacts({
 
         {open ? (
           <div className="mb-4 grid gap-2 rounded-xl border border-border bg-elevated/40 p-3 sm:grid-cols-2">
+            <select ref={salutation} defaultValue="" className={inputClass} aria-label="Anrede">
+              <option value="">Anrede —</option>
+              <option value="Herr">Herr</option>
+              <option value="Frau">Frau</option>
+              <option value="Divers">Divers</option>
+            </select>
+            <input ref={title} placeholder="Titel (z.B. Dr.)" className={inputClass} />
             <input ref={name} placeholder="Name *" className={inputClass} />
             <input ref={role} placeholder="Rolle (z.B. Inhaber)" className={inputClass} />
             <input ref={email} type="email" placeholder="E-Mail" className={inputClass} />
@@ -108,7 +122,7 @@ export function AccountContacts({
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">
-                    {c.name}
+                    {[c.salutation, c.title, c.name].filter(Boolean).join(" ")}
                     {c.role ? <span className="text-faint"> · {c.role}</span> : null}
                   </p>
                   <p className="truncate text-xs text-muted">

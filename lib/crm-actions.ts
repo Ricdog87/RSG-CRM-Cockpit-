@@ -182,6 +182,7 @@ export async function createCandidate(
       email: s(fd, "email") || null,
       phone: s(fd, "phone") || null,
       mandate_account: s(fd, "mandate_account"),
+      mandate_id: s(fd, "mandate_id") || null,
       stage: s(fd, "stage") || "neu",
       source: s(fd, "source"),
     },
@@ -210,6 +211,7 @@ export async function createMandate(
   fd: FormData
 ): Promise<ActionResult> {
   if (!s(fd, "account_name")) return { ok: false, error: "Account ist erforderlich." };
+  const pricing = s(fd, "pricing_model") === "percent" ? "percent" : "fixed";
   return insert(
     "recruiting_mandates",
     {
@@ -218,7 +220,10 @@ export async function createMandate(
       positions: n(fd, "positions") || 1,
       filled: 0,
       status: s(fd, "status") || "offen",
-      fee: n(fd, "fee") || 9999,
+      pricing_model: pricing,
+      fee: pricing === "fixed" ? n(fd, "fee") || 9999 : n(fd, "fee"),
+      target_salary: pricing === "percent" ? n(fd, "target_salary") : null,
+      fee_percent: pricing === "percent" ? n(fd, "fee_percent") || 25 : null,
       candidate_count: 0,
       deadline: s(fd, "deadline") || null,
     },
@@ -419,7 +424,14 @@ export async function deleteNote(
 
 export async function addContact(
   accountId: string,
-  contact: { name: string; role?: string; email?: string; phone?: string }
+  contact: {
+    name: string;
+    salutation?: string;
+    title?: string;
+    role?: string;
+    email?: string;
+    phone?: string;
+  }
 ): Promise<ActionResult> {
   if (!contact.name?.trim()) return { ok: false, error: "Name erforderlich." };
   if (useMockData) return DEMO;
@@ -429,6 +441,8 @@ export async function addContact(
   const { error: insErr } = await supabase.from("account_contacts").insert({
     partner_id: id,
     account_id: accountId,
+    salutation: contact.salutation?.trim() || null,
+    title: contact.title?.trim() || null,
     name: contact.name.trim(),
     role: contact.role?.trim() || null,
     email: contact.email?.trim() || null,
@@ -534,6 +548,7 @@ export async function updateCandidate(
       email: s(fd, "email") || null,
       phone: s(fd, "phone") || null,
       mandate_account: s(fd, "mandate_account"),
+      mandate_id: s(fd, "mandate_id") || null,
       stage: s(fd, "stage") || "neu",
       source: s(fd, "source"),
       updated_at: new Date().toISOString(),
@@ -549,6 +564,7 @@ export async function updateMandate(
   const id = s(fd, "id");
   if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
   if (!s(fd, "account_name")) return { ok: false, error: "Account ist erforderlich." };
+  const pricing = s(fd, "pricing_model") === "percent" ? "percent" : "fixed";
   return update(
     "recruiting_mandates",
     id,
@@ -558,7 +574,10 @@ export async function updateMandate(
       positions: n(fd, "positions") || 1,
       filled: n(fd, "filled"),
       status: s(fd, "status") || "offen",
-      fee: n(fd, "fee") || 9999,
+      pricing_model: pricing,
+      fee: pricing === "fixed" ? n(fd, "fee") || 9999 : n(fd, "fee"),
+      target_salary: pricing === "percent" ? n(fd, "target_salary") : null,
+      fee_percent: pricing === "percent" ? n(fd, "fee_percent") || 25 : null,
       deadline: s(fd, "deadline") || null,
     },
     "/cockpit/projekte/recruiting"

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconUserCheck, IconChevronRight } from "@/components/ui/icons";
 import { formatDate, formatEur } from "@/lib/format";
-import type { MandateStatus, RecruitingMandate } from "@/lib/crm-types";
+import { mandateRevenue, type MandateStatus, type RecruitingMandate } from "@/lib/crm-types";
 
 const statusMeta: Record<
   MandateStatus,
@@ -41,6 +41,11 @@ export function MandatesList({
         const st = statusMeta[m.status];
         const pct = m.positions > 0 ? Math.round((m.filled / m.positions) * 100) : 0;
         const offen = Math.max(0, m.positions - m.filled);
+        const perPos = m.positions > 0 ? mandateRevenue(m) / m.positions : 0;
+        const pricingLabel =
+          m.pricing_model === "percent"
+            ? `${m.fee_percent ?? 0} % von ${formatEur(m.target_salary ?? 0)}`
+            : `Festpreis ${formatEur(m.fee)}`;
         return (
           <Card key={m.id} className="card-hover">
             <CardBody className="space-y-4">
@@ -78,15 +83,20 @@ export function MandatesList({
                 <span className="text-faint">bis {formatDate(m.deadline)}</span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-ink">
-                  {offen > 0 ? `${formatEur(offen * m.fee)} offen` : "vollständig besetzt"}
-                </span>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-ink">
+                    {offen > 0 ? `${formatEur(offen * perPos)} offen` : "vollständig besetzt"}
+                  </p>
+                  <p className="truncate text-[0.7rem] text-faint">
+                    {pricingLabel} · {formatEur(mandateRevenue(m))} gesamt
+                  </p>
+                </div>
                 <Link
-                  href="/cockpit/kandidaten"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-sky-deep hover:text-sky-ink"
+                  href={`/cockpit/projekte/recruiting/${m.id}`}
+                  className="inline-flex flex-none items-center gap-1 text-xs font-semibold text-sky-deep hover:text-sky-ink"
                 >
-                  Kandidaten <IconChevronRight size={14} />
+                  Pipeline <IconChevronRight size={14} />
                 </Link>
               </div>
             </CardBody>

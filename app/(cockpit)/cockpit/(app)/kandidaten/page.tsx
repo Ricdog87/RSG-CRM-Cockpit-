@@ -1,20 +1,32 @@
-import { getCandidates, getAccounts } from "@/lib/crm-data";
+import { getCandidates, getAccounts, getMandates } from "@/lib/crm-data";
 import { createCandidate } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { CandidatesView } from "@/components/cockpit/views/CandidatesView";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { CvUploadDialog } from "@/components/cockpit/CvUploadDialog";
-import { CANDIDATE_FIELDS, withDatalist } from "@/lib/crm-forms";
+import { CANDIDATE_FIELDS, withDatalist, withSelectOptions } from "@/lib/crm-forms";
 import { IconUsers, IconCalendar, IconTrophy } from "@/components/ui/icons";
 import { formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function KandidatenPage() {
-  const [candidates, accounts] = await Promise.all([getCandidates(), getAccounts()]);
+  const [candidates, accounts, mandates] = await Promise.all([
+    getCandidates(),
+    getAccounts(),
+    getMandates(),
+  ]);
   const accountNames = accounts.map((a) => a.name);
-  const createFields = withDatalist(CANDIDATE_FIELDS, "mandate_account", accountNames);
+  const mandateOptions = mandates.map((m) => ({
+    value: m.id,
+    label: `${m.account_name} · ${m.role || "Mandat"}`,
+  }));
+  const createFields = withSelectOptions(
+    withDatalist(CANDIDATE_FIELDS, "mandate_account", accountNames),
+    "mandate_id",
+    [{ value: "", label: "— kein Mandat —" }, ...mandateOptions]
+  );
 
   const platziert = candidates.filter((c) => c.stage === "platziert").length;
   const aktiv = candidates.filter(
@@ -66,7 +78,11 @@ export default async function KandidatenPage() {
         />
       </div>
 
-      <CandidatesView candidates={candidates} accountNames={accountNames} />
+      <CandidatesView
+        candidates={candidates}
+        accountNames={accountNames}
+        mandateOptions={mandateOptions}
+      />
     </div>
   );
 }

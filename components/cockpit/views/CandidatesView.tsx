@@ -10,7 +10,7 @@ import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
 import { Badge } from "@/components/ui/Badge";
 import { IconMail, IconPhone, IconFolder, IconSearch, IconDashboard, IconLayers } from "@/components/ui/icons";
-import { CANDIDATE_FIELDS, withDatalist } from "@/lib/crm-forms";
+import { CANDIDATE_FIELDS, withDatalist, withSelectOptions } from "@/lib/crm-forms";
 import { updateCandidateStage, updateCandidate, deleteCandidate } from "@/lib/crm-actions";
 import { cvSignedUrl } from "@/lib/cv-actions";
 import { formatDate } from "@/lib/format";
@@ -158,11 +158,14 @@ function CandidateCard({
               fields={editFields}
               action={updateCandidate}
               initial={{
+                salutation: c.salutation ?? "",
+                title: c.title ?? "",
                 name: c.name,
                 role: c.role,
                 email: c.email ?? "",
                 phone: c.phone ?? "",
                 mandate_account: c.mandate_account,
+                mandate_id: c.mandate_id ?? "",
                 stage: c.stage,
                 source: c.source,
               }}
@@ -245,9 +248,11 @@ function CandidateRow({ c }: { c: Candidate }) {
 export function CandidatesView({
   candidates,
   accountNames = [],
+  mandateOptions = [],
 }: {
   candidates: Candidate[];
   accountNames?: string[];
+  mandateOptions?: { value: string; label: string }[];
 }) {
   const router = useRouter();
   const [items, setItems] = useState(candidates);
@@ -256,7 +261,11 @@ export function CandidatesView({
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"updated" | "rating" | "name">("updated");
   const [activeTags, setActiveTags] = useState<string[]>([]);
-  const editFields = withDatalist(CANDIDATE_FIELDS, "mandate_account", accountNames);
+  const editFields = withSelectOptions(
+    withDatalist(CANDIDATE_FIELDS, "mandate_account", accountNames),
+    "mandate_id",
+    [{ value: "", label: "— kein Mandat —" }, ...mandateOptions]
+  );
 
   async function move(id: string, stage: CandidateStage) {
     setItems((prev) => prev.map((c) => (c.id === id ? { ...c, stage } : c)));

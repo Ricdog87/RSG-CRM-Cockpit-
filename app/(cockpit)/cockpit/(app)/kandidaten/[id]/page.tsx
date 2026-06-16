@@ -15,6 +15,8 @@ import { EditDialog } from "@/components/cockpit/EditDialog";
 import { CandidateStageControl } from "@/components/cockpit/CandidateStageControl";
 import { CvDownloadButton } from "@/components/cockpit/CvDownloadButton";
 import { CandidateCvUpload } from "@/components/cockpit/CandidateCvUpload";
+import { CandidatePhoto } from "@/components/cockpit/CandidatePhoto";
+import { AnonymizeButton } from "@/components/cockpit/AnonymizeButton";
 import { CvPreview } from "@/components/cockpit/CvPreview";
 import { CandidateRatingTags } from "@/components/cockpit/CandidateRatingTags";
 import { CandidateMatch } from "@/components/cockpit/CandidateMatch";
@@ -109,9 +111,13 @@ export default async function KandidatDetailPage({
             <CardBody className="space-y-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-sky text-base font-black text-white">
-                    {initials(c.name)}
-                  </span>
+                  <CandidatePhoto
+                    candidateId={c.id}
+                    name={c.name}
+                    photoPath={c.photo_path}
+                    hasCv={Boolean(c.cv_path)}
+                    size={56}
+                  />
                   <div className="min-w-0">
                     <h1 className="truncate text-lg font-bold text-ink">{[c.salutation, c.title, c.name].filter(Boolean).join(" ")}</h1>
                     <p className="truncate text-sm text-muted">{c.role || "Position offen"}</p>
@@ -308,6 +314,7 @@ export default async function KandidatDetailPage({
                     <CvDownloadButton path={cvPath} />
                     <CandidateCvUpload candidateId={c.id} hasCv />
                   </div>
+                  {isPdf ? <AnonymizeButton candidateId={c.id} /> : null}
                   {isPdf ? <CvPreview path={cvPath} /> : null}
                 </div>
               ) : (

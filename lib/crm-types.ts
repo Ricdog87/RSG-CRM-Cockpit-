@@ -96,6 +96,21 @@ export interface RecruitingMandate {
   fee: number;
   candidate_count: number;
   deadline: string;
+  /** Preismodell: Festpreis je Stelle ODER % vom Bruttojahreszielgehalt. */
+  pricing_model?: "fixed" | "percent";
+  /** Bruttojahreszielgehalt (€) – für pricing_model "percent". */
+  target_salary?: number;
+  /** Honorarsatz in % – für pricing_model "percent". */
+  fee_percent?: number;
+}
+
+/** Erwarteter Umsatz eines Mandats (über alle Stellen). */
+export function mandateRevenue(m: RecruitingMandate): number {
+  const perPosition =
+    m.pricing_model === "percent"
+      ? (m.target_salary ?? 0) * ((m.fee_percent ?? 0) / 100)
+      : m.fee;
+  return Math.round(perPosition * (m.positions || 1));
 }
 
 export type CandidateStage =
@@ -112,6 +127,8 @@ export interface Candidate {
   name: string;
   role: string;
   mandate_account: string;
+  /** Verknüpftes Suchprojekt/Mandat (recruiting_mandates.id). */
+  mandate_id?: string;
   stage: CandidateStage;
   source: string;
   updated_at: string;

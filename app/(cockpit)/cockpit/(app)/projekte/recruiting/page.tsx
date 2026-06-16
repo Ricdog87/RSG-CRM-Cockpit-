@@ -1,22 +1,17 @@
 import { getMandates, getAccounts } from "@/lib/crm-data";
-import { createMandate } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { MandatesView } from "@/components/cockpit/views/MandatesView";
 import { StatCard } from "@/components/cockpit/StatCard";
-import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
-import { MANDATE_FIELDS, withDatalist } from "@/lib/crm-forms";
+import { MandateFormDialog } from "@/components/cockpit/MandateFormDialog";
+import { mandateRevenue } from "@/lib/crm-types";
 import { IconBriefcase, IconUserCheck, IconEuro } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-// Anlegen ohne „davon besetzt" (Feld nur beim Bearbeiten relevant).
-const CREATE_BASE = MANDATE_FIELDS.filter((f) => f.name !== "filled");
-
 export default async function RecruitingProjektePage() {
   const [mandates, accounts] = await Promise.all([getMandates(), getAccounts()]);
   const accountNames = accounts.map((a) => a.name);
-  const createFields = withDatalist(CREATE_BASE, "account_name", accountNames);
 
   const offenePositionen = mandates.reduce(
     (s, m) => s + Math.max(0, m.positions - m.filled),
@@ -24,10 +19,12 @@ export default async function RecruitingProjektePage() {
   );
   const besetzt = mandates.reduce((s, m) => s + m.filled, 0);
   const kandidaten = mandates.reduce((s, m) => s + m.candidate_count, 0);
-  const openVolume = mandates.reduce(
-    (s, m) => s + Math.max(0, m.positions - m.filled) * m.fee,
-    0
-  );
+  // Offenes Volumen: erwarteter Umsatz je offener Stelle (Festpreis ODER %).
+  const openVolume = mandates.reduce((s, m) => {
+    const offen = Math.max(0, m.positions - m.filled);
+    const perPos = m.positions > 0 ? mandateRevenue(m) / m.positions : 0;
+    return s + offen * perPos;
+  }, 0);
 
   return (
     <div className="space-y-6">
@@ -35,15 +32,7 @@ export default async function RecruitingProjektePage() {
         eyebrow="Projekte · RSG Recruiting"
         title="Personalvermittlung"
         description="Recruiting-Mandate, Besetzungsfortschritt und offenes Festpreis-Volumen."
-        action={
-          <EntityFormDialog
-            triggerLabel="Mandat anlegen"
-            title="Neues Recruiting-Mandat"
-            description="Offene Stelle mit Festpreis und Deadline erfassen."
-            fields={createFields}
-            action={createMandate}
-          />
-        }
+        action={<MandateFormDialog accountNames={accountNames} />}
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
