@@ -246,3 +246,30 @@ export async function extractCandidateSkills(
   revalidatePath(`/cockpit/kandidaten/${id}`);
   return { ok: true, skills };
 }
+
+/**
+ * Hängt eine bereits in den Bucket hochgeladene CV-Datei an eine:n BESTEHENDE:N
+ * Kandidat:in (Detailseite – nachträglicher Upload/Ersetzen). Aktualisiert
+ * cv_path/cv_filename/cv_uploaded_at; legt KEINEN neuen Datensatz an.
+ */
+export async function attachCv(input: {
+  candidateId: string;
+  cv_path: string;
+  cv_filename: string;
+}): Promise<ActionResult> {
+  if (useMockData) return { ok: true, demo: true };
+  const { id: pid, error } = await currentPartnerId();
+  if (!pid) return { ok: false, error };
+  const supabase = createClient();
+  const { error: updErr } = await supabase
+    .from("candidates")
+    .update({
+      cv_path: input.cv_path,
+      cv_filename: input.cv_filename,
+      cv_uploaded_at: new Date().toISOString(),
+    })
+    .eq("id", input.candidateId);
+  if (updErr) return { ok: false, error: updErr.message };
+  revalidatePath(`/cockpit/kandidaten/${input.candidateId}`);
+  return { ok: true };
+}

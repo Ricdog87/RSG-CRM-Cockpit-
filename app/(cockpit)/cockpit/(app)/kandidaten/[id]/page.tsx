@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { CandidateStageControl } from "@/components/cockpit/CandidateStageControl";
 import { CvDownloadButton } from "@/components/cockpit/CvDownloadButton";
+import { CandidateCvUpload } from "@/components/cockpit/CandidateCvUpload";
 import { CandidateSkills } from "@/components/cockpit/CandidateSkills";
 import { CandidateActivity } from "@/components/cockpit/CandidateActivity";
 import { CandidateConsent } from "@/components/cockpit/CandidateConsent";
@@ -259,7 +260,7 @@ export default async function KandidatDetailPage({
 
           <Card>
             <CardBody>
-              <SectionHeader title="Lebenslauf" />
+              <SectionHeader title="Lebenslauf" hint="PDF oder Word" />
               {cvPath ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2.5">
@@ -269,14 +270,23 @@ export default async function KandidatDetailPage({
                     <div className="min-w-0">
                       <p className="truncate text-sm text-ink">{c.cv_filename || "CV-Datei"}</p>
                       {c.cv_uploaded_at ? (
-                        <p className="text-[0.7rem] text-faint">{formatDate(c.cv_uploaded_at)}</p>
+                        <p className="text-[0.7rem] text-faint">
+                          hochgeladen am {formatDate(c.cv_uploaded_at)}
+                        </p>
                       ) : null}
                     </div>
                   </div>
-                  <CvDownloadButton path={cvPath} />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <CvDownloadButton path={cvPath} />
+                    <CandidateCvUpload candidateId={c.id} hasCv />
+                  </div>
                 </div>
               ) : (
-                <EmptyState icon={<IconFolder size={20} />} title="Kein CV hinterlegt." />
+                <EmptyState
+                  icon={<IconFolder size={20} />}
+                  title="Kein CV hinterlegt. Lade die Bewerbungsunterlagen hoch."
+                  action={<CandidateCvUpload candidateId={c.id} hasCv={false} />}
+                />
               )}
             </CardBody>
           </Card>
