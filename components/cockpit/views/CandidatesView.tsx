@@ -254,6 +254,8 @@ export function CandidatesView({
   const [filter, setFilter] = useState<string>("all");
   const [view, setView] = useState<"board" | "liste">("liste");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"updated" | "rating" | "name">("updated");
+  const [activeTags, setActiveTags] = useState<string[]>([]);
   const editFields = withDatalist(CANDIDATE_FIELDS, "mandate_account", accountNames);
 
   async function move(id: string, stage: CandidateStage) {
@@ -275,26 +277,46 @@ export function CandidatesView({
   const rejected = items.filter((c) => c.stage === "abgelehnt");
   const base = items.filter((c) => c.stage !== "abgelehnt");
 
+  const allTags = useMemo(
+    () => Array.from(new Set(items.flatMap((c) => c.tags ?? []))).sort((a, b) => a.localeCompare(b)),
+    [items]
+  );
+
+  function toggleTag(t: string) {
+    setActiveTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+  }
+
   const q = query.trim().toLowerCase();
   const filtered = useMemo(() => {
-    const pool =
+    let pool =
       filter === "abgelehnt"
         ? rejected
         : filter === "all"
           ? base
           : base.filter((c) => c.mandate_account === filter);
-    if (!q) return pool;
-    return pool.filter((c) =>
-      [c.name, c.role, c.email, c.mandate_account, ...(c.tags ?? [])]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q))
-    );
-  }, [filter, q, base, rejected]);
+    if (activeTags.length) {
+      pool = pool.filter((c) => (c.tags ?? []).some((t) => activeTags.includes(t)));
+    }
+    if (q) {
+      pool = pool.filter((c) =>
+        [c.name, c.role, c.email, c.mandate_account, ...(c.tags ?? [])]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q))
+      );
+    }
+    return pool;
+  }, [filter, q, base, rejected, activeTags]);
 
-  const listSorted = useMemo(
-    () => [...filtered].sort((a, b) => (b.updated_at ?? "").localeCompare(a.updated_at ?? "")),
-    [filtered]
-  );
+  const displayed = useMemo(() => {
+    const arr = [...filtered];
+    if (sort === "name") arr.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sort === "rating")
+      arr.sort(
+        (a, b) => (b.rating ?? 0) - (a.rating ?? 0) || (b.updated_at ?? "").localeCompare(a.updated_at ?? "")
+      );
+    else arr.sort((a, b) => (b.updated_at ?? "").localeCompare(a.updated_at ?? ""));
+    return arr;
+  }, [filtered, sort]);
 
   return (
     <div className="space-y-4">
@@ -309,6 +331,16 @@ export function CandidatesView({
             className="w-full rounded-xl border border-border bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand"
           />
         </div>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as typeof sort)}
+          aria-label="Sortieren"
+          className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-ink focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          <option value="updated">Zuletzt aktualisiert</option>
+          <option value="rating">Bewertung ↓</option>
+          <option value="name">Name A–Z</option>
+        </select>
         <div className="flex items-center gap-1 rounded-xl border border-border bg-elevated/60 p-1">
           {(["liste", "board"] as const).map((v) => (
             <button
@@ -326,6 +358,40 @@ export function CandidatesView({
           ))}
         </div>
       </div>
+
+      {/* Tag-Schnellfilter */}
+      {allTags.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-faint">Tags:</span>
+          {allTags.map((t) => {
+            const on = activeTags.includes(t);
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => toggleTag(t)}
+                className={cn(
+                  "rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors",
+                  on
+                    ? "border-brand bg-brand/10 text-brand-deep"
+                    : "border-border bg-elevated/50 text-muted hover:border-brand/40"
+                )}
+              >
+                {t}
+              </button>
+            );
+          })}
+          {activeTags.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setActiveTags([])}
+              className="text-xs text-faint underline hover:text-ink"
+            >
+              zurücksetzen
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <FilterTabs<string>
         value={filter}
@@ -346,7 +412,7 @@ export function CandidatesView({
       {view === "board" ? (
         <KanbanBoard
           columns={COLUMNS}
-          items={filtered}
+          items={displayed}
           getStage={(c) => c.stage}
           renderCard={(c) => (
             <CandidateCard c={c} onMove={move} onDelete={onDelete} editFields={editFields} />
@@ -356,16 +422,16 @@ export function CandidatesView({
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
           <div className="flex items-center justify-between border-b border-border px-3 py-2 text-[0.7rem] font-medium uppercase tracking-wider text-faint">
-            <span>{listSorted.length} Kandidat:innen</span>
+            <span>{displayed.length} Kandidat:innen</span>
             <span className="hidden lg:inline">Bewertung · Phase</span>
           </div>
-          {listSorted.length === 0 ? (
+          {displayed.length === 0 ? (
             <p className="px-3 py-10 text-center text-sm text-muted">
               Keine Kandidat:innen in dieser Auswahl.
             </p>
           ) : (
             <ul className="divide-y divide-border/70">
-              {listSorted.map((c) => (
+              {displayed.map((c) => (
                 <li key={c.id}>
                   <CandidateRow c={c} />
                 </li>
