@@ -176,6 +176,8 @@ export async function createCandidate(
     "candidates",
     {
       name: s(fd, "name"),
+      salutation: s(fd, "salutation") || null,
+      title: s(fd, "title") || null,
       role: s(fd, "role"),
       email: s(fd, "email") || null,
       phone: s(fd, "phone") || null,
@@ -526,6 +528,8 @@ export async function updateCandidate(
     id,
     {
       name: s(fd, "name"),
+      salutation: s(fd, "salutation") || null,
+      title: s(fd, "title") || null,
       role: s(fd, "role"),
       email: s(fd, "email") || null,
       phone: s(fd, "phone") || null,
