@@ -115,6 +115,13 @@ export interface Candidate {
   stage: CandidateStage;
   source: string;
   updated_at: string;
+  /** Fortlaufende Kandidaten-Nummer (DB-Sequence). */
+  candidate_no?: number;
+  /** Profilfoto im Bucket candidate-photos. */
+  photo_path?: string;
+  /** Anrede (Herr/Frau/Divers) + akad. Titel (z.B. Dr.) fuer professionelle Anschrift. */
+  salutation?: string;
+  title?: string;
   /** Kontaktdaten (z.B. automatisch aus dem CV extrahiert) */
   email?: string;
   phone?: string;

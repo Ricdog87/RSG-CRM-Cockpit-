@@ -52,6 +52,10 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
+function candNo(n?: number): string {
+  return n != null ? `RSG-${String(n).padStart(5, "0")}` : "";
+}
+
 function Prop({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2">
@@ -109,8 +113,11 @@ export default async function KandidatDetailPage({
                     {initials(c.name)}
                   </span>
                   <div className="min-w-0">
-                    <h1 className="truncate text-lg font-bold text-ink">{c.name}</h1>
+                    <h1 className="truncate text-lg font-bold text-ink">{[c.salutation, c.title, c.name].filter(Boolean).join(" ")}</h1>
                     <p className="truncate text-sm text-muted">{c.role || "Position offen"}</p>
+                    {c.candidate_no != null ? (
+                      <p className="mt-0.5 font-mono text-[0.7rem] font-medium text-faint">{candNo(c.candidate_no)}</p>
+                    ) : null}
                   </div>
                 </div>
                 <EditDialog
@@ -120,6 +127,8 @@ export default async function KandidatDetailPage({
                   action={updateCandidate}
                   initial={{
                     name: c.name,
+                    salutation: c.salutation ?? "",
+                    title: c.title ?? "",
                     role: c.role,
                     email: c.email ?? "",
                     phone: c.phone ?? "",

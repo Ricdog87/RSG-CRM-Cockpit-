@@ -48,10 +48,7 @@ async function load<T>(
     if (order) query = query.order(order.column, { ascending: order.ascending ?? true });
     const { data, error } = await query;
     if (error) {
-      // Fehlt die Tabelle (Migration noch nicht eingespielt) → Mock zeigen.
       if (isMissingTable(error)) return mock;
-      // Echter Query-Fehler (z.B. RLS/Verbindung): NICHT Mock zeigen – sonst
-      // sähen echte Nutzer:innen Demo-Daten. Leer zurückgeben + loggen.
       logDataError(`crm-data:${table}`, error);
       return [];
     }
@@ -156,6 +153,10 @@ function mapCandidate(r: Row): Candidate {
     stage: (str(r.stage, "neu") as CandidateStage),
     source: str(r.source),
     updated_at: str(r.updated_at),
+    candidate_no: r.candidate_no != null ? Number(r.candidate_no) : undefined,
+    photo_path: str(r.photo_path) || undefined,
+    salutation: str(r.salutation) || undefined,
+    title: str(r.title) || undefined,
     email: str(r.email),
     phone: str(r.phone),
     cv_path: str(r.cv_path),

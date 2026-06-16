@@ -32,6 +32,18 @@ export const ACCOUNT_FIELDS: FormField[] = [
 ];
 
 export const CANDIDATE_FIELDS: FormField[] = [
+  {
+    name: "salutation",
+    label: "Anrede",
+    type: "select",
+    options: [
+      { value: "", label: "—" },
+      { value: "Herr", label: "Herr" },
+      { value: "Frau", label: "Frau" },
+      { value: "Divers", label: "Divers" },
+    ],
+  },
+  { name: "title", label: "Titel", placeholder: "z.B. Dr." },
   { name: "name", label: "Name", required: true, placeholder: "Vor- und Nachname" },
   { name: "role", label: "Position", placeholder: "z.B. Pflegefachkraft" },
   { name: "email", label: "E-Mail", type: "email", placeholder: "name@beispiel.de" },
