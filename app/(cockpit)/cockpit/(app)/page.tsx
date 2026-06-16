@@ -10,6 +10,7 @@ import { KpiRow } from "@/components/cockpit/KpiRow";
 import { CrmOverview } from "@/components/cockpit/CrmOverview";
 import { OverrideNudge } from "@/components/cockpit/OverrideNudge";
 import { Pipeline } from "@/components/cockpit/Pipeline";
+import { OpenMandates } from "@/components/cockpit/OpenMandates";
 import { CareerProgress } from "@/components/cockpit/CareerProgress";
 import { Leaderboard } from "@/components/cockpit/Leaderboard";
 import { TeamDownline } from "@/components/cockpit/TeamDownline";
@@ -37,13 +38,18 @@ export default async function CockpitPage() {
         <QuickActions />
       </section>
 
-      {/* 2. Tagesordnung + Pipeline */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="animate-fade-up lg:col-span-2" aria-label="Tagesordnung">
-          <TodayAgenda tasks={openTasks} />
-        </section>
+      {/* 2. Tagesordnung */}
+      <section className="animate-fade-up" aria-label="Tagesordnung">
+        <TodayAgenda tasks={openTasks} />
+      </section>
+
+      {/* 3. Pipeline (Deals) + offene Mandate (Suchaufträge) nebeneinander */}
+      <div className="grid gap-6 lg:grid-cols-2">
         <section className="animate-fade-up" aria-label="Pipeline">
           <Pipeline deals={data.pipeline} limit={5} viewAllHref="/cockpit/pipeline" />
+        </section>
+        <section className="animate-fade-up" aria-label="Offene Mandate">
+          <OpenMandates mandates={mandates} limit={5} />
         </section>
       </div>
 
