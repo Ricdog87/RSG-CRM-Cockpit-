@@ -63,6 +63,67 @@ async function insert(
   return { ok: true };
 }
 
+const MISSING_COL = /column "?([a-z_]+)"? .*does not exist/i;
+
+/** Insert, das fehlende (noch nicht migrierte) Spalten automatisch weglässt. */
+async function insertGraceful(
+  table: string,
+  row: Record<string, unknown>,
+  revalidate: string
+): Promise<ActionResult & { id?: string }> {
+  if (useMockData) return DEMO;
+  const { id, error } = await currentPartnerId();
+  if (!id) return { ok: false, error };
+  const supabase = createClient();
+  let payload: Record<string, unknown> = { ...row, partner_id: id };
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const { data, error: insErr } = await supabase.from(table).insert(payload).select("id").single();
+    if (!insErr) {
+      revalidatePath(revalidate);
+      return { ok: true, id: (data as { id?: string } | null)?.id };
+    }
+    const m = insErr.message.match(MISSING_COL);
+    if (m && m[1] in payload) {
+      const next = { ...payload };
+      delete next[m[1]];
+      payload = next;
+      continue;
+    }
+    return { ok: false, error: insErr.message };
+  }
+  return { ok: false, error: "Anlegen fehlgeschlagen." };
+}
+
+/** Update, das fehlende (noch nicht migrierte) Spalten automatisch weglässt. */
+async function updateGraceful(
+  table: string,
+  id: string,
+  patch: Record<string, unknown>,
+  revalidate: string
+): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const { id: pid, error } = await currentPartnerId();
+  if (!pid) return { ok: false, error };
+  const supabase = createClient();
+  let payload: Record<string, unknown> = { ...patch };
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const { error: updErr } = await supabase.from(table).update(payload).eq("id", id);
+    if (!updErr) {
+      revalidatePath(revalidate);
+      return { ok: true };
+    }
+    const m = updErr.message.match(MISSING_COL);
+    if (m && m[1] in payload) {
+      const next = { ...payload };
+      delete next[m[1]];
+      payload = next;
+      continue;
+    }
+    return { ok: false, error: updErr.message };
+  }
+  return { ok: false, error: "Speichern fehlgeschlagen." };
+}
+
 /** Bestehende Account-Schlüssel (Name + E-Mail) für den Dubletten-Abgleich. */
 async function accountKeys(): Promise<{ name: string; email?: string }[]> {
   if (useMockData) {
@@ -179,7 +240,7 @@ export async function createCandidate(
   fd: FormData
 ): Promise<ActionResult> {
   if (!s(fd, "name")) return { ok: false, error: "Name ist erforderlich." };
-  return insert(
+  return insertGraceful(
     "candidates",
     {
       name: s(fd, "name"),
@@ -192,9 +253,21 @@ export async function createCandidate(
       mandate_id: s(fd, "mandate_id") || null,
       stage: s(fd, "stage") || "neu",
       source: s(fd, "source"),
+      location: s(fd, "location") || null,
+      zip: s(fd, "zip") || null,
+      willing_to_relocate: relocateValue(fd),
+      travel_willingness: s(fd, "travel_willingness") || null,
+      salary_expectation: fd.get("salary_expectation") ? n(fd, "salary_expectation") : null,
+      availability: s(fd, "availability") || null,
     },
     "/cockpit/kandidaten"
   );
+}
+
+/** "ja"/"nein"/"" → boolean | null */
+function relocateValue(fd: FormData): boolean | null {
+  const v = s(fd, "willing_to_relocate");
+  return v === "ja" ? true : v === "nein" ? false : null;
 }
 
 export async function createSegment(
@@ -552,7 +625,7 @@ export async function updateCandidate(
   const id = s(fd, "id");
   if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
   if (!s(fd, "name")) return { ok: false, error: "Name ist erforderlich." };
-  return update(
+  return updateGraceful(
     "candidates",
     id,
     {
@@ -566,6 +639,12 @@ export async function updateCandidate(
       mandate_id: s(fd, "mandate_id") || null,
       stage: s(fd, "stage") || "neu",
       source: s(fd, "source"),
+      location: s(fd, "location") || null,
+      zip: s(fd, "zip") || null,
+      willing_to_relocate: relocateValue(fd),
+      travel_willingness: s(fd, "travel_willingness") || null,
+      salary_expectation: fd.get("salary_expectation") ? n(fd, "salary_expectation") : null,
+      availability: s(fd, "availability") || null,
       updated_at: new Date().toISOString(),
     },
     "/cockpit/kandidaten"

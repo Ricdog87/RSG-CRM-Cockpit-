@@ -174,6 +174,12 @@ function mapCandidate(r: Row): Candidate {
     tags: Array.isArray(r.tags)
       ? (r.tags as unknown[]).map((t) => String(t)).filter(Boolean)
       : [],
+    location: str(r.location) || undefined,
+    zip: str(r.zip) || undefined,
+    willing_to_relocate: r.willing_to_relocate == null ? undefined : Boolean(r.willing_to_relocate),
+    travel_willingness: str(r.travel_willingness) || undefined,
+    salary_expectation: r.salary_expectation != null ? Number(r.salary_expectation) : undefined,
+    availability: str(r.availability) || undefined,
   };
 }
 

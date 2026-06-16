@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getCandidate, getAccounts } from "@/lib/crm-data";
 import { getNotesForCandidate } from "@/lib/notes-data";
 import { getConsentForCandidate } from "@/lib/consent-data";
+import { getSubmissionsForCandidate } from "@/lib/submissions-data";
 import { getTasksForRelated } from "@/lib/tasks-data";
 import { getEmailActivitiesForCandidate } from "@/lib/email-data";
 import { updateCandidate } from "@/lib/crm-actions";
@@ -30,7 +31,7 @@ import {
   IconFolder,
   IconBriefcase,
 } from "@/components/ui/icons";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatEur } from "@/lib/format";
 import type { CandidateStage } from "@/lib/crm-types";
 
 export const dynamic = "force-dynamic";
@@ -75,12 +76,13 @@ export default async function KandidatDetailPage({
   const c = await getCandidate(params.id);
   if (!c) notFound();
 
-  const [notes, tasks, emails, accounts, consent] = await Promise.all([
+  const [notes, tasks, emails, accounts, consent, submissions] = await Promise.all([
     getNotesForCandidate(c.id),
     getTasksForRelated("candidate", c.id),
     getEmailActivitiesForCandidate(c.email),
     getAccounts(),
     getConsentForCandidate(c.id).catch(() => null),
+    getSubmissionsForCandidate(c.id),
   ]);
 
   // Mandat/Account klickbar verknüpfen (Abgleich über den Namen).
@@ -202,6 +204,21 @@ export default async function KandidatDetailPage({
                 <Prop label="Quelle" value={c.source} />
                 <Prop label="E-Mail" value={c.email} />
                 <Prop label="Telefon" value={c.phone} />
+                <Prop label="Ort / PLZ" value={[c.location, c.zip].filter(Boolean).join(" · ")} />
+                <Prop
+                  label="Gehaltsvorstellung"
+                  value={c.salary_expectation ? `${formatEur(c.salary_expectation)}/J` : "—"}
+                />
+                <Prop label="Verfügbarkeit" value={c.availability} />
+                <Prop
+                  label="Mobilität"
+                  value={[
+                    c.willing_to_relocate == null ? "" : c.willing_to_relocate ? "umzugsbereit" : "kein Umzug",
+                    c.travel_willingness ? `Reise: ${c.travel_willingness}` : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                />
                 <Prop
                   label="CV hochgeladen"
                   value={c.cv_uploaded_at ? formatDate(c.cv_uploaded_at) : "—"}
@@ -280,6 +297,44 @@ export default async function KandidatDetailPage({
                 )
               ) : (
                 <EmptyState title="Noch keinem Mandat zugeordnet." />
+              )}
+            </CardBody>
+          </Card>
+
+          {/* Vorstellungs-Historie (gegen Doppelbewerbung) */}
+          <Card>
+            <CardBody>
+              <SectionHeader title="Vorstellungen" hint="Bewerbungshistorie" />
+              {submissions.length === 0 ? (
+                <EmptyState title="Noch keinem Mandat vorgestellt." />
+              ) : (
+                <ul className="space-y-2">
+                  {submissions.map((sub) => (
+                    <li
+                      key={sub.id}
+                      className="rounded-xl border border-border bg-elevated/40 px-3 py-2"
+                    >
+                      <p className="truncate text-sm font-medium text-ink">
+                        {sub.account_name || "Mandat"}
+                        {sub.role ? <span className="text-faint"> · {sub.role}</span> : null}
+                      </p>
+                      <p className="text-[0.7rem] text-faint">
+                        {sub.stage} · {sub.created_at ? formatDate(sub.created_at) : ""}
+                        {sub.mandate_id ? (
+                          <>
+                            {" · "}
+                            <Link
+                              href={`/cockpit/projekte/recruiting/${sub.mandate_id}`}
+                              className="text-sky-deep hover:underline"
+                            >
+                              Mandat
+                            </Link>
+                          </>
+                        ) : null}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
               )}
             </CardBody>
           </Card>

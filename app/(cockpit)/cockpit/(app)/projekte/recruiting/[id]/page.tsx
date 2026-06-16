@@ -6,6 +6,7 @@ import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { Badge } from "@/components/ui/Badge";
 import { MandateCandidates } from "@/components/cockpit/MandateCandidates";
+import { MandateMatchPanel } from "@/components/cockpit/MandateMatchPanel";
 import { IconChevronRight, IconBriefcase, IconUserCheck, IconEuro, IconTarget } from "@/components/ui/icons";
 import { formatEur, formatNumber, formatDate } from "@/lib/format";
 import type { MandateStatus } from "@/lib/crm-types";
@@ -75,6 +76,17 @@ export default async function MandateDetailPage({
         <StatCard label="Kandidat:innen" value={formatNumber(list.length)} hint="zugeordnet" accent="sky" icon={IconTarget} />
         <StatCard label="Erwarteter Umsatz" value={formatEur(mandateRevenue(m))} hint={`${formatEur(offen * perPos)} offen`} accent="warning" icon={IconEuro} />
       </div>
+
+      <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.05] to-sky/[0.04]">
+        <CardBody>
+          <SectionHeader
+            title="Search & Match"
+            hint="passende Kandidat:innen per Algorithmus finden"
+            action={<Badge tone="brand">Champions League</Badge>}
+          />
+          <MandateMatchPanel mandateId={m.id} />
+        </CardBody>
+      </Card>
 
       <Card>
         <CardBody>

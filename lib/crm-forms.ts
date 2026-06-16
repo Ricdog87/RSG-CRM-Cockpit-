@@ -70,6 +70,21 @@ export const CANDIDATE_FIELDS: FormField[] = [
     ],
   },
   { name: "source", label: "Quelle", placeholder: "z.B. LinkedIn" },
+  { name: "location", label: "Ort", placeholder: "z.B. Frankfurt" },
+  { name: "zip", label: "PLZ", placeholder: "z.B. 60311" },
+  {
+    name: "willing_to_relocate",
+    label: "Umzugsbereit",
+    type: "select",
+    options: [
+      { value: "", label: "—" },
+      { value: "ja", label: "Ja" },
+      { value: "nein", label: "Nein" },
+    ],
+  },
+  { name: "travel_willingness", label: "Reisebereitschaft", placeholder: "z.B. bis 50 %" },
+  { name: "salary_expectation", label: "Gehaltsvorstellung (€/Jahr)", type: "number", placeholder: "z.B. 65000" },
+  { name: "availability", label: "Verfügbarkeit", placeholder: "z.B. ab sofort / in 3 Monaten" },
 ];
 
 export const MANDATE_FIELDS: FormField[] = [

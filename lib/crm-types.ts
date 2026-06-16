@@ -154,6 +154,13 @@ export interface Candidate {
   rating?: number;
   /** Freie Tags zum Filtern/Priorisieren */
   tags?: string[];
+  /** Matching: Standort, PLZ, Mobilität, Gehalt, Verfügbarkeit */
+  location?: string;
+  zip?: string;
+  willing_to_relocate?: boolean;
+  travel_willingness?: string;
+  salary_expectation?: number;
+  availability?: string;
 }
 
 /** KI-Kundensegment (für Zielgruppen-/Use-Case-Steuerung). */
