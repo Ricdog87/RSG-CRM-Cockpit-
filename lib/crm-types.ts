@@ -125,6 +125,10 @@ export interface Candidate {
   cv_uploaded_at?: string;
   /** Skill-Set (z.B. aus dem CV extrahiert) */
   skills?: string[];
+  /** Bewertung 0–5 Sterne */
+  rating?: number;
+  /** Freie Tags zum Filtern/Priorisieren */
+  tags?: string[];
 }
 
 /** KI-Kundensegment (für Zielgruppen-/Use-Case-Steuerung). */

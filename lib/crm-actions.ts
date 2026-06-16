@@ -643,3 +643,47 @@ export async function deleteCandidateNote(
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
   return { ok: true };
 }
+
+// ---------- Bewertung & Tags je Kandidat:in -------------------------
+
+export async function setCandidateRating(
+  id: string,
+  rating: number
+): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const supabase = createClient();
+  const r = Math.max(0, Math.min(5, Math.round(rating)));
+  const { error } = await supabase
+    .from("candidates")
+    .update({ rating: r || null })
+    .eq("id", id);
+  if (error) {
+    if (/column .*rating.* does not exist/i.test(error.message))
+      return { ok: false, error: "Spalte rating fehlt – Migration 06_candidate_rating_tags.sql ausführen." };
+    return { ok: false, error: error.message };
+  }
+  revalidatePath(`/cockpit/kandidaten/${id}`);
+  return { ok: true };
+}
+
+export async function setCandidateTags(
+  id: string,
+  tags: string[]
+): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const supabase = createClient();
+  const clean = Array.from(
+    new Set(tags.map((t) => t.trim()).filter(Boolean))
+  ).slice(0, 20);
+  const { error } = await supabase
+    .from("candidates")
+    .update({ tags: clean })
+    .eq("id", id);
+  if (error) {
+    if (/column .*tags.* does not exist/i.test(error.message))
+      return { ok: false, error: "Spalte tags fehlt – Migration 06_candidate_rating_tags.sql ausführen." };
+    return { ok: false, error: error.message };
+  }
+  revalidatePath(`/cockpit/kandidaten/${id}`);
+  return { ok: true };
+}

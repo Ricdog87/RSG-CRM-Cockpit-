@@ -164,6 +164,10 @@ function mapCandidate(r: Row): Candidate {
     skills: Array.isArray(r.skills)
       ? (r.skills as unknown[]).map((s) => String(s)).filter(Boolean)
       : [],
+    rating: r.rating != null ? Number(r.rating) : undefined,
+    tags: Array.isArray(r.tags)
+      ? (r.tags as unknown[]).map((t) => String(t)).filter(Boolean)
+      : [],
   };
 }
 

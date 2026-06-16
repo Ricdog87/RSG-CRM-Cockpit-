@@ -247,29 +247,104 @@ export async function extractCandidateSkills(
   return { ok: true, skills };
 }
 
+/** Kombiniert Kontaktdaten + Skills aus einem PDF-CV (ein LLM-Aufruf). */
+async function parseCvFull(
+  bytes: Uint8Array
+): Promise<(CvParsed & { skills: string[] }) | null> {
+  if (AI.provider !== "anthropic" || !AI.anthropicKey) return null;
+  try {
+    const b64 = Buffer.from(bytes).toString("base64");
+    const client = new Anthropic({ apiKey: AI.anthropicKey });
+    const content: unknown[] = [
+      { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } },
+      {
+        type: "text",
+        text:
+          'Dies ist ein Lebenslauf. Extrahiere als JSON: {"name": voller Name, ' +
+          '"role": aktuelle/angestrebte Position, "email": E-Mail, "phone": Telefon, ' +
+          '"skills": Array der wichtigsten Fähigkeiten/Tools/Sprachen/Zertifikate ' +
+          '(max 20, kurze Begriffe)}. Fehlt etwas, nutze "" bzw. []. Nur das JSON.',
+      },
+    ];
+    const res = await client.messages.create({
+      model: AI.model,
+      max_tokens: 1200,
+      system: "Du extrahierst strukturierte Daten aus Lebensläufen.",
+      messages: [{ role: "user", content: content as unknown as Anthropic.MessageParam["content"] }],
+    });
+    const block = res.content.find((b) => b.type === "text");
+    const raw = block && block.type === "text" ? block.text : "";
+    const j = extractJson<Partial<CvParsed> & { skills?: unknown }>(raw);
+    return {
+      name: String(j.name ?? "").trim(),
+      role: String(j.role ?? "").trim(),
+      email: String(j.email ?? "").trim().toLowerCase(),
+      phone: String(j.phone ?? "").trim(),
+      skills: Array.isArray(j.skills) ? j.skills.map((s) => String(s).trim()).filter(Boolean).slice(0, 20) : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Hängt eine bereits in den Bucket hochgeladene CV-Datei an eine:n BESTEHENDE:N
- * Kandidat:in (Detailseite – nachträglicher Upload/Ersetzen). Aktualisiert
- * cv_path/cv_filename/cv_uploaded_at; legt KEINEN neuen Datensatz an.
+ * Kandidat:in (Detailseite – nachträglicher Upload/Ersetzen) und füllt dabei
+ * fehlende Felder (Position, E-Mail, Telefon, Skills) automatisch aus dem CV.
+ * Vorhandene Werte werden NICHT überschrieben. Legt KEINEN neuen Datensatz an.
  */
 export async function attachCv(input: {
   candidateId: string;
   cv_path: string;
   cv_filename: string;
-}): Promise<ActionResult> {
+}): Promise<ActionResult & { enriched?: string[] }> {
   if (useMockData) return { ok: true, demo: true };
   const { id: pid, error } = await currentPartnerId();
   if (!pid) return { ok: false, error };
   const supabase = createClient();
+
+  const patch: Record<string, unknown> = {
+    cv_path: input.cv_path,
+    cv_filename: input.cv_filename,
+    cv_uploaded_at: new Date().toISOString(),
+  };
+
+  // Auto-Ausfüllen: nur leere Felder aus dem PDF-CV ergänzen.
+  const enriched: string[] = [];
+  if (/\.pdf$/i.test(input.cv_filename)) {
+    const { data: cur } = await supabase
+      .from("candidates")
+      .select("role, email, phone, skills")
+      .eq("id", input.candidateId)
+      .maybeSingle();
+    const c = (cur as { role?: string; email?: string; phone?: string; skills?: unknown } | null) ?? null;
+    const { data: file } = await supabase.storage.from(BUCKET).download(input.cv_path);
+    if (file) {
+      const parsed = await parseCvFull(new Uint8Array(await file.arrayBuffer()));
+      if (parsed) {
+        if (!c?.role && parsed.role) { patch.role = parsed.role; enriched.push("Position"); }
+        if (!c?.email && parsed.email) { patch.email = parsed.email; enriched.push("E-Mail"); }
+        if (!c?.phone && parsed.phone) { patch.phone = parsed.phone; enriched.push("Telefon"); }
+        const hasSkills = Array.isArray(c?.skills) && (c?.skills as unknown[]).length > 0;
+        if (!hasSkills && parsed.skills.length) { patch.skills = parsed.skills; enriched.push("Skills"); }
+      }
+    }
+  }
+
   const { error: updErr } = await supabase
     .from("candidates")
-    .update({
-      cv_path: input.cv_path,
-      cv_filename: input.cv_filename,
-      cv_uploaded_at: new Date().toISOString(),
-    })
+    .update(patch)
     .eq("id", input.candidateId);
-  if (updErr) return { ok: false, error: updErr.message };
+  if (updErr) {
+    // skills-Spalte evtl. noch nicht migriert → ohne skills erneut versuchen
+    if ("skills" in patch && /column .*skills.* does not exist/i.test(updErr.message)) {
+      delete patch.skills;
+      const { error: e2 } = await supabase.from("candidates").update(patch).eq("id", input.candidateId);
+      if (e2) return { ok: false, error: e2.message };
+    } else {
+      return { ok: false, error: updErr.message };
+    }
+  }
   revalidatePath(`/cockpit/kandidaten/${input.candidateId}`);
-  return { ok: true };
+  return { ok: true, enriched };
 }

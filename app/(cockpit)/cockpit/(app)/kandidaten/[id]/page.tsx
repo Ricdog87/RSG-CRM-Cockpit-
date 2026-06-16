@@ -15,6 +15,9 @@ import { EditDialog } from "@/components/cockpit/EditDialog";
 import { CandidateStageControl } from "@/components/cockpit/CandidateStageControl";
 import { CvDownloadButton } from "@/components/cockpit/CvDownloadButton";
 import { CandidateCvUpload } from "@/components/cockpit/CandidateCvUpload";
+import { CvPreview } from "@/components/cockpit/CvPreview";
+import { CandidateRatingTags } from "@/components/cockpit/CandidateRatingTags";
+import { CandidateMatch } from "@/components/cockpit/CandidateMatch";
 import { CandidateSkills } from "@/components/cockpit/CandidateSkills";
 import { CandidateActivity } from "@/components/cockpit/CandidateActivity";
 import { CandidateConsent } from "@/components/cockpit/CandidateConsent";
@@ -195,6 +198,14 @@ export default async function KandidatDetailPage({
               </div>
             </CardBody>
           </Card>
+
+          {/* Bewertung & Tags */}
+          <Card>
+            <CardBody>
+              <SectionHeader title="Bewertung & Tags" hint="zum Priorisieren" />
+              <CandidateRatingTags id={c.id} rating={c.rating ?? 0} tags={c.tags ?? []} />
+            </CardBody>
+          </Card>
         </div>
 
         {/* Mittlere Spalte: Aktivitäts-Center */}
@@ -258,6 +269,14 @@ export default async function KandidatDetailPage({
             </CardBody>
           </Card>
 
+          {/* KI-Matching zum Mandat */}
+          <Card>
+            <CardBody>
+              <SectionHeader title="KI-Matching" hint="Passung zum Mandat" />
+              <CandidateMatch id={c.id} />
+            </CardBody>
+          </Card>
+
           <Card>
             <CardBody>
               <SectionHeader title="Lebenslauf" hint="PDF oder Word" />
@@ -280,6 +299,7 @@ export default async function KandidatDetailPage({
                     <CvDownloadButton path={cvPath} />
                     <CandidateCvUpload candidateId={c.id} hasCv />
                   </div>
+                  {isPdf ? <CvPreview path={cvPath} /> : null}
                 </div>
               ) : (
                 <EmptyState

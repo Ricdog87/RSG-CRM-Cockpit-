@@ -34,12 +34,14 @@ export function CandidateCvUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
     setError(null);
+    setNote(null);
     try {
       const supabase = createClient();
       const path = `uploads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName(file.name)}`;
@@ -49,6 +51,9 @@ export function CandidateCvUpload({
       if (upErr) throw new Error(upErr.message);
       const res = await attachCv({ candidateId, cv_path: path, cv_filename: file.name });
       if (!res.ok) throw new Error(res.error ?? "Verknüpfen fehlgeschlagen.");
+      if (res.enriched && res.enriched.length) {
+        setNote(`Automatisch ergänzt: ${res.enriched.join(", ")}.`);
+      }
       if (!res.demo) router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload fehlgeschlagen.");
@@ -76,6 +81,7 @@ export function CandidateCvUpload({
         onChange={onFile}
       />
       {error ? <p className="mt-1.5 text-xs text-danger">{error}</p> : null}
+      {note ? <p className="mt-1.5 text-xs text-success">{note}</p> : null}
     </div>
   );
 }
