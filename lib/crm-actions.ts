@@ -81,7 +81,11 @@ function strippedWarning(table: string, stripped: string[]): string | undefined 
       ? "08_candidate_matching.sql"
       : table === "accounts"
         ? "07_account_phone.sql"
-        : "die passende Migration";
+        : table === "recruiting_mandates"
+          ? "09_mandate_pricing.sql"
+          : table === "ki_projects"
+            ? "10_ki_setup_fee.sql"
+            : "die passende Migration";
   return `Gespeichert – aber diese Felder konnten nicht abgelegt werden, weil die Spalten in der Datenbank fehlen: ${fields.join(
     ", "
   )}. Bitte ${mig} im Supabase SQL-Editor ausführen und erneut speichern.`;
@@ -732,7 +736,7 @@ export async function updateKiProject(
 ): Promise<ActionResult> {
   const id = s(fd, "id");
   if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
-  return update(
+  return updateGraceful(
     "ki_projects",
     id,
     {
@@ -741,6 +745,7 @@ export async function updateKiProject(
       segment: s(fd, "segment"),
       status: s(fd, "status") || "onboarding",
       mrr: n(fd, "mrr"),
+      setup_fee: n(fd, "setup_fee"),
       go_live: s(fd, "go_live") || null,
       health: s(fd, "health") || "neutral",
     },

@@ -74,7 +74,12 @@ export function KiProjectsTable({
                   <Badge tone={he.tone}>{he.label}</Badge>
                 </div>
                 <div className="flex items-center justify-end gap-2 lg:col-span-2">
-                  <p className="text-sm font-semibold text-ink">{formatEur(p.mrr)}/M</p>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-ink">{formatEur(p.mrr)}/M</p>
+                    {p.setup_fee ? (
+                      <p className="text-[0.7rem] text-faint">+ {formatEur(p.setup_fee)} Setup</p>
+                    ) : null}
+                  </div>
                   {renderActions ? renderActions(p) : null}
                 </div>
               </li>

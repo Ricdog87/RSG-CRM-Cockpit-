@@ -118,6 +118,7 @@ export async function getKiProjects(): Promise<KiProject[]> {
         segment: str(r.segment),
         status: (str(r.status, "onboarding") as KiStatus),
         mrr: num(r.mrr),
+        setup_fee: num(r.setup_fee),
         go_live: str(r.go_live),
         health: (str(r.health, "neutral") as Health),
       })),

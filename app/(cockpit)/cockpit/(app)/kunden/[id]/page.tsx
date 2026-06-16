@@ -184,7 +184,11 @@ export default async function AccountDetailPage({
                   <Row
                     key={p.id}
                     title={p.product || "KI-Projekt"}
-                    subtitle={`Go-Live ${formatDate(p.go_live)}`}
+                    subtitle={
+                      p.setup_fee
+                        ? `Go-Live ${formatDate(p.go_live)} · ${formatEur(p.setup_fee)} Setup`
+                        : `Go-Live ${formatDate(p.go_live)}`
+                    }
                     right={`${formatEur(p.mrr)}/M`}
                     badge={<Badge tone="sky">{p.status}</Badge>}
                   />

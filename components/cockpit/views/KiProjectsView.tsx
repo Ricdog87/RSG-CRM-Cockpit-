@@ -74,6 +74,7 @@ export function KiProjectsView({
                   segment: p.segment,
                   status: p.status,
                   health: p.health,
+                  setup_fee: p.setup_fee ? String(p.setup_fee) : "",
                   mrr: String(p.mrr ?? ""),
                   go_live: p.go_live,
                 }}

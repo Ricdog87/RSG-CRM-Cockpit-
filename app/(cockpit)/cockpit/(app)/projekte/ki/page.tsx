@@ -14,9 +14,9 @@ export default async function KiProjektePage() {
   const live = projects.filter((p) => p.status === "live");
   const onboarding = projects.filter((p) => p.status === "onboarding");
   const risiko = projects.filter((p) => p.health === "risiko");
-  const mrr = projects
-    .filter((p) => p.status !== "gekuendigt")
-    .reduce((s, p) => s + p.mrr, 0);
+  const active = projects.filter((p) => p.status !== "gekuendigt");
+  const mrr = active.reduce((s, p) => s + p.mrr, 0);
+  const setupTotal = active.reduce((s, p) => s + (p.setup_fee ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -44,7 +44,11 @@ export default async function KiProjektePage() {
         <StatCard
           label="MRR aktiv"
           value={`${formatEur(mrr)}/M`}
-          hint="laufender Projektumsatz"
+          hint={
+            setupTotal > 0
+              ? `+ ${formatEur(setupTotal)} Implementierung einmalig`
+              : "laufender Projektumsatz"
+          }
           accent="brand"
           icon={IconEuro}
         />

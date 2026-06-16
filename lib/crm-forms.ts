@@ -167,7 +167,18 @@ export const KIPROJECT_FIELDS: FormField[] = [
       { value: "risiko", label: "Risiko" },
     ],
   },
-  { name: "mrr", label: "MRR (€)", type: "number", placeholder: "0" },
+  {
+    name: "setup_fee",
+    label: "Implementierung (€, einmalig)",
+    type: "number",
+    placeholder: "z.B. 2500",
+  },
+  {
+    name: "mrr",
+    label: "Monatl. Fixpreis (€)",
+    type: "number",
+    placeholder: "Token, Wartung & Updates",
+  },
   { name: "go_live", label: "Go-Live", type: "date" },
 ];
 

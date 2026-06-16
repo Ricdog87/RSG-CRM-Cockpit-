@@ -73,7 +73,10 @@ export interface KiProject {
   product: string;
   segment: string;
   status: KiStatus;
+  /** monatlicher Fixpreis (€) – Token, Wartung & Updates */
   mrr: number;
+  /** einmalige Implementierungs-/Installationskosten (€) bei Projektstart */
+  setup_fee?: number;
   go_live: string;
   health: Health;
 }
