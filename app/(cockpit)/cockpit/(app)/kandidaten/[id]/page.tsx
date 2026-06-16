@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCandidate, getAccounts } from "@/lib/crm-data";
+import { getCandidate, getAccounts, getMandates } from "@/lib/crm-data";
 import { getNotesForCandidate } from "@/lib/notes-data";
 import { getConsentForCandidate } from "@/lib/consent-data";
 import { getSubmissionsForCandidate } from "@/lib/submissions-data";
 import { getTasksForRelated } from "@/lib/tasks-data";
 import { getEmailActivitiesForCandidate } from "@/lib/email-data";
 import { updateCandidate } from "@/lib/crm-actions";
-import { CANDIDATE_FIELDS, candidateInitial } from "@/lib/crm-forms";
+import { CANDIDATE_FIELDS, candidateInitial, withSelectOptions } from "@/lib/crm-forms";
 import { aiConfigured } from "@/lib/ai/config";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -77,13 +77,23 @@ export default async function KandidatDetailPage({
   const c = await getCandidate(params.id);
   if (!c) notFound();
 
-  const [notes, tasks, emails, accounts, consent, submissions] = await Promise.all([
+  const [notes, tasks, emails, accounts, consent, submissions, mandates] = await Promise.all([
     getNotesForCandidate(c.id),
     getTasksForRelated("candidate", c.id),
     getEmailActivitiesForCandidate(c.email),
     getAccounts(),
     getConsentForCandidate(c.id).catch(() => null),
     getSubmissionsForCandidate(c.id),
+    getMandates(),
+  ]);
+
+  // Mandat-Auswahl im Bearbeiten-Dialog (Kandidat:in einem Suchprojekt zuordnen).
+  const editFields = withSelectOptions(CANDIDATE_FIELDS, "mandate_id", [
+    { value: "", label: "— kein Mandat —" },
+    ...mandates.map((mm) => ({
+      value: mm.id,
+      label: `${mm.account_name} · ${mm.role || "Mandat"}`,
+    })),
   ]);
 
   // Mandat/Account klickbar verknüpfen (Abgleich über den Namen).
@@ -130,7 +140,7 @@ export default async function KandidatDetailPage({
             <EditDialog
               id={c.id}
               title="Kandidat:in bearbeiten"
-              fields={CANDIDATE_FIELDS}
+              fields={editFields}
               action={updateCandidate}
               initial={candidateInitial(c)}
             />
