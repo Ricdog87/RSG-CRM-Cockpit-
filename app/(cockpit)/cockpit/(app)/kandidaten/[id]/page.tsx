@@ -21,6 +21,7 @@ import { AnonymizeButton } from "@/components/cockpit/AnonymizeButton";
 import { CvPreview } from "@/components/cockpit/CvPreview";
 import { CandidateRatingTags } from "@/components/cockpit/CandidateRatingTags";
 import { CandidateMatch } from "@/components/cockpit/CandidateMatch";
+import { CandidateMandateMatch } from "@/components/cockpit/CandidateMandateMatch";
 import { CandidateSkills } from "@/components/cockpit/CandidateSkills";
 import { CandidateActivity } from "@/components/cockpit/CandidateActivity";
 import { CandidateConsent } from "@/components/cockpit/CandidateConsent";
@@ -339,11 +340,19 @@ export default async function KandidatDetailPage({
             </CardBody>
           </Card>
 
-          {/* KI-Matching zum Mandat */}
+          {/* KI-Matching zum aktuell verknüpften Mandat */}
           <Card>
             <CardBody>
               <SectionHeader title="KI-Matching" hint="Passung zum Mandat" />
               <CandidateMatch id={c.id} />
+            </CardBody>
+          </Card>
+
+          {/* Reverse-Match: passende offene Mandate */}
+          <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.05] to-sky/[0.04]">
+            <CardBody>
+              <SectionHeader title="Passende Mandate" hint="offene Suchprojekte für diese Person" />
+              <CandidateMandateMatch candidateId={c.id} />
             </CardBody>
           </Card>
 

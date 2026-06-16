@@ -8,7 +8,9 @@ import { cn } from "@/components/ui/cn";
 import {
   matchCandidatesToMandate,
   submitCandidateToMandate,
+  analyzeMatch,
   type CandidateMatch,
+  type DeepAnalysis,
 } from "@/lib/match";
 
 function scoreTone(s: number): string {
@@ -23,6 +25,21 @@ export function MandateMatchPanel({ mandateId }: { mandateId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [done, setDone] = useState<Set<string>>(new Set());
+  const [analysis, setAnalysis] = useState<Record<string, DeepAnalysis | "loading" | "error">>({});
+
+  async function analyze(id: string) {
+    if (analysis[id] && analysis[id] !== "error") {
+      setAnalysis((a) => {
+        const next = { ...a };
+        delete next[id];
+        return next;
+      });
+      return;
+    }
+    setAnalysis((a) => ({ ...a, [id]: "loading" }));
+    const res = await analyzeMatch(id, mandateId);
+    setAnalysis((a) => ({ ...a, [id]: res.ok && res.analysis ? res.analysis : "error" }));
+  }
 
   function run() {
     setError(null);
@@ -101,6 +118,24 @@ export function MandateMatchPanel({ mandateId }: { mandateId: string }) {
                         ))}
                       </div>
                     ) : null}
+                    <button
+                      type="button"
+                      onClick={() => analyze(m.id)}
+                      className="mt-1.5 inline-flex items-center gap-1 text-[0.7rem] font-medium text-sky-deep hover:underline"
+                    >
+                      <IconSpark size={11} />
+                      {analysis[m.id] === "loading"
+                        ? "analysiert …"
+                        : analysis[m.id] && analysis[m.id] !== "error"
+                          ? "Analyse verbergen"
+                          : "KI-Tiefenanalyse"}
+                    </button>
+                    {analysis[m.id] === "error" ? (
+                      <p className="mt-1 text-[0.7rem] text-danger">Analyse nicht möglich.</p>
+                    ) : null}
+                    {analysis[m.id] && analysis[m.id] !== "loading" && analysis[m.id] !== "error" ? (
+                      <AnalysisBlock a={analysis[m.id] as DeepAnalysis} />
+                    ) : null}
                   </div>
                   <div className="flex-none">
                     {presented ? (
@@ -124,6 +159,27 @@ export function MandateMatchPanel({ mandateId }: { mandateId: string }) {
           </ul>
         )
       ) : null}
+    </div>
+  );
+}
+
+function AnalysisBlock({ a }: { a: DeepAnalysis }) {
+  return (
+    <div className="mt-2 space-y-1.5 rounded-lg border border-border bg-elevated/50 p-2.5 text-xs">
+      <p className="font-semibold text-ink">
+        Passung {a.fit}/100
+      </p>
+      {a.strengths.length ? (
+        <p className="text-success">
+          <span className="font-medium">Stärken:</span> {a.strengths.join(", ")}
+        </p>
+      ) : null}
+      {a.gaps.length ? (
+        <p className="text-warning">
+          <span className="font-medium">Lücken:</span> {a.gaps.join(", ")}
+        </p>
+      ) : null}
+      {a.recommendation ? <p className="text-muted">{a.recommendation}</p> : null}
     </div>
   );
 }
