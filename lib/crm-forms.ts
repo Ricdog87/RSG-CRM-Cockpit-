@@ -1,4 +1,31 @@
 import type { FormField } from "@/components/cockpit/EntityFormDialog";
+import type { Candidate } from "@/lib/crm-types";
+
+/**
+ * Vorbelegung für den Kandidaten-Bearbeiten-Dialog – MUSS alle bearbeitbaren
+ * Felder enthalten, sonst werden nicht vorbefüllte Felder beim Speichern geleert.
+ */
+export function candidateInitial(c: Candidate): Record<string, string> {
+  return {
+    salutation: c.salutation ?? "",
+    title: c.title ?? "",
+    name: c.name,
+    role: c.role,
+    email: c.email ?? "",
+    phone: c.phone ?? "",
+    mandate_account: c.mandate_account,
+    mandate_id: c.mandate_id ?? "",
+    stage: c.stage,
+    source: c.source,
+    location: c.location ?? "",
+    zip: c.zip ?? "",
+    willing_to_relocate:
+      c.willing_to_relocate == null ? "" : c.willing_to_relocate ? "ja" : "nein",
+    travel_willingness: c.travel_willingness ?? "",
+    salary_expectation: c.salary_expectation != null ? String(c.salary_expectation) : "",
+    availability: c.availability ?? "",
+  };
+}
 
 /** Feldkonfiguration für Account-Formulare (Anlegen + Bearbeiten). */
 export const ACCOUNT_FIELDS: FormField[] = [

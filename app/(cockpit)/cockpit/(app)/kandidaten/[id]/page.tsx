@@ -7,7 +7,7 @@ import { getSubmissionsForCandidate } from "@/lib/submissions-data";
 import { getTasksForRelated } from "@/lib/tasks-data";
 import { getEmailActivitiesForCandidate } from "@/lib/email-data";
 import { updateCandidate } from "@/lib/crm-actions";
-import { CANDIDATE_FIELDS } from "@/lib/crm-forms";
+import { CANDIDATE_FIELDS, candidateInitial } from "@/lib/crm-forms";
 import { aiConfigured } from "@/lib/ai/config";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -134,17 +134,7 @@ export default async function KandidatDetailPage({
                   title="Kandidat:in bearbeiten"
                   fields={CANDIDATE_FIELDS}
                   action={updateCandidate}
-                  initial={{
-                    name: c.name,
-                    salutation: c.salutation ?? "",
-                    title: c.title ?? "",
-                    role: c.role,
-                    email: c.email ?? "",
-                    phone: c.phone ?? "",
-                    mandate_account: c.mandate_account,
-                    stage: c.stage,
-                    source: c.source,
-                  }}
+                  initial={candidateInitial(c)}
                 />
               </div>
 

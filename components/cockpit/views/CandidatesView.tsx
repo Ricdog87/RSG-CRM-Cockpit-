@@ -10,7 +10,7 @@ import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
 import { Badge } from "@/components/ui/Badge";
 import { IconMail, IconPhone, IconFolder, IconSearch, IconDashboard, IconLayers } from "@/components/ui/icons";
-import { CANDIDATE_FIELDS, withDatalist, withSelectOptions } from "@/lib/crm-forms";
+import { CANDIDATE_FIELDS, withDatalist, withSelectOptions, candidateInitial } from "@/lib/crm-forms";
 import { updateCandidateStage, updateCandidate, deleteCandidate } from "@/lib/crm-actions";
 import { cvSignedUrl } from "@/lib/cv-actions";
 import { formatDate } from "@/lib/format";
@@ -157,18 +157,7 @@ function CandidateCard({
               title="Kandidat:in bearbeiten"
               fields={editFields}
               action={updateCandidate}
-              initial={{
-                salutation: c.salutation ?? "",
-                title: c.title ?? "",
-                name: c.name,
-                role: c.role,
-                email: c.email ?? "",
-                phone: c.phone ?? "",
-                mandate_account: c.mandate_account,
-                mandate_id: c.mandate_id ?? "",
-                stage: c.stage,
-                source: c.source,
-              }}
+              initial={candidateInitial(c)}
             />
           }
         />
