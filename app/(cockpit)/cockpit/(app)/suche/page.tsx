@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/cockpit/PageHeader";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { IconChevronRight } from "@/components/ui/icons";
+import { IconChevronRight, IconSearch } from "@/components/ui/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +25,30 @@ function candNo(n?: number): string {
 
 function match(q: string, ...fields: (string | undefined)[]) {
   return fields.some((f) => (f ?? "").toLowerCase().includes(q));
+}
+
+/** Suchfeld direkt auf der Suchseite – funktioniert auf allen Geräten (auch Mobile). */
+function SearchField({ defaultValue }: { defaultValue?: string }) {
+  return (
+    <form action="/cockpit/suche" className="relative flex items-center">
+      <IconSearch size={18} className="pointer-events-none absolute left-3.5 text-faint" />
+      <input
+        type="search"
+        name="q"
+        defaultValue={defaultValue}
+        autoFocus
+        placeholder="Name, Firma, Position…"
+        aria-label="Suchbegriff"
+        className="w-full rounded-2xl border border-border bg-elevated/60 py-3 pl-11 pr-24 text-base text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-sky"
+      />
+      <button
+        type="submit"
+        className="absolute right-2 rounded-xl bg-gradient-to-r from-brand to-sky px-4 py-1.5 text-sm font-semibold text-white shadow-glow active:scale-95"
+      >
+        Suchen
+      </button>
+    </form>
+  );
 }
 
 function ResultGroup({ label, hits }: { label: string; hits: Hit[] }) {
@@ -65,7 +89,8 @@ export default async function SuchePage({
     return (
       <div className="space-y-6">
         <PageHeader eyebrow="Suche" title="CRM-Suche" />
-        <EmptyState title="Gib oben einen Suchbegriff ein – Kunden, Chancen, Kandidaten und Mandate werden durchsucht." />
+        <SearchField />
+        <EmptyState title="Gib einen Suchbegriff ein – Kunden, Chancen, Kandidaten und Mandate werden durchsucht." />
       </div>
     );
   }
@@ -122,6 +147,8 @@ export default async function SuchePage({
         description={`${total} Treffer über Kunden, Chancen, Kandidaten und Mandate.`}
         action={<Badge tone="neutral">{total}</Badge>}
       />
+
+      <SearchField defaultValue={searchParams.q} />
 
       {total === 0 ? (
         <EmptyState title="Keine Treffer. Versuche einen anderen Begriff – z.B. einen Firmen- oder Personennamen." />
