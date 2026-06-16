@@ -47,6 +47,17 @@ export function MandateFormDialog({
     }
   }, [state, router]);
 
+  // Deeplink vom Mobile-FAB: ?new=1 öffnet den Anlegen-Dialog und säubert die URL.
+  useEffect(() => {
+    if (isEdit) return;
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("new") !== "1") return;
+    setOpen(true);
+    sp.delete("new");
+    const qs = sp.toString();
+    window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""));
+  }, [isEdit]);
+
   const perPosition = pricing === "percent" ? targetSalary * (feePercent / 100) : fee;
   const expected = Math.round(perPosition * (positions || 1));
   // Live-Zahlungsplan aus den aktuellen Eingaben.

@@ -1,6 +1,9 @@
 import { getKiProjects, getAccounts } from "@/lib/crm-data";
+import { createKiProject } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { KiProjectsView } from "@/components/cockpit/views/KiProjectsView";
+import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
+import { KIPROJECT_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { IconPhone, IconSpark, IconEuro, IconAlert } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
@@ -24,6 +27,16 @@ export default async function KiProjektePage() {
         eyebrow="Projekte · RSG AI"
         title="KI & Telefonassistenz"
         description="Umsetzung und Betrieb der KI-Projekte – von Onboarding bis Optimierung."
+        action={
+          <EntityFormDialog
+            triggerLabel="KI-Auftrag anlegen"
+            title="Neues KI-Projekt"
+            description="Implementierung, monatlicher Fixpreis und Status erfassen."
+            fields={withDatalist(KIPROJECT_FIELDS, "account_name", accountNames)}
+            action={createKiProject}
+            autoOpenParam="new"
+          />
+        }
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

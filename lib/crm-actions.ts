@@ -310,6 +310,27 @@ function relocateValue(fd: FormData): boolean | null {
   return v === "ja" ? true : v === "nein" ? false : null;
 }
 
+export async function createKiProject(
+  _prev: ActionResult | null,
+  fd: FormData
+): Promise<ActionResult> {
+  if (!s(fd, "account_name")) return { ok: false, error: "Account ist erforderlich." };
+  return insertGraceful(
+    "ki_projects",
+    {
+      account_name: s(fd, "account_name"),
+      product: s(fd, "product"),
+      segment: s(fd, "segment"),
+      status: s(fd, "status") || "onboarding",
+      mrr: n(fd, "mrr"),
+      setup_fee: n(fd, "setup_fee"),
+      go_live: s(fd, "go_live") || null,
+      health: s(fd, "health") || "neutral",
+    },
+    "/cockpit/projekte/ki"
+  );
+}
+
 export async function createSegment(
   _prev: ActionResult | null,
   fd: FormData
