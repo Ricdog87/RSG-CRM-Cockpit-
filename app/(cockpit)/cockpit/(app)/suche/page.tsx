@@ -92,7 +92,7 @@ export default async function SuchePage({
   const candHits: Hit[] = candidates
     .filter((c) => match(q, c.name, c.role, c.mandate_account, c.source))
     .map((c) => ({
-      href: "/cockpit/kandidaten",
+      href: `/cockpit/kandidaten/${c.id}`,
       title: c.name,
       subtitle: [c.role, c.mandate_account].filter(Boolean).join(" · "),
     }));
