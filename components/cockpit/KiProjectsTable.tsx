@@ -57,15 +57,18 @@ export function KiProjectsTable({
             return (
               <li
                 key={p.id}
-                className="grid grid-cols-2 gap-2 px-5 py-3.5 lg:grid-cols-12 lg:items-center lg:gap-3"
+                className="relative grid grid-cols-2 gap-2 px-5 py-3.5 transition-colors hover:bg-elevated/40 lg:grid-cols-12 lg:items-center lg:gap-3"
               >
+                <Link
+                  href={`/cockpit/projekte/ki/${p.id}`}
+                  aria-label={`${p.account_name} öffnen`}
+                  className="absolute inset-0 z-10"
+                />
                 <div className="col-span-2 min-w-0 lg:col-span-4">
-                  <Link href={`/cockpit/projekte/ki/${p.id}`} className="group">
-                    <p className="truncate text-sm font-medium text-ink group-hover:text-brand-deep group-hover:underline">{p.account_name}</p>
-                    <p className="truncate text-xs text-faint">
-                      {p.product} · Go-Live {formatDate(p.go_live)}
-                    </p>
-                  </Link>
+                  <p className="truncate text-sm font-medium text-ink">{p.account_name}</p>
+                  <p className="truncate text-xs text-faint">
+                    {p.product} · Go-Live {formatDate(p.go_live)}
+                  </p>
                 </div>
                 <div className="hidden min-w-0 lg:col-span-2 lg:block">
                   <p className="truncate text-sm text-muted">{p.segment}</p>
@@ -76,7 +79,7 @@ export function KiProjectsTable({
                 <div className="lg:col-span-2">
                   <Badge tone={he.tone}>{he.label}</Badge>
                 </div>
-                <div className="flex items-center justify-end gap-2 lg:col-span-2">
+                <div className="relative z-20 flex items-center justify-end gap-2 lg:col-span-2">
                   <div className="text-right">
                     <p className="text-sm font-semibold text-ink">{formatEur(p.mrr)}/M</p>
                     {p.setup_fee ? (

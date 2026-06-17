@@ -116,7 +116,12 @@ export function MandatesList({
 
         return (
           <Card key={m.id} className={`card-hover overflow-hidden border-l-4 ${statusAccent[m.status]}`}>
-            <CardBody className="space-y-4">
+            <CardBody className="relative space-y-4">
+              <Link
+                href={`/cockpit/projekte/recruiting/${m.id}`}
+                aria-label={`${m.role || "Mandat"} öffnen`}
+                className="absolute inset-0 z-10"
+              />
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-ink">{m.role}</p>
@@ -134,7 +139,7 @@ export function MandatesList({
                     ) : null}
                   </div>
                 </div>
-                <div className="flex flex-none items-center gap-1">
+                <div className="relative z-20 flex flex-none items-center gap-1">
                   <Badge tone={st.tone}>{st.label}</Badge>
                   {renderActions ? renderActions(m) : null}
                 </div>
@@ -160,7 +165,7 @@ export function MandatesList({
                 <button
                   type="button"
                   onClick={() => toggle(m.id)}
-                  className="inline-flex items-center gap-1.5 text-muted transition-colors hover:text-ink"
+                  className="relative z-20 inline-flex items-center gap-1.5 text-muted transition-colors hover:text-ink"
                 >
                   <IconUserCheck size={15} className="text-faint" />
                   Kandidaten ({mandateCandidates.length})
@@ -174,7 +179,7 @@ export function MandatesList({
 
               {/* Ausklappbarer Kandidaten-Bereich */}
               {isExpanded && (
-                <div className="space-y-3 border-t border-border/60 pt-3">
+                <div className="relative z-20 space-y-3 border-t border-border/60 pt-3">
                   {mandateCandidates.length === 0 ? (
                     <p className="text-xs text-faint">Keine Kandidat:innen zugeordnet.</p>
                   ) : (
@@ -229,7 +234,7 @@ export function MandatesList({
                 </div>
                 <Link
                   href={`/cockpit/projekte/recruiting/${m.id}`}
-                  className="inline-flex flex-none items-center gap-1 text-xs font-semibold text-sky-deep hover:text-sky-ink"
+                  className="relative z-20 inline-flex flex-none items-center gap-1 text-xs font-semibold text-sky-deep hover:text-sky-ink"
                 >
                   Pipeline <IconChevronRight size={14} />
                 </Link>
