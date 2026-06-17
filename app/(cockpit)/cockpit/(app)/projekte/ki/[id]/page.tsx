@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getKiProject, getAccounts } from "@/lib/crm-data";
 import { getTasksForRelated } from "@/lib/tasks-data";
+import { getMilestonesForProject, getReadinessForProject } from "@/lib/ki-plan-data";
 import { updateKiProject } from "@/lib/crm-actions";
 import { KIPROJECT_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
@@ -10,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { KiProjectControls } from "@/components/cockpit/KiProjectControls";
+import { MilestonesCard, ReadinessChecklist } from "@/components/cockpit/KiProjectPlan";
 import {
   IconChevronRight,
   IconPhone,
@@ -46,10 +48,12 @@ function Prop({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export default async function KiProjectDetailPage({ params }: { params: { id: string } }) {
-  const [p, accounts, tasks] = await Promise.all([
+  const [p, accounts, tasks, milestones, readiness] = await Promise.all([
     getKiProject(params.id),
     getAccounts(),
     getTasksForRelated("project", params.id),
+    getMilestonesForProject(params.id),
+    getReadinessForProject(params.id),
   ]);
   if (!p) notFound();
 
@@ -120,6 +124,13 @@ export default async function KiProjectDetailPage({ params }: { params: { id: st
         <StatCard label="Health" value={he.label} hint="Projektgesundheit" accent={p.health === "risiko" ? "warning" : "success"} icon={IconCheck} />
       </div>
 
+      <Card>
+        <CardBody>
+          <SectionHeader title="Projektplan" hint="Meilensteine bis Go-Live & Betrieb" />
+          <MilestonesCard projectId={p.id} milestones={milestones} />
+        </CardBody>
+      </Card>
+
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardBody>
@@ -141,6 +152,13 @@ export default async function KiProjectDetailPage({ params }: { params: { id: st
         </Card>
 
         <div className="space-y-6">
+          <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.05] to-sky/[0.04]">
+            <CardBody>
+              <SectionHeader title="Go-Live-Readiness" hint="Abnahme-Checkliste" />
+              <ReadinessChecklist projectId={p.id} state={readiness} />
+            </CardBody>
+          </Card>
+
           <Card>
             <CardBody>
               <SectionHeader title="Kunde" hint="verknüpftes Unternehmen" />
