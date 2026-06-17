@@ -219,6 +219,40 @@ export function placementGuaranteeUntil(
   return p.start_date ? addMonths(p.start_date, p.guarantee_months || 6) : undefined;
 }
 
+export type InterviewType = "telefon" | "video" | "vor_ort" | "kundengespraech";
+export type InterviewStatus = "geplant" | "stattgefunden" | "abgesagt" | "verschoben";
+
+/** Strukturiertes Interview je Kandidat:in (Termin, Art, Feedback). */
+export interface Interview {
+  id: string;
+  candidate_id: string;
+  mandate_id?: string;
+  scheduled_at?: string;
+  type: InterviewType;
+  interviewer?: string;
+  location?: string;
+  status: InterviewStatus;
+  score?: number;
+  feedback?: string;
+  created_at?: string;
+}
+
+export type OfferStatus = "entwurf" | "versendet" | "in_verhandlung" | "angenommen" | "abgelehnt";
+
+/** Angebot je Kandidat:in (Gehalt, Eintritt, Status, Ablehnungsgrund). */
+export interface Offer {
+  id: string;
+  candidate_id: string;
+  mandate_id?: string;
+  offered_salary?: number;
+  start_date?: string;
+  offer_date?: string;
+  status: OfferStatus;
+  decline_reason?: string;
+  notes?: string;
+  created_at?: string;
+}
+
 /** Kandidat:in in der Recruiting-Pipeline. */
 export interface Candidate {
   id: string;

@@ -4,6 +4,7 @@ import { getCandidate, getAccounts, getMandates } from "@/lib/crm-data";
 import { getNotesForCandidate } from "@/lib/notes-data";
 import { getConsentForCandidate } from "@/lib/consent-data";
 import { getSubmissionsForCandidate } from "@/lib/submissions-data";
+import { getInterviewsForCandidate, getOffersForCandidate } from "@/lib/hiring-data";
 import { getTasksForRelated } from "@/lib/tasks-data";
 import { getEmailActivitiesForCandidate } from "@/lib/email-data";
 import { updateCandidate } from "@/lib/crm-actions";
@@ -22,6 +23,7 @@ import { CvPreview } from "@/components/cockpit/CvPreview";
 import { CandidateRatingTags } from "@/components/cockpit/CandidateRatingTags";
 import { CandidateMatch } from "@/components/cockpit/CandidateMatch";
 import { CandidateMandateMatch } from "@/components/cockpit/CandidateMandateMatch";
+import { InterviewsCard, OffersCard } from "@/components/cockpit/HiringCards";
 import { CandidateSkills } from "@/components/cockpit/CandidateSkills";
 import { CandidateActivity } from "@/components/cockpit/CandidateActivity";
 import { CandidateConsent } from "@/components/cockpit/CandidateConsent";
@@ -77,15 +79,18 @@ export default async function KandidatDetailPage({
   const c = await getCandidate(params.id);
   if (!c) notFound();
 
-  const [notes, tasks, emails, accounts, consent, submissions, mandates] = await Promise.all([
-    getNotesForCandidate(c.id),
-    getTasksForRelated("candidate", c.id),
-    getEmailActivitiesForCandidate(c.email),
-    getAccounts(),
-    getConsentForCandidate(c.id).catch(() => null),
-    getSubmissionsForCandidate(c.id),
-    getMandates(),
-  ]);
+  const [notes, tasks, emails, accounts, consent, submissions, mandates, interviews, offers] =
+    await Promise.all([
+      getNotesForCandidate(c.id),
+      getTasksForRelated("candidate", c.id),
+      getEmailActivitiesForCandidate(c.email),
+      getAccounts(),
+      getConsentForCandidate(c.id).catch(() => null),
+      getSubmissionsForCandidate(c.id),
+      getMandates(),
+      getInterviewsForCandidate(c.id),
+      getOffersForCandidate(c.id),
+    ]);
 
   // Mandat-Auswahl im Bearbeiten-Dialog (Kandidat:in einem Suchprojekt zuordnen).
   const editFields = withSelectOptions(CANDIDATE_FIELDS, "mandate_id", [
@@ -334,6 +339,27 @@ export default async function KandidatDetailPage({
                   ))}
                 </ul>
               )}
+            </CardBody>
+          </Card>
+
+          {/* Interviews */}
+          <Card>
+            <CardBody>
+              <SectionHeader title="Interviews" hint="Termine, Art & Feedback" />
+              <InterviewsCard candidateId={c.id} mandateId={c.mandate_id} interviews={interviews} />
+            </CardBody>
+          </Card>
+
+          {/* Angebote */}
+          <Card>
+            <CardBody>
+              <SectionHeader title="Angebote" hint="Gehalt, Status & Ablehnungsgrund" />
+              <OffersCard
+                candidateId={c.id}
+                mandateId={c.mandate_id}
+                defaultSalary={c.salary_expectation}
+                offers={offers}
+              />
             </CardBody>
           </Card>
 
