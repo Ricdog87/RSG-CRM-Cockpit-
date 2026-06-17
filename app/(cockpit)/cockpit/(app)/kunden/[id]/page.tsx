@@ -142,6 +142,7 @@ export default async function AccountDetailPage({
           />
           <EmailTimeline
             activities={emails}
+            limit={5}
             emptyText="Noch keine E-Mails. Setze deine BCC-Adresse (Postfach) ins BCC, um Mails automatisch hier zu protokollieren."
           />
         </CardBody>

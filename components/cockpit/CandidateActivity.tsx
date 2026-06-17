@@ -184,7 +184,13 @@ export function CandidateActivity({
       .forEach((n) => feed.push({ at: n.created_at, node: renderNote(n) }));
   }
   if (showTasks) taskItems.forEach((t) => feed.push({ at: t.due_date ?? "", node: renderTask(t) }));
-  if (showEmails) emails.forEach((e) => feed.push({ at: e.occurred_at, node: renderEmail(e) }));
+  if (showEmails) {
+    // Mail-Tracking übersichtlich halten: nur die letzten 5 E-Mails.
+    const recentEmails = [...emails]
+      .sort((a, b) => (b.occurred_at || "").localeCompare(a.occurred_at || ""))
+      .slice(0, 5);
+    recentEmails.forEach((e) => feed.push({ at: e.occurred_at, node: renderEmail(e) }));
+  }
   feed.sort((a, b) => (b.at || "").localeCompare(a.at || ""));
 
   function renderNote(n: CandidateNote) {
