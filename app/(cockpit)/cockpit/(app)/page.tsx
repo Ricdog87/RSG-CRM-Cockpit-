@@ -80,7 +80,7 @@ function LineHeader({ eyebrow, title, accent }: { eyebrow: string; title: string
 }
 
 export default async function CockpitPage() {
-  const [data, identity, opportunities, kiProjects, mandates, candidates, accounts, openTasks, milestones, invoiceSummary, activityStats, briefing] =
+  const [data, identity, opportunities, kiProjects, mandates, candidates, accounts, openTasks, milestones, invoiceSummary, activityStats] =
     await Promise.all([
       getCockpitData(),
       getPartnerIdentity(),
@@ -93,8 +93,18 @@ export default async function CockpitPage() {
       getUpcomingMilestones(),
       getInvoiceSummary(),
       getActivityStats(),
-      buildBriefing(),
     ]);
+
+  // Briefing aus bereits geladenen Daten ableiten (keine Doppel-Queries).
+  const briefing = await buildBriefing({
+    opportunities,
+    kiProjects,
+    mandates,
+    candidates,
+    accounts,
+    tasks: openTasks,
+    invoices: invoiceSummary,
+  });
 
   // ── Tagesziele / Streak / Wochenübersicht (Arbeitswoche Mo–Do) ────────
   const dKey = (d: Date) =>

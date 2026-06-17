@@ -6,10 +6,17 @@ import {
   getCandidates,
   getAccounts,
 } from "@/lib/crm-data";
-import { getOpenTasks } from "@/lib/tasks-data";
-import { getInvoiceSummary } from "@/lib/invoices-data";
+import { getOpenTasks, type Task } from "@/lib/tasks-data";
+import { getInvoiceSummary, type InvoiceSummary } from "@/lib/invoices-data";
 import { mandateFeePerPosition } from "@/lib/crm-types";
-import type { BusinessLine } from "@/lib/crm-types";
+import type {
+  BusinessLine,
+  Account,
+  Opportunity,
+  KiProject,
+  RecruitingMandate,
+  Candidate,
+} from "@/lib/crm-types";
 
 /**
  * Intelligentes Tages-Briefing: leitet aus den echten CRM-Daten die wichtigsten
@@ -60,16 +67,29 @@ function valueBonus(eur: number): number {
   return Math.min(120, Math.round(Math.log10(eur + 1) * 30));
 }
 
-export async function buildBriefing(): Promise<Briefing> {
-  const [opps, ki, mandates, candidates, accounts, tasks, invoices] = await Promise.all([
-    getOpportunities(),
-    getKiProjects(),
-    getMandates(),
-    getCandidates(),
-    getAccounts(),
-    getOpenTasks(),
-    getInvoiceSummary(),
-  ]);
+/** Vorgeladene Daten (z.B. vom Dashboard), um Doppel-Queries zu vermeiden. */
+export interface BriefingInput {
+  opportunities: Opportunity[];
+  kiProjects: KiProject[];
+  mandates: RecruitingMandate[];
+  candidates: Candidate[];
+  accounts: Account[];
+  tasks: Task[];
+  invoices: InvoiceSummary;
+}
+
+export async function buildBriefing(pre?: BriefingInput): Promise<Briefing> {
+  const [opps, ki, mandates, candidates, accounts, tasks, invoices] = pre
+    ? [pre.opportunities, pre.kiProjects, pre.mandates, pre.candidates, pre.accounts, pre.tasks, pre.invoices]
+    : await Promise.all([
+        getOpportunities(),
+        getKiProjects(),
+        getMandates(),
+        getCandidates(),
+        getAccounts(),
+        getOpenTasks(),
+        getInvoiceSummary(),
+      ]);
 
   const signals: BriefingSignal[] = [];
   const push = (s: Omit<BriefingSignal, "score"> & { urgency?: number }) => {
