@@ -1,5 +1,7 @@
 import { getAccounts, getMandates, getKiProjects, getOpportunities, getCandidates, accountKey } from "@/lib/crm-data";
 import { computeAccountIntel } from "@/lib/account-intel";
+import { findAccountDuplicates } from "@/lib/account-dedupe";
+import { AccountDuplicates } from "@/components/cockpit/AccountDuplicates";
 import { createAccount } from "@/lib/crm-actions";
 import { autofillAccountAction } from "@/lib/ai-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
@@ -57,6 +59,7 @@ export default async function KundenPage() {
     (a) => a.lifecycle === "kunde" || a.lifecycle === "bestand"
   );
   const derivedCount = accounts.filter((a) => a.synthetic).length;
+  const duplicateGroups = findAccountDuplicates(accounts);
 
   return (
     <div className="space-y-6">
@@ -110,6 +113,8 @@ export default async function KundenPage() {
       </div>
 
       <BackfillAccountsButton derivedCount={derivedCount} />
+
+      <AccountDuplicates groups={duplicateGroups} />
 
       <AccountsView accounts={accounts} healthById={healthById} />
     </div>
