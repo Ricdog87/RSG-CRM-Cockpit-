@@ -78,6 +78,14 @@ export const AUTOMATIONS: AutomationDef[] = [
     trigger: "Mandat → Besetzt",
     action: "Aufgabe erstellen",
   },
+  {
+    key: "lost_reengage",
+    title: "Chance verloren → Wiedervorlage (90 T)",
+    description:
+      "Wird eine Verkaufschance auf „Verloren“ gesetzt, entsteht automatisch eine Wiedervorlage „Erneut ansprechen“ (in 90 Tagen) – nichts geht verloren.",
+    trigger: "Chance → Verloren",
+    action: "Aufgabe erstellen",
+  },
 ];
 
 /** Prüft, ob eine Regel aktiv ist (Default: an). Client kann Session- oder Service-Role-Client sein. */

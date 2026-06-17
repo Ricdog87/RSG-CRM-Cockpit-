@@ -780,6 +780,33 @@ export async function updateOpportunityStage(
       logDataError("automation:won_onboarding", e);
     }
   }
+  // Workflow: Chance verloren → Wiedervorlage (90 T) zur Reaktivierung.
+  if (res.ok && !res.demo && stage === "verloren") {
+    try {
+      const { id: pid } = await currentPartnerId();
+      if (pid) {
+        const supabase = createClient();
+        const { data: opp } = await supabase
+          .from("opportunities")
+          .select("account_name, title")
+          .eq("id", id)
+          .maybeSingle();
+        const o = opp as { account_name?: string; title?: string } | null;
+        const accName = o?.account_name ?? "";
+        const accId = accName ? await resolveAccountId(supabase, accName) : null;
+        await autoTask(supabase, pid, "lost_reengage", {
+          related_type: accId ? "customer" : "none",
+          related_id: accId,
+          related_label: accName || o?.title || "Verlorene Chance",
+          title: `Erneut ansprechen: ${accName}${o?.title ? ` (${o.title})` : ""}`,
+          dueInDays: 90,
+          notes: "Verlorene Chance – nach Reifezeit erneut qualifizieren.",
+        });
+      }
+    } catch (e) {
+      logDataError("automation:lost_reengage", e);
+    }
+  }
   return res;
 }
 
