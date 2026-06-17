@@ -9,6 +9,12 @@ import { automationEnabled, AUTOMATIONS } from "@/lib/automations";
 import { logDataError } from "@/lib/log";
 import type { RelatedType } from "@/lib/task-link";
 
+import {
+  getValidAccessToken,
+  upsertGoogleEvent,
+  deleteGoogleEvent,
+} from "@/lib/google-calendar";
+
 /**
  * Server Actions für Schreibvorgänge im CRM. Bei gesetzter Supabase-ENV wird
  * RLS-konform in die CRM-Tabellen geschrieben (partner_id = eigene Partner-ID).
@@ -728,44 +734,131 @@ export async function addTask(input: TaskInput): Promise<ActionResult> {
   const { id, error } = await currentPartnerId();
   if (!id) return { ok: false, error };
   const supabase = createClient();
-  const { error: insErr } = await supabase.from("crm_tasks").insert({
-    partner_id: id,
-    related_type: input.related_type ?? "none",
-    related_id: input.related_id ?? null,
-    related_label: input.related_label ?? null,
-    title: input.title.trim(),
-    due_date: input.due_date || null,
-    due_time: input.due_time || null,
-    notes: input.notes || null,
-  });
+
+  const { data: inserted, error: insErr } = await supabase
+    .from("crm_tasks")
+    .insert({
+      partner_id: id,
+      related_type: input.related_type ?? "none",
+      related_id: input.related_id ?? null,
+      related_label: input.related_label ?? null,
+      title: input.title.trim(),
+      due_date: input.due_date || null,
+      due_time: input.due_time || null,
+      notes: input.notes || null,
+    })
+    .select("id")
+    .single();
+
   if (insErr) return { ok: false, error: insErr.message };
+
+  // ── Google-Sync (fire-and-forget, blockiert nie den Return) ──────────
+  if (input.due_date && inserted) {
+    void (async () => {
+      try {
+        const auth = await getValidAccessToken();
+        if (!auth) return;
+        const eventId = await upsertGoogleEvent(
+          auth.token,
+          {
+            id: (inserted as { id: string }).id,
+            title: input.title.trim(),
+            notes: input.notes,
+            related_label: input.related_label,
+            due_date: input.due_date!,
+            due_time: input.due_time,
+          },
+          null,
+          auth.calendarId
+        );
+        if (eventId) {
+          await supabase
+            .from("crm_tasks")
+            .update({ google_event_id: eventId })
+            .eq("id", (inserted as { id: string }).id);
+        }
+      } catch (e) {
+        console.error("[addTask] google sync", e);
+      }
+    })();
+  }
+  // ─────────────────────────────────────────────────────────────────────
+
   revalidateTasks(input.related_type, input.related_id);
   return { ok: true };
 }
-
 export async function setTaskDone(
   id: string,
   done: boolean
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
   const supabase = createClient();
-  const { error } = await supabase.from("crm_tasks").update({ done }).eq("id", id);
+  const { error } = await supabase
+    .from("crm_tasks")
+    .update({ done })
+    .eq("id", id);
   if (error) return { ok: false, error: error.message };
+
+  // ── Google-Sync: erledigte Tasks aus Google Calendar entfernen ────────
+  if (done) {
+    void (async () => {
+      try {
+        const auth = await getValidAccessToken();
+        if (!auth) return;
+        const { data: task } = await supabase
+          .from("crm_tasks")
+          .select("google_event_id")
+          .eq("id", id)
+          .maybeSingle();
+        const gid = (task as { google_event_id?: string | null } | null)
+          ?.google_event_id;
+        if (gid) {
+          await deleteGoogleEvent(auth.token, gid, auth.calendarId);
+          await supabase
+            .from("crm_tasks")
+            .update({ google_event_id: null })
+            .eq("id", id);
+        }
+      } catch (e) {
+        console.error("[setTaskDone] google sync", e);
+      }
+    })();
+  }
+  // ─────────────────────────────────────────────────────────────────────
+
   revalidateTasks();
   return { ok: true };
 }
-
 export async function deleteTask(id: string): Promise<ActionResult> {
   if (useMockData) return DEMO;
   const supabase = createClient();
+
+  // ── Google-Event zuerst löschen (vor DB-Delete, damit ID noch da ist)
+  void (async () => {
+    try {
+      const auth = await getValidAccessToken();
+      if (!auth) return;
+      const { data: task } = await supabase
+        .from("crm_tasks")
+        .select("google_event_id")
+        .eq("id", id)
+        .maybeSingle();
+      const gid = (task as { google_event_id?: string | null } | null)
+        ?.google_event_id;
+      if (gid) {
+        await deleteGoogleEvent(auth.token, gid, auth.calendarId);
+      }
+    } catch (e) {
+      console.error("[deleteTask] google sync", e);
+    }
+  })();
+  // ─────────────────────────────────────────────────────────────────────
+
   const { error } = await supabase.from("crm_tasks").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
   revalidateTasks();
   return { ok: true };
 }
-
-// ---------- Update der übrigen Entitäten ----------------------------
-
 export async function updateCandidate(
   _prev: ActionResult | null,
   fd: FormData
