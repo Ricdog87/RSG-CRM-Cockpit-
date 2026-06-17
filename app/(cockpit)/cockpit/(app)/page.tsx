@@ -92,10 +92,54 @@ export default async function CockpitPage() {
       getActivityStats(),
     ]);
 
-  // Tagesziel: neues Projekt heute angelegt?
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const newRecruitingToday = mandates.some((m) => (m.created_at ?? "").slice(0, 10) === todayStr);
-  const newKiToday = kiProjects.some((p) => (p.created_at ?? "").slice(0, 10) === todayStr);
+  // ── Tagesziele / Streak / Wochenübersicht (Arbeitswoche Mo–Do) ────────
+  const dKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const nowD = new Date();
+  const todayKey = dKey(nowD);
+  const recDates = new Set(mandates.filter((m) => m.created_at).map((m) => dKey(new Date(m.created_at!))));
+  const kiDates = new Set(kiProjects.filter((p) => p.created_at).map((p) => dKey(new Date(p.created_at!))));
+  const newRecruitingToday = recDates.has(todayKey);
+  const newKiToday = kiDates.has(todayKey);
+
+  const dayScore = (key: string) => {
+    const a = activityStats.daily[key] ?? { call: 0, email: 0 };
+    return (a.call >= 15 ? 1 : 0) + (a.email >= 10 ? 1 : 0) + (recDates.has(key) ? 1 : 0) + (kiDates.has(key) ? 1 : 0);
+  };
+
+  // Streak: zusammenhängende Arbeitstage (Mo–Do) mit allen 4 Zielen erreicht.
+  let streak = 0;
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(nowD);
+    d.setDate(nowD.getDate() - i);
+    const wd = d.getDay();
+    if (wd < 1 || wd > 4) continue; // nur Mo–Do
+    const sc = dayScore(dKey(d));
+    if (i === 0 && sc < 4) continue; // heute zählt nicht als Bruch
+    if (sc >= 4) streak++;
+    else break;
+  }
+
+  // Wochenübersicht Mo–So.
+  const weekStart = new Date(nowD);
+  weekStart.setDate(nowD.getDate() - ((nowD.getDay() + 6) % 7));
+  const dayLabels = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+  const weekDays = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const key = dKey(d);
+    const wd = d.getDay();
+    const mode: "goal" | "review" | "off" = wd >= 1 && wd <= 4 ? "goal" : wd === 5 ? "review" : "off";
+    return {
+      label: dayLabels[i],
+      mode,
+      score: mode === "goal" ? dayScore(key) : 0,
+      isToday: key === todayKey,
+      isFuture: d.getTime() > nowD.getTime() && key !== todayKey,
+    };
+  });
+  const todayMode: "work" | "review" | "off" =
+    nowD.getDay() >= 1 && nowD.getDay() <= 4 ? "work" : nowD.getDay() === 5 ? "review" : "off";
 
   // Kombinierter Forecast (Gesamt-Pipeline): Recruiting-Honorar-Angebote +
   // KI-MRR-Angebote ×12 (ARR-Sicht).
@@ -144,7 +188,16 @@ export default async function CockpitPage() {
       {/* Tagesziele (spielerisch) + Tagesordnung */}
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="animate-fade-up lg:col-span-2" aria-label="Tagesziele">
-          <DailyGoals stats={activityStats} newRecruitingToday={newRecruitingToday} newKiToday={newKiToday} />
+          <DailyGoals
+            stats={activityStats}
+            newRecruitingToday={newRecruitingToday}
+            newKiToday={newKiToday}
+            streak={streak}
+            weekDays={weekDays}
+            dayMode={todayMode}
+            callGoalWeek={60}
+            emailGoalWeek={40}
+          />
         </section>
         <section className="animate-fade-up" aria-label="Tagesordnung">
           <TodayAgenda tasks={openTasks} />

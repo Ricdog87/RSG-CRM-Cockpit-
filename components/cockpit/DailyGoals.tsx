@@ -11,6 +11,14 @@ import type { ActivityStats } from "@/lib/activity-data";
 const CALL_GOAL = 15;
 const EMAIL_GOAL = 10;
 
+interface WeekDay {
+  label: string;
+  mode: "goal" | "review" | "off";
+  score: number;
+  isToday: boolean;
+  isFuture: boolean;
+}
+
 function Bar({ value, goal, tone }: { value: number; goal: number; tone: string }) {
   const pct = Math.min(100, Math.round((value / goal) * 100));
   return (
@@ -24,22 +32,39 @@ export function DailyGoals({
   stats,
   newRecruitingToday,
   newKiToday,
+  streak,
+  weekDays,
+  dayMode,
+  callGoalWeek,
+  emailGoalWeek,
 }: {
   stats: ActivityStats;
   newRecruitingToday: boolean;
   newKiToday: boolean;
+  streak: number;
+  weekDays: WeekDay[];
+  dayMode: "work" | "review" | "off";
+  callGoalWeek: number;
+  emailGoalWeek: number;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [calls, setCalls] = useState(stats.callsToday);
   const [emails, setEmails] = useState(stats.emailsToday);
+  const [wCalls, setWCalls] = useState(stats.weekCalls);
+  const [wEmails, setWEmails] = useState(stats.weekEmails);
   const [account, setAccount] = useState("");
   const [subject, setSubject] = useState("");
   const [week, setWeek] = useState(stats.week);
 
   function log(kind: "call" | "email", line: "ki" | "recruiting") {
-    if (kind === "call") setCalls((c) => c + 1);
-    else setEmails((c) => c + 1);
+    if (kind === "call") {
+      setCalls((c) => c + 1);
+      setWCalls((c) => c + 1);
+    } else {
+      setEmails((c) => c + 1);
+      setWEmails((c) => c + 1);
+    }
     setWeek((w) => ({ ...w, [line]: { ...w[line], [kind]: w[line][kind] + 1 } }));
     start(async () => {
       const res = await logActivity({ kind, line, account_name: account, subject });
@@ -64,46 +89,93 @@ export function DailyGoals({
 
   const inputCls =
     "w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand";
-  const chip =
-    "rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60";
+  const chip = "rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60";
 
   return (
-    <Card className={allDone ? "border-success/40 bg-gradient-to-br from-success/[0.06] to-brand/[0.04]" : undefined}>
+    <Card className={dayMode === "work" && allDone ? "border-success/40 bg-gradient-to-br from-success/[0.06] to-brand/[0.04]" : undefined}>
       <CardBody className="space-y-4">
         <SectionHeader
-          title="Tagesziele"
-          hint={allDone ? "🎉 Alle Ziele erreicht – stark!" : "Fokus für heute"}
+          title={dayMode === "review" ? "Freitag · Review & Buchhaltung" : dayMode === "off" ? "Wochenende" : "Tagesziele"}
+          hint={dayMode === "work" ? (allDone ? "🎉 Alle Ziele erreicht – stark!" : "Fokus für heute (Mo–Do)") : "Arbeitswoche Mo–Do"}
           action={
-            <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", allDone ? "bg-success/15 text-success" : "bg-brand/10 text-brand-deep")}>
-              {goalsDone}/4 {allDone ? "🔥" : ""}
+            <span className="inline-flex items-center gap-2">
+              {streak > 0 ? (
+                <span className="rounded-full bg-warning/15 px-2.5 py-1 text-xs font-bold text-warning">🔥 {streak}</span>
+              ) : null}
+              {dayMode === "work" ? (
+                <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", allDone ? "bg-success/15 text-success" : "bg-brand/10 text-brand-deep")}>
+                  {goalsDone}/4
+                </span>
+              ) : null}
             </span>
           }
         />
 
-        {/* Fortschritts-Ziele */}
+        {streak > 0 ? (
+          <p className="-mt-2 text-xs text-muted">
+            🔥 <span className="font-semibold text-ink">{streak} Tag{streak === 1 ? "" : "e"} in Folge</span> alle Tagesziele erreicht.
+          </p>
+        ) : null}
+
+        {dayMode === "work" ? (
+          <>
+            {/* Fortschritts-Ziele */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-border bg-elevated/40 p-3">
+                <div className="mb-1.5 flex items-center justify-between text-sm">
+                  <span className="inline-flex items-center gap-1.5 font-medium text-ink"><IconPhone size={14} className="text-brand-deep" /> Sales Calls</span>
+                  <span className={cn("font-bold tabular-nums", calls >= CALL_GOAL ? "text-success" : "text-ink")}>{calls}/{CALL_GOAL}</span>
+                </div>
+                <Bar value={calls} goal={CALL_GOAL} tone={calls >= CALL_GOAL ? "bg-success" : "bg-gradient-to-r from-brand to-sky"} />
+              </div>
+              <div className="rounded-xl border border-border bg-elevated/40 p-3">
+                <div className="mb-1.5 flex items-center justify-between text-sm">
+                  <span className="inline-flex items-center gap-1.5 font-medium text-ink"><IconMail size={14} className="text-brand-deep" /> Neukunden-E-Mails</span>
+                  <span className={cn("font-bold tabular-nums", emails >= EMAIL_GOAL ? "text-success" : "text-ink")}>{emails}/{EMAIL_GOAL}</span>
+                </div>
+                <Bar value={emails} goal={EMAIL_GOAL} tone={emails >= EMAIL_GOAL ? "bg-success" : "bg-gradient-to-r from-brand to-sky"} />
+              </div>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              <GoalFlag done={newRecruitingToday} icon={<IconBriefcase size={14} />} label="Neues Recruiting-Projekt" />
+              <GoalFlag done={newKiToday} icon={<IconBolt size={14} />} label="Neues KI-/Tel.-Projekt" />
+            </div>
+          </>
+        ) : (
+          <div className="rounded-xl border border-sky/30 bg-sky/[0.05] px-3 py-2.5 text-sm text-ink">
+            {dayMode === "review"
+              ? "Heute kein Akquise-Ziel – Zeit für Wochen-Review, Forecast-Pflege & Buchhaltung. Deine Wochenbilanz:"
+              : "Wochenende – frei. Deine Wochenbilanz:"}
+          </div>
+        )}
+
+        {/* Wochenziele (Mo–Do) */}
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-border bg-elevated/40 p-3">
-            <div className="mb-1.5 flex items-center justify-between text-sm">
-              <span className="inline-flex items-center gap-1.5 font-medium text-ink"><IconPhone size={14} className="text-brand-deep" /> Sales Calls</span>
-              <span className={cn("font-bold tabular-nums", calls >= CALL_GOAL ? "text-success" : "text-ink")}>{calls}/{CALL_GOAL}</span>
+            <div className="mb-1.5 flex items-center justify-between text-xs">
+              <span className="font-medium text-muted">Wochenziel Calls</span>
+              <span className={cn("font-bold tabular-nums", wCalls >= callGoalWeek ? "text-success" : "text-ink")}>{wCalls}/{callGoalWeek}</span>
             </div>
-            <Bar value={calls} goal={CALL_GOAL} tone={calls >= CALL_GOAL ? "bg-success" : "bg-gradient-to-r from-brand to-sky"} />
+            <Bar value={wCalls} goal={callGoalWeek} tone={wCalls >= callGoalWeek ? "bg-success" : "bg-gradient-to-r from-brand to-sky"} />
           </div>
           <div className="rounded-xl border border-border bg-elevated/40 p-3">
-            <div className="mb-1.5 flex items-center justify-between text-sm">
-              <span className="inline-flex items-center gap-1.5 font-medium text-ink"><IconMail size={14} className="text-brand-deep" /> Neukunden-E-Mails</span>
-              <span className={cn("font-bold tabular-nums", emails >= EMAIL_GOAL ? "text-success" : "text-ink")}>{emails}/{EMAIL_GOAL}</span>
+            <div className="mb-1.5 flex items-center justify-between text-xs">
+              <span className="font-medium text-muted">Wochenziel E-Mails</span>
+              <span className={cn("font-bold tabular-nums", wEmails >= emailGoalWeek ? "text-success" : "text-ink")}>{wEmails}/{emailGoalWeek}</span>
             </div>
-            <Bar value={emails} goal={EMAIL_GOAL} tone={emails >= EMAIL_GOAL ? "bg-success" : "bg-gradient-to-r from-brand to-sky"} />
+            <Bar value={wEmails} goal={emailGoalWeek} tone={wEmails >= emailGoalWeek ? "bg-success" : "bg-gradient-to-r from-brand to-sky"} />
           </div>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-2">
-          <GoalFlag done={newRecruitingToday} icon={<IconBriefcase size={14} />} label="Neues Recruiting-Projekt" />
-          <GoalFlag done={newKiToday} icon={<IconBolt size={14} />} label="Neues KI-/Tel.-Projekt" />
+        {/* Mini-Wochenübersicht Mo–So */}
+        <div className="flex items-center justify-between gap-1.5">
+          {weekDays.map((d, i) => (
+            <DayDot key={i} day={d} />
+          ))}
         </div>
 
-        {/* Schnell-Logger */}
+        {/* Schnell-Logger (immer verfügbar) */}
         <div className="space-y-2 rounded-xl border border-border bg-surface p-3">
           <p className="text-xs font-semibold text-ink">Aktivität erfassen</p>
           <div className="grid grid-cols-2 gap-2">
@@ -123,7 +195,7 @@ export function DailyGoals({
         {/* Wochenfokus */}
         <div>
           <div className="mb-1 flex items-center justify-between text-xs text-faint">
-            <span>Wochenfokus (Calls + E-Mails)</span>
+            <span>Wochenfokus (Mo–Do · Calls + E-Mails)</span>
             <span>{kiTotal + recTotal} gesamt</span>
           </div>
           <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-elevated">
@@ -137,6 +209,37 @@ export function DailyGoals({
         </div>
       </CardBody>
     </Card>
+  );
+}
+
+function DayDot({ day }: { day: WeekDay }) {
+  let dot = "bg-elevated text-faint";
+  let title = "";
+  if (day.mode === "review") {
+    dot = "bg-sky/15 text-sky-deep";
+    title = "Review & Buchhaltung";
+  } else if (day.mode === "off") {
+    dot = "bg-elevated/60 text-faint";
+    title = "frei";
+  } else if (!day.isFuture) {
+    if (day.score === 4) {
+      dot = "bg-success/20 text-success";
+      title = "alle Ziele erreicht";
+    } else if (day.score > 0) {
+      dot = "bg-warning/20 text-warning";
+      title = `${day.score}/4 Ziele`;
+    } else {
+      dot = "bg-danger/15 text-danger";
+      title = "0/4 Ziele";
+    }
+  }
+  return (
+    <div className="flex flex-1 flex-col items-center gap-1" title={title}>
+      <span className="text-[0.65rem] font-medium text-faint">{day.label}</span>
+      <span className={cn("flex h-7 w-7 items-center justify-center rounded-full text-[0.65rem] font-bold", dot, day.isToday && "ring-2 ring-brand ring-offset-1 ring-offset-surface")}>
+        {day.mode === "review" ? "R" : day.mode === "off" ? "–" : day.isFuture ? "·" : day.score === 4 ? "✓" : day.score}
+      </span>
+    </div>
   );
 }
 
