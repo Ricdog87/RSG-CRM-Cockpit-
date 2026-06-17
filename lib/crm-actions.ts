@@ -947,6 +947,16 @@ export async function updateCandidate(
   );
 }
 
+/** Schnelles Verschieben eines Mandats im Kanban-Board (Status). */
+export async function setMandateStatus(id: string, status: string): Promise<ActionResult> {
+  return update(
+    "recruiting_mandates",
+    id,
+    { status },
+    "/cockpit/projekte/recruiting"
+  );
+}
+
 export async function updateMandate(
   _prev: ActionResult | null,
   fd: FormData
