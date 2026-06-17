@@ -16,6 +16,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { IconChevronRight } from "@/components/ui/icons";
 import { AccountEnrich } from "@/components/cockpit/AccountEnrich";
 import { AccountContractCard } from "@/components/cockpit/AccountContractCard";
+import { AccountIntelCard } from "@/components/cockpit/AccountIntelCard";
+import { computeAccountIntel } from "@/lib/account-intel";
 import { BackfillAccountsButton } from "@/components/cockpit/BackfillAccountsButton";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 
@@ -67,6 +69,19 @@ export default async function AccountDetailPage({
     getTasksForRelated("customer", account.id),
     getContactsForAccount(account.id),
   ]);
+
+  const intel = computeAccountIntel({
+    account,
+    opportunities,
+    kiProjects,
+    mandates,
+    candidates,
+    activityDates: [
+      ...emails.map((e) => e.occurred_at),
+      ...notes.map((n) => n.created_at),
+      ...tasks.map((t) => t.due_date),
+    ],
+  });
 
   return (
     <div className="space-y-6">
@@ -154,6 +169,9 @@ export default async function AccountDetailPage({
           ) : null}
         </CardBody>
       </Card>
+
+      {/* Account-Intelligenz: Health-Score + nächste beste Aktion */}
+      <AccountIntelCard intel={intel} />
 
       {/* Ansprechpartner:innen */}
       <AccountContacts accountId={account.id} contacts={contacts} />
