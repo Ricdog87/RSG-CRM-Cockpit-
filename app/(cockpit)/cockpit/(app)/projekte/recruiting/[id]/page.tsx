@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getMandates, getCandidates } from "@/lib/crm-data";
 import { getPlacementsForMandate } from "@/lib/placements-data";
 import { getInvoicesForMandate } from "@/lib/invoices-data";
+import { getJobResponsesForMandate } from "@/lib/submissions-data";
 import { mandateRevenue } from "@/lib/crm-types";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/cockpit/StatCard";
@@ -31,11 +32,12 @@ export default async function MandateDetailPage({
 }: {
   params: { id: string };
 }) {
-  const [mandates, candidates, placements, invoices] = await Promise.all([
+  const [mandates, candidates, placements, invoices, jobResponses] = await Promise.all([
     getMandates(),
     getCandidates(),
     getPlacementsForMandate(params.id),
     getInvoicesForMandate(params.id),
+    getJobResponsesForMandate(params.id),
   ]);
   const m = mandates.find((x) => x.id === params.id);
   if (!m) notFound();
@@ -105,6 +107,51 @@ export default async function MandateDetailPage({
             anonymized={m.job_posting_anonymized}
             shareToken={m.share_token}
           />
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody>
+          <SectionHeader
+            title="Bewerber-Antworten"
+            hint="über den Stellen-Link: Interessiert / Absage"
+            action={
+              jobResponses.length > 0 ? (
+                <Badge tone="brand">{jobResponses.length}</Badge>
+              ) : undefined
+            }
+          />
+          {jobResponses.length === 0 ? (
+            <p className="text-sm text-muted">
+              Noch keine Rückmeldungen. Teile den anonymen Stellen-Link – wer „Interessiert“ oder
+              „Nicht interessiert“ klickt, erscheint hier mit Name &amp; E-Mail.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {jobResponses.map((r) => (
+                <li
+                  key={r.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <Link
+                      href={`/cockpit/kandidaten/${r.candidate_id}`}
+                      className="truncate text-sm font-medium text-ink hover:text-brand-deep"
+                    >
+                      {r.candidate_name}
+                    </Link>
+                    <p className="truncate text-xs text-faint">
+                      {r.candidate_email ?? "—"}
+                      {r.created_at ? ` · ${formatDate(r.created_at)}` : ""}
+                    </p>
+                  </div>
+                  <Badge tone={r.interested ? "success" : "danger"}>
+                    {r.interested ? "Interessiert" : "Absage"}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardBody>
       </Card>
 
