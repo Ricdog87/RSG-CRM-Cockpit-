@@ -18,6 +18,7 @@ import { AccountEnrich } from "@/components/cockpit/AccountEnrich";
 import { AccountContractCard } from "@/components/cockpit/AccountContractCard";
 import { AccountIntelCard } from "@/components/cockpit/AccountIntelCard";
 import { FollowupDrafter } from "@/components/cockpit/FollowupDrafter";
+import { AccountSequenceEnroll } from "@/components/cockpit/AccountSequenceEnroll";
 import { computeAccountIntel } from "@/lib/account-intel";
 import { BackfillAccountsButton } from "@/components/cockpit/BackfillAccountsButton";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
@@ -207,6 +208,9 @@ export default async function AccountDetailPage({
           recipientEmail={account.contact_email || undefined}
         />
       </div>
+
+      {/* B2B-Outbound-Sequenz (Kaltakquise-Kadenz) */}
+      <AccountSequenceEnroll accountId={account.id} accountName={account.name} defaultLine={account.line} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Aufgaben */}

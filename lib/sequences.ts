@@ -13,11 +13,16 @@ export interface SequenceStep {
   template?: string;
 }
 
+/** Zielgruppe der Sequenz: Kandidat:in (Recruiting) oder Account (B2B-Akquise). */
+export type SequenceAudience = "candidate" | "account";
+
 export interface Sequence {
   key: string;
   name: string;
   description: string;
   steps: SequenceStep[];
+  /** Standard: candidate (Rückwärtskompatibilität). */
+  audience?: SequenceAudience;
 }
 
 export const channelLabel: Record<SequenceChannel, string> = {
@@ -83,6 +88,50 @@ export const SEQUENCES: Sequence[] = [
   },
 ];
 
+// ── B2B-Kaltakquise-Kadenzen (Zielgruppe: Account/Entscheider) ──────────
+SEQUENCES.push(
+  {
+    key: "akquise_ki",
+    name: "Kaltakquise – RSG AI",
+    description: "B2B-Erstansprache für die KI-Telefonassistenz (Anruf → E-Mail → LinkedIn → Anruf).",
+    audience: "account",
+    steps: [
+      { dayOffset: 0, channel: "anruf", title: "Entscheider:in anrufen – Erreichbarkeit/verpasste Anrufe ansprechen" },
+      {
+        dayOffset: 1,
+        channel: "email",
+        title: "Value-Mail: verlorene Anrufe = verlorener Umsatz",
+        template:
+          "Hallo {name},\n\nviele Anfragen gehen außerhalb der Sprechzeiten oder in Stoßzeiten verloren. Unsere KI-Telefonassistenz nimmt jeden Anruf an, qualifiziert und bucht Termine – 24/7.\n\nPasst ein kurzer 15-Minuten-Call diese Woche, um den Nutzen für {company} konkret zu zeigen?\n\nBeste Grüße",
+      },
+      { dayOffset: 4, channel: "linkedin", title: "Auf LinkedIn vernetzen + kurzer Hinweis" },
+      { dayOffset: 8, channel: "anruf", title: "Telefonischer Nachfass + Demo anbieten" },
+    ],
+  },
+  {
+    key: "akquise_recruiting",
+    name: "Kaltakquise – RSG Recruiting",
+    description: "B2B-Erstansprache für Personalvermittlung zum Festpreis (Anruf → E-Mail → Anruf).",
+    audience: "account",
+    steps: [
+      { dayOffset: 0, channel: "anruf", title: "Entscheider:in anrufen – offene Vakanzen erfragen" },
+      {
+        dayOffset: 2,
+        channel: "email",
+        title: "Festpreis-Vermittlung vorstellen",
+        template:
+          "Hallo {name},\n\noffene Stellen kosten täglich Geld. Wir besetzen Vakanzen zum planbaren Festpreis – ohne Prozent-Risiko.\n\nWelche Position ist bei {company} aktuell am dringendsten? Dann zeige ich Ihnen passende Profile.\n\nBeste Grüße",
+      },
+      { dayOffset: 6, channel: "anruf", title: "Nachfass + konkrete Bedarfsklärung" },
+    ],
+  }
+);
+
 export function getSequence(key: string): Sequence | undefined {
   return SEQUENCES.find((s) => s.key === key);
+}
+
+/** Sequenzen einer Zielgruppe (Default-Audience = candidate). */
+export function sequencesFor(audience: SequenceAudience): Sequence[] {
+  return SEQUENCES.filter((s) => (s.audience ?? "candidate") === audience);
 }
