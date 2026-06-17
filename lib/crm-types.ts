@@ -175,6 +175,50 @@ export type CandidateStage =
   | "platziert"
   | "abgelehnt";
 
+export type PlacementStatus = "aktiv" | "garantie_ok" | "ausgefallen" | "nachbesetzung";
+
+/** Erfolgreiche Vermittlung: Eintritt, Garantie/Probezeit und Status. */
+export interface Placement {
+  id: string;
+  candidate_id?: string;
+  mandate_id?: string;
+  candidate_name: string;
+  account_name: string;
+  role: string;
+  /** Eintrittsdatum (ISO yyyy-mm-dd). */
+  start_date?: string;
+  /** Vereinbartes Gesamthonorar (€). */
+  agreed_fee?: number;
+  /** Probezeit-/Garantiedauer in Monaten. */
+  guarantee_months: number;
+  status: PlacementStatus;
+  notes?: string;
+  created_at?: string;
+}
+
+function addMonths(iso: string, months: number): string | undefined {
+  if (!iso) return undefined;
+  const d = new Date(iso + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return undefined;
+  const day = d.getDate();
+  d.setMonth(d.getMonth() + months);
+  // Monatsüberlauf abfangen (z.B. 31.01. + 1 Monat).
+  if (d.getDate() < day) d.setDate(0);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Fälligkeitsdatum der 2. Rate (50 % nach 3 Monaten Betriebszugehörigkeit). */
+export function placementSplitDate(p: Pick<Placement, "start_date">): string | undefined {
+  return p.start_date ? addMonths(p.start_date, 3) : undefined;
+}
+
+/** Ende der Probezeit/Garantie (Eintritt + Garantiemonate). */
+export function placementGuaranteeUntil(
+  p: Pick<Placement, "start_date" | "guarantee_months">
+): string | undefined {
+  return p.start_date ? addMonths(p.start_date, p.guarantee_months || 6) : undefined;
+}
+
 /** Kandidat:in in der Recruiting-Pipeline. */
 export interface Candidate {
   id: string;

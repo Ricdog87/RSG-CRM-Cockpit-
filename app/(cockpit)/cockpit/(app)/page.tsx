@@ -6,12 +6,14 @@ import {
   getCandidates,
 } from "@/lib/crm-data";
 import { getOpenTasks } from "@/lib/tasks-data";
+import { getUpcomingMilestones } from "@/lib/placements-data";
 import { KpiRow } from "@/components/cockpit/KpiRow";
 import { CrmOverview } from "@/components/cockpit/CrmOverview";
 import { OverrideNudge } from "@/components/cockpit/OverrideNudge";
 import { Pipeline } from "@/components/cockpit/Pipeline";
 import { OpenMandates } from "@/components/cockpit/OpenMandates";
 import { OneTimeRevenue } from "@/components/cockpit/OneTimeRevenue";
+import { PlacementMilestones } from "@/components/cockpit/PlacementMilestones";
 import { CareerProgress } from "@/components/cockpit/CareerProgress";
 import { Leaderboard } from "@/components/cockpit/Leaderboard";
 import { TeamDownline } from "@/components/cockpit/TeamDownline";
@@ -22,7 +24,7 @@ import { QuickActions } from "@/components/cockpit/QuickActions";
 export const dynamic = "force-dynamic";
 
 export default async function CockpitPage() {
-  const [data, opportunities, kiProjects, mandates, candidates, openTasks] =
+  const [data, opportunities, kiProjects, mandates, candidates, openTasks, milestones] =
     await Promise.all([
       getCockpitData(),
       getOpportunities(),
@@ -30,6 +32,7 @@ export default async function CockpitPage() {
       getMandates(),
       getCandidates(),
       getOpenTasks(),
+      getUpcomingMilestones(),
     ]);
 
   return (
@@ -54,10 +57,15 @@ export default async function CockpitPage() {
         </section>
       </div>
 
-      {/* 3b. Einmalumsatz (Implementierung & Anzahlungen) */}
-      <section className="animate-fade-up" aria-label="Einmalumsatz">
-        <OneTimeRevenue kiProjects={kiProjects} mandates={mandates} />
-      </section>
+      {/* 3b. Einmalumsatz + Platzierungs-Meilensteine */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="animate-fade-up" aria-label="Einmalumsatz">
+          <OneTimeRevenue kiProjects={kiProjects} mandates={mandates} />
+        </section>
+        <section className="animate-fade-up" aria-label="Platzierungs-Meilensteine">
+          <PlacementMilestones milestones={milestones} />
+        </section>
+      </div>
 
       {/* 3. KPI-Reihe */}
       <section className="animate-fade-up" aria-label="Kennzahlen">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMandates, getCandidates } from "@/lib/crm-data";
+import { getPlacementsForMandate } from "@/lib/placements-data";
 import { mandateRevenue } from "@/lib/crm-types";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/cockpit/StatCard";
@@ -8,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { MandateCandidates } from "@/components/cockpit/MandateCandidates";
 import { MandateMatchPanel } from "@/components/cockpit/MandateMatchPanel";
 import { JobPostingCard } from "@/components/cockpit/JobPostingCard";
+import { PlacementsCard } from "@/components/cockpit/PlacementsCard";
 import { IconChevronRight, IconBriefcase, IconUserCheck, IconEuro, IconTarget } from "@/components/ui/icons";
 import { formatEur, formatNumber, formatDate } from "@/lib/format";
 import type { MandateStatus } from "@/lib/crm-types";
@@ -27,7 +29,11 @@ export default async function MandateDetailPage({
 }: {
   params: { id: string };
 }) {
-  const [mandates, candidates] = await Promise.all([getMandates(), getCandidates()]);
+  const [mandates, candidates, placements] = await Promise.all([
+    getMandates(),
+    getCandidates(),
+    getPlacementsForMandate(params.id),
+  ]);
   const m = mandates.find((x) => x.id === params.id);
   if (!m) notFound();
 
@@ -109,6 +115,23 @@ export default async function MandateDetailPage({
         <CardBody>
           <SectionHeader title="Kandidaten-Pipeline" hint="Status je Phase – per Auswahl verschieben" />
           <MandateCandidates candidates={list} />
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody>
+          <SectionHeader
+            title="Platzierungen"
+            hint="Eintritt, 3-Monats-Honorarrate & Garantie"
+          />
+          <PlacementsCard
+            mandateId={m.id}
+            accountName={m.account_name}
+            role={m.role}
+            defaultFee={mandateRevenue(m)}
+            candidates={list.map((c) => ({ id: c.id, name: c.name }))}
+            placements={placements}
+          />
         </CardBody>
       </Card>
     </div>
