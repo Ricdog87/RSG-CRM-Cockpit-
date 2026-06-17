@@ -48,10 +48,12 @@ export function Pipeline({
   deals,
   limit,
   viewAllHref,
+  title = "Pipeline",
 }: {
   deals: Deal[];
   limit?: number;
   viewAllHref?: string;
+  title?: string;
 }) {
   const open = deals.filter(
     (d) => d.stage !== "gewonnen" && d.stage !== "verloren"
@@ -66,7 +68,7 @@ export function Pipeline({
     <Card>
       <CardBody>
         <SectionHeader
-          title="Pipeline"
+          title={title}
           hint={
             open.length > 0
               ? `${open.length} offene Deals · ${formatEur(weightedMrr)} gewichtet`
