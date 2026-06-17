@@ -109,6 +109,8 @@ export interface KiProject {
   nps?: number;
   upsell_potential?: string;
   upsell_value?: number;
+  /** Anlagedatum (für Tagesziel „neues KI-Projekt"). */
+  created_at?: string;
 }
 
 export type MandateStatus =

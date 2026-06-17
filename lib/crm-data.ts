@@ -141,6 +141,7 @@ function mapKiProject(r: Row): KiProject {
     nps: r.nps == null ? undefined : Number(r.nps),
     upsell_potential: str(r.upsell_potential) || undefined,
     upsell_value: r.upsell_value == null ? undefined : Number(r.upsell_value),
+    created_at: str(r.created_at) || undefined,
   };
 }
 

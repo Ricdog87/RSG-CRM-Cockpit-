@@ -11,6 +11,8 @@ import type { Deal, DealStage } from "@/lib/types";
 import { mandateFeePerPosition, mandateRevenue, type SalesStage } from "@/lib/crm-types";
 import { getUpcomingMilestones } from "@/lib/placements-data";
 import { getInvoiceSummary } from "@/lib/invoices-data";
+import { getActivityStats } from "@/lib/activity-data";
+import { DailyGoals } from "@/components/cockpit/DailyGoals";
 import { KpiRow } from "@/components/cockpit/KpiRow";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { OverrideNudge } from "@/components/cockpit/OverrideNudge";
@@ -24,6 +26,7 @@ import { Leaderboard } from "@/components/cockpit/Leaderboard";
 import { TeamDownline } from "@/components/cockpit/TeamDownline";
 import { TodayAgenda } from "@/components/cockpit/TodayAgenda";
 import { QuickActions } from "@/components/cockpit/QuickActions";
+import { Card, CardBody } from "@/components/ui/Card";
 import { IconBriefcase, IconEuro, IconUserCheck, IconTarget, IconPhone, IconBolt, IconTrendingUp } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
 
@@ -75,7 +78,7 @@ function LineHeader({ eyebrow, title, accent }: { eyebrow: string; title: string
 }
 
 export default async function CockpitPage() {
-  const [data, opportunities, kiProjects, mandates, candidates, accounts, openTasks, milestones, invoiceSummary] =
+  const [data, opportunities, kiProjects, mandates, candidates, accounts, openTasks, milestones, invoiceSummary, activityStats] =
     await Promise.all([
       getCockpitData(),
       getOpportunities(),
@@ -86,7 +89,23 @@ export default async function CockpitPage() {
       getOpenTasks(),
       getUpcomingMilestones(),
       getInvoiceSummary(),
+      getActivityStats(),
     ]);
+
+  // Tagesziel: neues Projekt heute angelegt?
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const newRecruitingToday = mandates.some((m) => (m.created_at ?? "").slice(0, 10) === todayStr);
+  const newKiToday = kiProjects.some((p) => (p.created_at ?? "").slice(0, 10) === todayStr);
+
+  // Kombinierter Forecast (Gesamt-Pipeline): Recruiting-Honorar-Angebote +
+  // KI-MRR-Angebote ×12 (ARR-Sicht).
+  const recruitingForecastTotal = mandates
+    .filter((m) => m.status === "angebot")
+    .reduce((s, m) => s + mandateRevenue(m), 0);
+  const kiForecastArr = kiProjects
+    .filter((p) => p.status === "angebot")
+    .reduce((s, p) => s + p.mrr * 12, 0);
+  const totalPipeline = recruitingForecastTotal + kiForecastArr;
 
   const aktiveKunden = accounts.filter((a) => a.lifecycle === "kunde" || a.lifecycle === "bestand").length;
 
@@ -122,8 +141,41 @@ export default async function CockpitPage() {
         <QuickActions />
       </section>
 
-      <section className="animate-fade-up" aria-label="Tagesordnung">
-        <TodayAgenda tasks={openTasks} />
+      {/* Tagesziele (spielerisch) + Tagesordnung */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <section className="animate-fade-up lg:col-span-2" aria-label="Tagesziele">
+          <DailyGoals stats={activityStats} newRecruitingToday={newRecruitingToday} newKiToday={newKiToday} />
+        </section>
+        <section className="animate-fade-up" aria-label="Tagesordnung">
+          <TodayAgenda tasks={openTasks} />
+        </section>
+      </div>
+
+      {/* Gesamt-Pipeline (kombinierter Forecast über beide Linien) */}
+      <section className="animate-fade-up" aria-label="Gesamt-Pipeline">
+        <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.06] to-sky/[0.05]">
+          <CardBody className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-brand-deep">
+                Gesamt-Pipeline · Forecast
+              </p>
+              <p className="mt-1 text-3xl font-black tracking-tight text-ink">{formatEur(totalPipeline)}</p>
+              <p className="mt-0.5 text-xs text-muted">
+                Recruiting-Honorar-Angebote + KI-MRR-Angebote ×12 (ARR-Sicht)
+              </p>
+            </div>
+            <div className="flex gap-6 text-right text-sm">
+              <div>
+                <p className="text-xs text-faint">Recruiting</p>
+                <p className="font-bold text-ink">{formatEur(recruitingForecastTotal)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-faint">KI (ARR)</p>
+                <p className="font-bold text-ink">{formatEur(kiForecastArr)}</p>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
       </section>
 
       {/* ═══════════ RSG Recruiting ═══════════ */}
