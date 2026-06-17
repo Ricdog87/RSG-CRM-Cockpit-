@@ -35,7 +35,7 @@ export async function getJobResponsesForMandate(mandateId: string): Promise<JobR
       .from("candidate_submissions")
       .select("id, candidate_id, stage, created_at, candidates(name, email)")
       .eq("mandate_id", mandateId)
-      .in("stage", ["interessiert", "abgesagt"])
+      .in("stage", ["interessiert", "abgesagt", "talent_pool"])
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) {

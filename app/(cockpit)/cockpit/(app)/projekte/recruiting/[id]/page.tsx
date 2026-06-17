@@ -145,8 +145,8 @@ export default async function MandateDetailPage({
                       {r.created_at ? ` · ${formatDate(r.created_at)}` : ""}
                     </p>
                   </div>
-                  <Badge tone={r.interested ? "success" : "danger"}>
-                    {r.interested ? "Interessiert" : "Absage"}
+                  <Badge tone={r.stage === "interessiert" ? "success" : r.stage === "talent_pool" ? "brand" : "danger"}>
+                    {r.stage === "interessiert" ? "Interessiert" : r.stage === "talent_pool" ? "Talent-Pool" : "Absage"}
                   </Badge>
                 </li>
               ))}
