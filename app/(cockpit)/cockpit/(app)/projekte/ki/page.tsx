@@ -2,6 +2,7 @@ import { getKiProjects, getAccounts } from "@/lib/crm-data";
 import { createKiProject } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { KiProjectsView } from "@/components/cockpit/views/KiProjectsView";
+import { KiRenewals } from "@/components/cockpit/KiRenewals";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { KIPROJECT_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { StatCard } from "@/components/cockpit/StatCard";
@@ -73,6 +74,8 @@ export default async function KiProjektePage() {
           icon={IconAlert}
         />
       </div>
+
+      <KiRenewals projects={projects} />
 
       <KiProjectsView projects={projects} accountNames={accountNames} />
     </div>

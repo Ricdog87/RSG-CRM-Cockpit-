@@ -19,6 +19,7 @@ import { OpenMandates } from "@/components/cockpit/OpenMandates";
 import { OneTimeRevenue } from "@/components/cockpit/OneTimeRevenue";
 import { PlacementMilestones } from "@/components/cockpit/PlacementMilestones";
 import { InvoiceSummaryCard } from "@/components/cockpit/InvoiceSummaryCard";
+import { KiRenewals } from "@/components/cockpit/KiRenewals";
 import { CareerProgress } from "@/components/cockpit/CareerProgress";
 import { Leaderboard } from "@/components/cockpit/Leaderboard";
 import { TeamDownline } from "@/components/cockpit/TeamDownline";
@@ -91,8 +92,8 @@ export default async function CockpitPage() {
         </section>
       </div>
 
-      {/* 3b. Einmalumsatz + Meilensteine + Rechnungen */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      {/* 3b. Einmalumsatz + Meilensteine + Rechnungen + KI-Renewals */}
+      <div className="grid gap-6 lg:grid-cols-2">
         <section className="animate-fade-up" aria-label="Einmalumsatz">
           <OneTimeRevenue kiProjects={kiProjects} mandates={mandates} />
         </section>
@@ -101,6 +102,9 @@ export default async function CockpitPage() {
         </section>
         <section className="animate-fade-up" aria-label="Rechnungen">
           <InvoiceSummaryCard summary={invoiceSummary} />
+        </section>
+        <section className="animate-fade-up" aria-label="Renewals & Churn">
+          <KiRenewals projects={kiProjects} />
         </section>
       </div>
 
