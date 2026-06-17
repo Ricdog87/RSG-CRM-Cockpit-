@@ -228,6 +228,58 @@ function accKey(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+/** Account-ID per Name auflösen (case-insensitiv). */
+async function resolveAccountId(
+  supabase: ReturnType<typeof createClient>,
+  name: string
+): Promise<string | null> {
+  const n = (name || "").trim();
+  if (!n) return null;
+  const { data } = await supabase.from("accounts").select("id").ilike("name", n).maybeSingle();
+  return (data as { id?: string } | null)?.id ?? null;
+}
+
+/**
+ * Führt eine Workflow-Automatisierung aus: legt – falls die Regel aktiv ist –
+ * automatisch eine Aufgabe an. Best-effort, blockiert nie die auslösende Aktion.
+ */
+async function autoTask(
+  supabase: ReturnType<typeof createClient>,
+  pid: string,
+  key: string,
+  task: {
+    related_type?: RelatedType;
+    related_id?: string | null;
+    related_label?: string | null;
+    title: string;
+    dueInDays?: number | null;
+    notes?: string | null;
+  }
+): Promise<void> {
+  try {
+    if (!(await automationEnabled(supabase, pid, key))) return;
+    const due =
+      task.dueInDays != null
+        ? new Date(Date.now() + task.dueInDays * 86400000).toISOString().slice(0, 10)
+        : null;
+    await supabase.from("crm_tasks").insert({
+      partner_id: pid,
+      related_type: task.related_type ?? "none",
+      related_id: task.related_id ?? null,
+      related_label: task.related_label ?? null,
+      title: task.title,
+      due_date: due,
+      notes: task.notes ?? null,
+    });
+    revalidatePath("/cockpit/aufgaben");
+    revalidatePath("/cockpit/kalender");
+    if (task.related_type === "customer" && task.related_id)
+      revalidatePath(`/cockpit/kunden/${task.related_id}`);
+  } catch (e) {
+    logDataError(`automation:${key}`, e);
+  }
+}
+
 /**
  * Materialisiert alle Accounts, die von Mandaten, KI-Projekten, Chancen oder
  * Kandidaten referenziert werden, aber noch keinen eigenen Datensatz haben.
@@ -530,7 +582,8 @@ export async function createKiProject(
   );
   // Kunde automatisch übernehmen (inkl. MRR & Ansprechpartner aus dem Projekt).
   if (res.ok && !res.demo) {
-    await ensureAccount(s(fd, "account_name"), {
+    const accountName = s(fd, "account_name");
+    await ensureAccount(accountName, {
       line: "ki",
       segment: s(fd, "segment"),
       mrr: n(fd, "mrr"),
@@ -539,6 +592,24 @@ export async function createKiProject(
       contact: s(fd, "acc_contact_name") || s(fd, "decision_maker") || s(fd, "tech_contact"),
       contact_email: s(fd, "acc_contact_email"),
     });
+    // Workflow: neues KI-Projekt → Kickoff-Aufgabe beim Kunden.
+    try {
+      const { id: pid } = await currentPartnerId();
+      if (pid) {
+        const supabase = createClient();
+        const accId = await resolveAccountId(supabase, accountName);
+        const product = s(fd, "product") || "KI-Projekt";
+        await autoTask(supabase, pid, "ki_onboarding_kickoff", {
+          related_type: accId ? "customer" : "none",
+          related_id: accId,
+          related_label: `${accountName} – ${product}`,
+          title: `Kickoff-Termin vereinbaren: ${product}`,
+          dueInDays: 2,
+        });
+      }
+    } catch (e) {
+      logDataError("automation:ki_onboarding_kickoff", e);
+    }
   }
   return res;
 }
@@ -587,13 +658,32 @@ export async function createMandate(
   );
   // Kunde automatisch übernehmen, falls noch nicht im CRM (Recruiting-Linie).
   if (res.ok && !res.demo) {
-    await ensureAccount(s(fd, "account_name"), {
+    const accountName = s(fd, "account_name");
+    await ensureAccount(accountName, {
       line: "recruiting",
       branche: s(fd, "acc_branche"),
       ort: s(fd, "acc_ort"),
       contact: s(fd, "acc_contact_name"),
       contact_email: s(fd, "acc_contact_email"),
     });
+    // Workflow: neues Mandat → Sourcing-Aufgabe beim Kunden.
+    try {
+      const { id: pid } = await currentPartnerId();
+      if (pid) {
+        const supabase = createClient();
+        const accId = await resolveAccountId(supabase, accountName);
+        const role = s(fd, "role") || "offene Position";
+        await autoTask(supabase, pid, "mandate_sourcing", {
+          related_type: accId ? "customer" : "none",
+          related_id: accId,
+          related_label: `${accountName} – ${role}`,
+          title: `Kandidat:innen sourcen: ${role}`,
+          dueInDays: 2,
+        });
+      }
+    } catch (e) {
+      logDataError("automation:mandate_sourcing", e);
+    }
   }
   return res;
 }
@@ -688,12 +778,49 @@ export async function updateCandidateStage(
   id: string,
   stage: string
 ): Promise<ActionResult> {
-  return update(
+  const res = await update(
     "candidates",
     id,
     { stage, updated_at: new Date().toISOString() },
     "/cockpit/kandidaten"
   );
+  // Workflows: Interview → Feedback-Aufgabe, Platziert → Aftercare/NPS.
+  if (res.ok && !res.demo && (stage === "interview" || stage === "platziert")) {
+    try {
+      const { id: pid } = await currentPartnerId();
+      if (pid) {
+        const supabase = createClient();
+        const { data: cand } = await supabase
+          .from("candidates")
+          .select("name, role")
+          .eq("id", id)
+          .maybeSingle();
+        const c = cand as { name?: string; role?: string } | null;
+        const label = c?.name || "Kandidat:in";
+        if (stage === "interview") {
+          await autoTask(supabase, pid, "candidate_interview_feedback", {
+            related_type: "candidate",
+            related_id: id,
+            related_label: label,
+            title: `Interview-Feedback einholen: ${label}`,
+            dueInDays: 2,
+          });
+        } else {
+          await autoTask(supabase, pid, "placement_aftercare", {
+            related_type: "candidate",
+            related_id: id,
+            related_label: label,
+            title: `Aftercare/NPS prüfen: ${label}${c?.role ? ` (${c.role})` : ""}`,
+            dueInDays: 90,
+            notes: "Zufriedenheit nach Probezeit prüfen, Referenz/NPS einholen.",
+          });
+        }
+      }
+    } catch (e) {
+      logDataError("automation:candidate_stage", e);
+    }
+  }
+  return res;
 }
 
 export async function updateAccount(

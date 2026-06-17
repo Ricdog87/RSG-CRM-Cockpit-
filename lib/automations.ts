@@ -38,6 +38,38 @@ export const AUTOMATIONS: AutomationDef[] = [
     trigger: "Inbound-E-Mail (Webhook)",
     action: "Aufgabe erstellen",
   },
+  {
+    key: "mandate_sourcing",
+    title: "Neues Mandat → Sourcing-Aufgabe",
+    description:
+      "Beim Anlegen eines Recruiting-Mandats wird automatisch eine Aufgabe „Kandidat:innen sourcen“ (in 2 Tagen) beim Kunden erstellt.",
+    trigger: "Mandat angelegt",
+    action: "Aufgabe erstellen",
+  },
+  {
+    key: "ki_onboarding_kickoff",
+    title: "Neues KI-Projekt → Kickoff-Aufgabe",
+    description:
+      "Beim Anlegen eines KI-Projekts wird automatisch eine Aufgabe „Kickoff-Termin vereinbaren“ (in 2 Tagen) beim Kunden erstellt.",
+    trigger: "KI-Projekt angelegt",
+    action: "Aufgabe erstellen",
+  },
+  {
+    key: "candidate_interview_feedback",
+    title: "Kandidat:in → Interview → Feedback-Aufgabe",
+    description:
+      "Wechselt eine:r Kandidat:in in die Interview-Phase, entsteht automatisch eine Aufgabe „Interview-Feedback einholen“ (in 2 Tagen).",
+    trigger: "Kandidat:in → Interview",
+    action: "Aufgabe erstellen",
+  },
+  {
+    key: "placement_aftercare",
+    title: "Platzierung → Aftercare/NPS-Aufgabe",
+    description:
+      "Wird eine:r Kandidat:in platziert, entsteht automatisch eine Aftercare-Aufgabe „Zufriedenheit & NPS prüfen“ (in 90 Tagen, nach Probezeit).",
+    trigger: "Kandidat:in → Platziert",
+    action: "Aufgabe erstellen",
+  },
 ];
 
 /** Prüft, ob eine Regel aktiv ist (Default: an). Client kann Session- oder Service-Role-Client sein. */
