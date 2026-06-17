@@ -213,6 +213,8 @@ export async function createAccount(
     contact_phone: s(fd, "contact_phone") || null,
     mrr: n(fd, "mrr"),
     ort: s(fd, "ort"),
+    country: s(fd, "country") || null,
+    owner: s(fd, "owner") || null,
   };
   // Robust gegen noch nicht migrierte Spalten: fehlende Spalten werden
   // automatisch weggelassen, damit das Anlegen nie komplett scheitert.
@@ -530,6 +532,8 @@ export async function updateAccount(
       contact_phone: s(fd, "contact_phone") || null,
       mrr: n(fd, "mrr"),
       ort: s(fd, "ort"),
+      country: s(fd, "country") || null,
+      owner: s(fd, "owner") || null,
     },
     ["/cockpit/kunden", `/cockpit/kunden/${id}`]
   );

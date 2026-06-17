@@ -53,9 +53,11 @@ export const ACCOUNT_FIELDS: FormField[] = [
   { name: "branche", label: "Branche", placeholder: "z.B. Gesundheit" },
   { name: "segment", label: "Segment", placeholder: "z.B. Praxen" },
   { name: "ort", label: "Ort" },
+  { name: "country", label: "Land/Region", placeholder: "Germany" },
   { name: "contact_name", label: "Ansprechpartner:in" },
   { name: "contact_email", label: "E-Mail", type: "email" },
   { name: "contact_phone", label: "Telefon", placeholder: "+49 …" },
+  { name: "owner", label: "Zuständige:r Mitarbeiter:in" },
   { name: "mrr", label: "MRR (€)", type: "number", placeholder: "0" },
 ];
 

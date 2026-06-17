@@ -31,6 +31,11 @@ export interface Account {
   mrr: number;
   ort: string;
   since: string;
+  /** HubSpot-Import: zuständiger Mitarbeiter, Land/Region, externe ID, letzte Aktivität. */
+  owner?: string;
+  country?: string;
+  external_id?: string;
+  last_activity_at?: string;
   /** Vermittlungsvertrag/AGB: Mandatsart, Vertragsstatus, Unterzeichnung, Honorarvereinbarung. */
   engagement_type?: "exklusiv" | "nicht_exklusiv" | "retainer";
   contract_status?: "kein" | "versendet" | "unterzeichnet";

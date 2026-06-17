@@ -108,10 +108,28 @@ export default async function AccountDetailPage({
               <p className="mt-1 truncate text-sm text-ink">{account.contact_email || "—"}</p>
             </div>
             <div>
+              <p className="kpi-label">Telefon</p>
+              <p className="mt-1 truncate text-sm text-ink">{account.contact_phone || "—"}</p>
+            </div>
+            <div>
               <p className="kpi-label">Segment</p>
               <p className="mt-1 text-sm text-ink">{account.segment || "—"}</p>
             </div>
+            <div>
+              <p className="kpi-label">Land/Region</p>
+              <p className="mt-1 text-sm text-ink">{account.country || "—"}</p>
+            </div>
+            <div>
+              <p className="kpi-label">Zuständig</p>
+              <p className="mt-1 truncate text-sm text-ink">{account.owner || "—"}</p>
+            </div>
           </div>
+          {account.last_activity_at ? (
+            <p className="text-xs text-faint">
+              Letzte Aktivität: {formatDate(account.last_activity_at)}
+              {account.external_id ? ` · HubSpot-ID ${account.external_id}` : ""}
+            </p>
+          ) : null}
         </CardBody>
       </Card>
 

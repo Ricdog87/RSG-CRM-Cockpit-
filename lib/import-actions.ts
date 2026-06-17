@@ -15,7 +15,7 @@ export interface ImportResult {
   errors: { row: number; message: string }[];
 }
 
-const MAX_ROWS = 5000;
+const MAX_ROWS = 10000;
 const REVALIDATE: Record<string, string> = {
   accounts: "/cockpit/kunden",
   candidates: "/cockpit/kandidaten",
