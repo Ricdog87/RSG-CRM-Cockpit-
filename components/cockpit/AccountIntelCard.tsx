@@ -2,6 +2,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { IconChevronRight, IconCheck, IconAlertTriangle } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
+import { NextActionButton } from "@/components/cockpit/NextActionButton";
 import type { AccountIntel, IntelTone } from "@/lib/account-intel";
 
 const ringTone: Record<IntelTone, string> = {
@@ -18,7 +19,15 @@ const badgeTone: Record<IntelTone, "success" | "sky" | "warning" | "danger"> = {
 };
 
 /** Account-Health-Score (0–100) mit Faktoren und nächster bester Aktion. */
-export function AccountIntelCard({ intel }: { intel: AccountIntel }) {
+export function AccountIntelCard({
+  intel,
+  accountId,
+  accountName,
+}: {
+  intel: AccountIntel;
+  accountId?: string;
+  accountName?: string;
+}) {
   const circumference = 2 * Math.PI * 26;
   const dash = (intel.score / 100) * circumference;
 
@@ -56,6 +65,11 @@ export function AccountIntelCard({ intel }: { intel: AccountIntel }) {
               <IconChevronRight size={14} className="mt-0.5 flex-none" />
               <span className="font-medium">{intel.nextAction}</span>
             </p>
+            {accountId && accountName ? (
+              <div className="mt-2">
+                <NextActionButton accountId={accountId} accountName={accountName} action={intel.nextAction} />
+              </div>
+            ) : null}
           </div>
         </div>
 

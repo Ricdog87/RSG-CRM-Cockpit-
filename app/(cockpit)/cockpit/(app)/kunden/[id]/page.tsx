@@ -185,7 +185,7 @@ export default async function AccountDetailPage({
       </Card>
 
       {/* Account-Intelligenz: Health-Score + nächste beste Aktion */}
-      <AccountIntelCard intel={intel} />
+      <AccountIntelCard intel={intel} accountId={account.id} accountName={account.name} />
 
       {/* Ansprechpartner:innen */}
       <AccountContacts accountId={account.id} contacts={contacts} />
