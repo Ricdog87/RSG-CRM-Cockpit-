@@ -64,6 +64,7 @@ export function AccountsTable({
                         {a.name}
                       </Link>
                       <LineBadge line={a.line} />
+                      {a.synthetic ? <Badge tone="neutral">abgeleitet</Badge> : null}
                     </div>
                     {a.contact_name ? (
                       <p className="mt-0.5 truncate text-xs text-muted">{a.contact_name}</p>
@@ -91,6 +92,7 @@ export function AccountsTable({
                       {a.name}
                     </Link>
                     <LineBadge line={a.line} />
+                    {a.synthetic ? <Badge tone="neutral">abgeleitet</Badge> : null}
                   </div>
                   <p className="truncate text-xs text-faint">
                     {a.branche} · {a.ort}

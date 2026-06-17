@@ -62,37 +62,134 @@ async function load<T>(
 const str = (v: unknown, fallback = "") => (v == null ? fallback : String(v));
 const num = (v: unknown) => Number(v ?? 0);
 
+/** Normalisierter Schlüssel für den namensbasierten Account-Abgleich. */
+export function accountKey(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function mapAccountRow(r: Row): Account {
+  return {
+    id: str(r.id),
+    name: str(r.name, "Account"),
+    branche: str(r.branche),
+    segment: str(r.segment),
+    line: (str(r.line, "ki") as BusinessLine),
+    lifecycle: (str(r.lifecycle, "lead") as Lifecycle),
+    contact_name: str(r.contact_name),
+    contact_email: str(r.contact_email),
+    contact_phone: str(r.contact_phone),
+    mrr: num(r.mrr),
+    ort: str(r.ort),
+    strasse: str(r.strasse) || undefined,
+    plz: str(r.plz) || undefined,
+    since: str(r.since),
+    owner: str(r.owner) || undefined,
+    country: str(r.country) || undefined,
+    external_id: str(r.external_id) || undefined,
+    last_activity_at: str(r.last_activity_at) || undefined,
+    engagement_type: (str(r.engagement_type) || undefined) as Account["engagement_type"],
+    contract_status: (str(r.contract_status) || undefined) as Account["contract_status"],
+    contract_signed_at: str(r.contract_signed_at) || undefined,
+    fee_agreement: str(r.fee_agreement) || undefined,
+  };
+}
+
+/** Präfix für virtuell abgeleitete Accounts (noch ohne eigenen Datensatz). */
+const SYNTH_PREFIX = "ref:";
+
+/** Deterministische, umkehrbare ID für einen abgeleiteten Account. */
+export function syntheticAccountId(name: string): string {
+  return SYNTH_PREFIX + Buffer.from(name.trim(), "utf8").toString("base64url");
+}
+
+/** Liest den Namen aus einer abgeleiteten Account-ID zurück (oder null). */
+export function nameFromSyntheticId(id: string): string | null {
+  if (!id.startsWith(SYNTH_PREFIX)) return null;
+  try {
+    return Buffer.from(id.slice(SYNTH_PREFIX.length), "base64url").toString("utf8");
+  } catch {
+    return null;
+  }
+}
+
+function syntheticAccount(name: string, line: BusinessLine): Account {
+  return {
+    id: syntheticAccountId(name),
+    name,
+    branche: "",
+    segment: "",
+    line,
+    // Referenziert von Mandat/KI-Projekt/Chance ⇒ es ist ein Kunde.
+    lifecycle: "kunde",
+    contact_name: "",
+    contact_email: "",
+    contact_phone: "",
+    mrr: 0,
+    ort: "",
+    since: "",
+    synthetic: true,
+  };
+}
+
+/**
+ * Alle Account-Namen, die von anderen Entitäten referenziert werden
+ * (Mandate, KI-Projekte, Chancen, Kandidaten) – inkl. abgeleiteter
+ * Geschäftslinie. Grundlage für das Self-Healing fehlender Accounts.
+ */
+async function referencedAccountNames(): Promise<Map<string, { name: string; line: BusinessLine }>> {
+  const map = new Map<string, { name: string; line: BusinessLine }>();
+  if (useMockData) return map;
+  const add = (raw: unknown, line: BusinessLine) => {
+    const name = str(raw).trim();
+    if (!name) return;
+    const key = accountKey(name);
+    if (!map.has(key)) map.set(key, { name, line });
+  };
+  try {
+    const supabase = createClient();
+    const [m, k, o, c] = await Promise.all([
+      supabase.from("recruiting_mandates").select("account_name"),
+      supabase.from("ki_projects").select("account_name"),
+      supabase.from("opportunities").select("account_name, line"),
+      supabase.from("candidates").select("mandate_account"),
+    ]);
+    for (const r of (m.data as Row[] | null) ?? []) add(r.account_name, "recruiting");
+    for (const r of (k.data as Row[] | null) ?? []) add(r.account_name, "ki");
+    for (const r of (o.data as Row[] | null) ?? []) add(r.account_name, str(r.line, "ki") as BusinessLine);
+    for (const r of (c.data as Row[] | null) ?? []) add(r.mandate_account, "recruiting");
+  } catch (e) {
+    // Self-Healing ist best effort – nie die Account-Liste blockieren.
+    logDataError("crm-data:referencedAccountNames", e);
+  }
+  return map;
+}
+
 export async function getAccounts(): Promise<Account[]> {
-  return load(
+  const real = await load(
     "accounts",
     mockAccounts,
-    (rows) =>
-      rows.map((r) => ({
-        id: str(r.id),
-        name: str(r.name, "Account"),
-        branche: str(r.branche),
-        segment: str(r.segment),
-        line: (str(r.line, "ki") as BusinessLine),
-        lifecycle: (str(r.lifecycle, "lead") as Lifecycle),
-        contact_name: str(r.contact_name),
-        contact_email: str(r.contact_email),
-        contact_phone: str(r.contact_phone),
-        mrr: num(r.mrr),
-        ort: str(r.ort),
-        strasse: str(r.strasse) || undefined,
-        plz: str(r.plz) || undefined,
-        since: str(r.since),
-        owner: str(r.owner) || undefined,
-        country: str(r.country) || undefined,
-        external_id: str(r.external_id) || undefined,
-        last_activity_at: str(r.last_activity_at) || undefined,
-        engagement_type: (str(r.engagement_type) || undefined) as Account["engagement_type"],
-        contract_status: (str(r.contract_status) || undefined) as Account["contract_status"],
-        contract_signed_at: str(r.contract_signed_at) || undefined,
-        fee_agreement: str(r.fee_agreement) || undefined,
-      })),
+    (rows) => rows.map(mapAccountRow),
     { column: "mrr", ascending: false }
   );
+  if (useMockData) return real;
+
+  // Self-Healing: Jeder Account-Name, der von einem Mandat, KI-Projekt, einer
+  // Chance oder einem Kandidaten referenziert wird, MUSS als Kunde auffindbar
+  // sein – auch wenn (noch) kein eigener accounts-Datensatz existiert (z.B.
+  // Altbestand/Import). Solche Namen werden als virtuelle Accounts ergänzt und
+  // beim ersten Schreibzugriff (Aktivität/Notiz/Backfill) materialisiert.
+  const refs = await referencedAccountNames();
+  if (refs.size === 0) return real;
+  const have = new Set(real.map((a) => accountKey(a.name)));
+  const synthetic: Account[] = [];
+  for (const { name, line } of refs.values()) {
+    const key = accountKey(name);
+    if (!key || have.has(key)) continue;
+    have.add(key);
+    synthetic.push(syntheticAccount(name, line));
+  }
+  synthetic.sort((a, b) => a.name.localeCompare(b.name, "de"));
+  return [...real, ...synthetic];
 }
 
 export async function getOpportunities(): Promise<Opportunity[]> {
@@ -292,15 +389,24 @@ export async function getAccountDetail(id: string): Promise<AccountDetail | null
       getCandidates(),
     ]);
 
-  const account = accounts.find((a) => a.id === id);
+  let account = accounts.find((a) => a.id === id);
+  // Fallback: abgeleitete (virtuelle) Account-ID → über den Namen auflösen.
+  if (!account) {
+    const refName = nameFromSyntheticId(id);
+    if (refName) {
+      const key = accountKey(refName);
+      account = accounts.find((a) => accountKey(a.name) === key);
+    }
+  }
   if (!account) return null;
-  const name = account.name;
+  const key = accountKey(account.name);
+  const eq = (v: string) => accountKey(v) === key;
 
   return {
     account,
-    opportunities: opportunities.filter((o) => o.account_name === name),
-    kiProjects: kiProjects.filter((p) => p.account_name === name),
-    mandates: mandates.filter((m) => m.account_name === name),
-    candidates: candidates.filter((c) => c.mandate_account === name),
+    opportunities: opportunities.filter((o) => eq(o.account_name)),
+    kiProjects: kiProjects.filter((p) => eq(p.account_name)),
+    mandates: mandates.filter((m) => eq(m.account_name)),
+    candidates: candidates.filter((c) => eq(c.mandate_account)),
   };
 }

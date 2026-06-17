@@ -45,7 +45,7 @@ export async function matchCandidateToMandate(candidateId: string): Promise<Matc
     const { data: m } = await supabase
       .from("recruiting_mandates")
       .select("role")
-      .eq("account_name", mandateName)
+      .ilike("account_name", mandateName)
       .limit(1)
       .maybeSingle();
     targetRole = (m as { role?: string } | null)?.role ?? "";

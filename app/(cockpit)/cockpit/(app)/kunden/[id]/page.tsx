@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { IconChevronRight } from "@/components/ui/icons";
 import { AccountEnrich } from "@/components/cockpit/AccountEnrich";
 import { AccountContractCard } from "@/components/cockpit/AccountContractCard";
+import { BackfillAccountsButton } from "@/components/cockpit/BackfillAccountsButton";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -75,6 +76,19 @@ export default async function AccountDetailPage({
       >
         <IconChevronRight size={14} className="rotate-180" /> Zurück zu Kunden
       </Link>
+
+      {account.synthetic ? (
+        <Card>
+          <CardBody className="space-y-2">
+            <p className="text-sm font-semibold text-ink">Abgeleiteter Kunde</p>
+            <p className="text-xs text-muted">
+              Dieser Kunde wurde aus referenzierenden Mandaten/Projekten erkannt, ist aber noch
+              kein eigener Datensatz. Lege ihn an, um Notizen, Aufgaben und Kontakte zu speichern.
+            </p>
+            <BackfillAccountsButton derivedCount={1} />
+          </CardBody>
+        </Card>
+      ) : null}
 
       {/* Kopf */}
       <Card>

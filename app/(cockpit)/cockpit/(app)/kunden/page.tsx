@@ -3,6 +3,7 @@ import { createAccount } from "@/lib/crm-actions";
 import { autofillAccountAction } from "@/lib/ai-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { AccountsView } from "@/components/cockpit/views/AccountsView";
+import { BackfillAccountsButton } from "@/components/cockpit/BackfillAccountsButton";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { ACCOUNT_FIELDS } from "@/lib/crm-forms";
@@ -20,6 +21,7 @@ export default async function KundenPage() {
   const kunden = accounts.filter(
     (a) => a.lifecycle === "kunde" || a.lifecycle === "bestand"
   );
+  const derivedCount = accounts.filter((a) => a.synthetic).length;
 
   return (
     <div className="space-y-6">
@@ -71,6 +73,8 @@ export default async function KundenPage() {
           icon={IconEuro}
         />
       </div>
+
+      <BackfillAccountsButton derivedCount={derivedCount} />
 
       <AccountsView accounts={accounts} />
     </div>

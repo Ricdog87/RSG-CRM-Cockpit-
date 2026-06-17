@@ -223,6 +223,97 @@ async function ensureAccount(
   }
 }
 
+/** Normalisierter Schlüssel für den namensbasierten Account-Abgleich. */
+function accKey(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/**
+ * Materialisiert alle Accounts, die von Mandaten, KI-Projekten, Chancen oder
+ * Kandidaten referenziert werden, aber noch keinen eigenen Datensatz haben.
+ * Idempotent: bereits vorhandene Accounts werden übersprungen. Behebt den
+ * Altbestand-/Import-Fall (z.B. „Lagardère Travel Retail"), bei dem ein Mandat
+ * existiert, der Kunde aber nie als Account angelegt wurde.
+ */
+export async function backfillAccounts(): Promise<ActionResult & { created?: number }> {
+  if (useMockData) return { ...DEMO, created: 0 };
+  const { id: pid, error } = await currentPartnerId();
+  if (!pid) return { ok: false, error };
+  const supabase = createClient();
+
+  // 1) Referenzierte Namen (inkl. Geschäftslinie) sammeln.
+  const refs = new Map<string, { name: string; line: "ki" | "recruiting" }>();
+  const addRef = (raw: unknown, line: "ki" | "recruiting") => {
+    const name = String(raw ?? "").trim();
+    if (!name) return;
+    const key = accKey(name);
+    if (!refs.has(key)) refs.set(key, { name, line });
+  };
+  const [m, k, o, c] = await Promise.all([
+    supabase.from("recruiting_mandates").select("account_name"),
+    supabase.from("ki_projects").select("account_name"),
+    supabase.from("opportunities").select("account_name, line"),
+    supabase.from("candidates").select("mandate_account"),
+  ]);
+  for (const r of (m.data as Array<Record<string, unknown>> | null) ?? []) addRef(r.account_name, "recruiting");
+  for (const r of (k.data as Array<Record<string, unknown>> | null) ?? []) addRef(r.account_name, "ki");
+  for (const r of (o.data as Array<Record<string, unknown>> | null) ?? [])
+    addRef(r.account_name, String(r.line ?? "ki") === "recruiting" ? "recruiting" : "ki");
+  for (const r of (c.data as Array<Record<string, unknown>> | null) ?? []) addRef(r.mandate_account, "recruiting");
+
+  if (refs.size === 0) return { ok: true, created: 0 };
+
+  // 2) Vorhandene Accounts abziehen.
+  const { data: existing } = await supabase.from("accounts").select("name");
+  const have = new Set(
+    ((existing as Array<{ name?: string }> | null) ?? []).map((a) => accKey(String(a.name ?? "")))
+  );
+
+  // 3) Fehlende anlegen (graceful gegen fehlende Spalten).
+  let created = 0;
+  let lastErr = "";
+  for (const { name, line } of refs.values()) {
+    if (have.has(accKey(name))) continue;
+    const row: Record<string, unknown> = {
+      partner_id: pid,
+      name,
+      line,
+      lifecycle: "kunde",
+      mrr: 0,
+    };
+    let ok = false;
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const { error: insErr } = await supabase.from("accounts").insert(row);
+      if (!insErr) {
+        ok = true;
+        break;
+      }
+      lastErr = insErr.message;
+      const mm = insErr.message.match(MISSING_COL);
+      if (mm && mm[1] in row) {
+        delete row[mm[1]];
+        continue;
+      }
+      break;
+    }
+    if (ok) {
+      created++;
+      have.add(accKey(name));
+    }
+  }
+
+  if (created > 0) {
+    revalidatePath("/cockpit/kunden");
+    revalidatePath("/cockpit/suche");
+    revalidatePath("/cockpit");
+  }
+  return {
+    ok: true,
+    created,
+    warning: created === 0 && lastErr ? `Keine Accounts angelegt. Letzter Fehler: ${lastErr}` : undefined,
+  };
+}
+
 /** Bestehende Account-Schlüssel (Name + E-Mail) für den Dubletten-Abgleich. */
 async function accountKeys(): Promise<{ name: string; email?: string }[]> {
   if (useMockData) {
@@ -548,7 +639,7 @@ export async function updateOpportunityStage(
             const { data: acc } = await supabase
               .from("accounts")
               .select("id")
-              .eq("name", accName)
+              .ilike("name", accName)
               .maybeSingle();
             const accId = (acc as { id?: string } | null)?.id;
             if (accId) {
@@ -612,25 +703,25 @@ export async function updateAccount(
   const id = s(fd, "id");
   if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
   if (!s(fd, "name")) return { ok: false, error: "Name ist erforderlich." };
-  return updateGraceful(
-    "accounts",
-    id,
-    {
-      name: s(fd, "name"),
-      branche: s(fd, "branche"),
-      segment: s(fd, "segment"),
-      line: s(fd, "line") || "ki",
-      lifecycle: s(fd, "lifecycle") || "lead",
-      contact_name: s(fd, "contact_name"),
-      contact_email: s(fd, "contact_email"),
-      contact_phone: s(fd, "contact_phone") || null,
-      mrr: n(fd, "mrr"),
-      ort: s(fd, "ort"),
-      country: s(fd, "country") || null,
-      owner: s(fd, "owner") || null,
-    },
-    ["/cockpit/kunden", `/cockpit/kunden/${id}`]
-  );
+  const patch = {
+    name: s(fd, "name"),
+    branche: s(fd, "branche"),
+    segment: s(fd, "segment"),
+    line: s(fd, "line") || "ki",
+    lifecycle: s(fd, "lifecycle") || "lead",
+    contact_name: s(fd, "contact_name"),
+    contact_email: s(fd, "contact_email"),
+    contact_phone: s(fd, "contact_phone") || null,
+    mrr: n(fd, "mrr"),
+    ort: s(fd, "ort"),
+    country: s(fd, "country") || null,
+    owner: s(fd, "owner") || null,
+  };
+  // Abgeleiteter (virtueller) Account ohne echten Datensatz → jetzt anlegen.
+  if (id.startsWith("ref:")) {
+    return insertGraceful("accounts", patch, ["/cockpit/kunden", "/cockpit/suche"]);
+  }
+  return updateGraceful("accounts", id, patch, ["/cockpit/kunden", `/cockpit/kunden/${id}`]);
 }
 
 /** Vermittlungsvertrag/AGB je Kunde aktualisieren. */
@@ -675,6 +766,10 @@ async function remove(
 }
 
 export async function deleteAccount(id: string): Promise<ActionResult> {
+  // Abgeleiteter Kunde (nur aus Mandat/Projekt referenziert) – kann nicht direkt
+  // gelöscht werden, ohne den referenzierenden Datensatz zu entfernen.
+  if (id.startsWith("ref:"))
+    return { ok: false, error: "Abgeleiteter Kunde – bitte zuerst das zugehörige Mandat/Projekt entfernen oder umbenennen." };
   return remove("accounts", id, "/cockpit/kunden");
 }
 export async function deleteCandidate(id: string): Promise<ActionResult> {

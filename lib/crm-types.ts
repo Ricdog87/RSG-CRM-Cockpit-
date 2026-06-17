@@ -44,6 +44,13 @@ export interface Account {
   contract_status?: "kein" | "versendet" | "unterzeichnet";
   contract_signed_at?: string;
   fee_agreement?: string;
+  /**
+   * true ⇒ dieser Account existiert (noch) nicht als eigener Datensatz, sondern
+   * wurde aus einem referenzierenden Datensatz (Mandat/KI-Projekt/Chance/
+   * Kandidat) abgeleitet, damit jeder Kunde auffindbar bleibt. Wird beim ersten
+   * Schreibzugriff (Notiz/Aktivität/Backfill) zu einem echten Datensatz.
+   */
+  synthetic?: boolean;
 }
 
 export type SalesStage =
