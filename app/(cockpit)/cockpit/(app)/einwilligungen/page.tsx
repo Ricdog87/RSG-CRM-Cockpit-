@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getConsents, type ConsentRow } from "@/lib/consent-data";
+import { getDeletionDue, RETENTION_MONTHS } from "@/lib/retention-data";
+import { RetentionList } from "@/components/cockpit/RetentionList";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
@@ -21,7 +23,7 @@ function isExpired(c: ConsentRow): boolean {
 }
 
 export default async function EinwilligungenPage() {
-  const consents = await getConsents();
+  const [consents, deletionDue] = await Promise.all([getConsents(), getDeletionDue()]);
 
   const granted = consents.filter((c) => c.status === "granted").length;
   const pending = consents.filter((c) => c.status === "pending").length;
@@ -90,6 +92,21 @@ export default async function EinwilligungenPage() {
               })}
             </ul>
           )}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody>
+          <SectionHeader
+            title="Löschfristen"
+            hint={`Aufbewahrung ${RETENTION_MONTHS} Monate ohne Einwilligung`}
+            action={deletionDue.length > 0 ? <Badge tone="warning">{deletionDue.length} fällig</Badge> : undefined}
+          />
+          <p className="mb-3 text-xs text-muted">
+            DSGVO-Grundsatz der Speicherbegrenzung (Art. 5 Abs. 1 lit. e): Daten ohne gültige
+            Rechtsgrundlage anonymisieren oder löschen.
+          </p>
+          <RetentionList items={deletionDue} />
         </CardBody>
       </Card>
     </div>

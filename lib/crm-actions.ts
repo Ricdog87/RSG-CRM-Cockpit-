@@ -582,6 +582,33 @@ export async function deleteAccount(id: string): Promise<ActionResult> {
 export async function deleteCandidate(id: string): Promise<ActionResult> {
   return remove("candidates", id, "/cockpit/kandidaten");
 }
+
+/**
+ * DSGVO-Anonymisierung: entfernt personenbezogene Daten, behält aber den
+ * Datensatz für Statistik/Funnel. Strippt Spalten graceful.
+ */
+export async function anonymizeCandidate(id: string): Promise<ActionResult> {
+  if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
+  const res = await updateGraceful(
+    "candidates",
+    id,
+    {
+      name: "Anonymisiert",
+      email: null,
+      phone: null,
+      salutation: null,
+      title: null,
+      location: null,
+      zip: null,
+      photo_path: null,
+      cv_path: null,
+      cv_filename: null,
+      tags: [],
+    },
+    ["/cockpit/kandidaten", "/cockpit/einwilligungen", `/cockpit/kandidaten/${id}`]
+  );
+  return res;
+}
 export async function deleteMandate(id: string): Promise<ActionResult> {
   return remove("recruiting_mandates", id, "/cockpit/projekte/recruiting");
 }
