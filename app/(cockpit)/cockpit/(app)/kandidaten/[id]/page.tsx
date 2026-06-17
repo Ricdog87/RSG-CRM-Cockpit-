@@ -24,6 +24,7 @@ import { CandidateRatingTags } from "@/components/cockpit/CandidateRatingTags";
 import { CandidateMatch } from "@/components/cockpit/CandidateMatch";
 import { CandidateMandateMatch } from "@/components/cockpit/CandidateMandateMatch";
 import { InterviewsCard, OffersCard } from "@/components/cockpit/HiringCards";
+import { SequenceEnroll } from "@/components/cockpit/SequenceEnroll";
 import { CandidateSkills } from "@/components/cockpit/CandidateSkills";
 import { CandidateActivity } from "@/components/cockpit/CandidateActivity";
 import { CandidateConsent } from "@/components/cockpit/CandidateConsent";
@@ -360,6 +361,14 @@ export default async function KandidatDetailPage({
                 defaultSalary={c.salary_expectation}
                 offers={offers}
               />
+            </CardBody>
+          </Card>
+
+          {/* Outbound-Sequenz */}
+          <Card>
+            <CardBody>
+              <SectionHeader title="Outbound-Sequenz" hint="Nachfass-Kadenz als Aufgaben" />
+              <SequenceEnroll candidateId={c.id} candidateName={c.name} />
             </CardBody>
           </Card>
 
