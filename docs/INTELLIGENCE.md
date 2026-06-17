@@ -64,7 +64,20 @@ sind gefährdet?“).
 Anteil), MRR unter Beobachtung (Churn/Renewal), aktive Kunden vs. Leads,
 Gesamt-Pipeline mit Win-Rate & Ø-Deal.
 
-## 8. Recruiter-Matching (vorhanden, KI-gestützt)
+## 8. Wochen-Review (Freitag)
+`lib/ai/weekly-review.ts` – an Review-/freien Tagen erscheint im Dashboard ein
+Wochen-Review (Calls, E-Mails, neue Mandate/KI-Projekte, Platzierungen,
+kritische Themen) mit optionaler KI-Zusammenfassung + Fokus für nächste Woche.
+
+## 9. Datenhygiene: Dubletten-Finder
+`lib/account-dedupe.ts` – erkennt wahrscheinliche Account-Dubletten (gleicher
+normalisierter Name / gleiche Firmen-Domain) read-only auf der Kundenliste.
+
+## 10. KI-ROI-Rechner (Akquise-Tool)
+`components/cockpit/KiRoiCalculator.tsx` – übersetzt verpasste Anrufe in
+entgangenen Umsatz und zeigt den ROI der KI-Telefonassistenz (Leads-Seite).
+
+## 11. Recruiter-Matching (vorhanden, KI-gestützt)
 `lib/match.ts` – Kandidat:in ↔ Mandat-Scoring inkl. Distanz, Skills, Gehalt;
 Shortlist-Panels auf Mandats- und Kandidaten-Detailseiten.
 
