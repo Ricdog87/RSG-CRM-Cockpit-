@@ -7,6 +7,7 @@ import { LineBadge } from "@/components/cockpit/LineBadge";
 import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { OppScore } from "@/components/cockpit/OppScore";
 import { FilterTabs } from "@/components/ui/FilterTabs";
+import { cn } from "@/components/ui/cn";
 import { updateOpportunityStage } from "@/lib/crm-actions";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 import type { BusinessLine, Opportunity, SalesStage } from "@/lib/crm-types";
@@ -31,6 +32,15 @@ function value(o: Opportunity) {
   return o.value_type === "mrr" ? `${formatEur(o.value)}/M` : formatEur(o.value);
 }
 
+/** „Rotting“: offene Chance mit überschrittenem erwartetem Abschluss. */
+function overdueDays(o: Opportunity): number | null {
+  if (o.stage === "gewonnen" || o.stage === "verloren" || !o.expected_close) return null;
+  const t = new Date(o.expected_close + "T00:00:00").getTime();
+  if (Number.isNaN(t)) return null;
+  const d = Math.round((Date.now() - t) / 86400000);
+  return d > 0 ? d : null;
+}
+
 function OppCard({
   o,
   onMove,
@@ -38,13 +48,24 @@ function OppCard({
   o: Opportunity;
   onMove: (id: string, stage: SalesStage) => void;
 }) {
+  const rotting = overdueDays(o);
   return (
-    <div className="rounded-xl border border-border bg-elevated/50 p-3 transition-colors hover:border-brand/40">
+    <div
+      className={cn(
+        "rounded-xl border bg-elevated/50 p-3 transition-colors hover:border-brand/40",
+        rotting != null ? "border-danger/40" : "border-border"
+      )}
+    >
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <p className="truncate text-sm font-medium text-ink">{o.account_name}</p>
         <LineBadge line={o.line} />
       </div>
       <p className="truncate text-xs text-muted">{o.title}</p>
+      {rotting != null ? (
+        <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-[0.65rem] font-semibold text-danger">
+          ● Abschluss {rotting} T überfällig
+        </p>
+      ) : null}
       <div className="mt-3 flex items-center justify-between">
         <span className="text-sm font-semibold text-ink">{value(o)}</span>
         <span className="text-xs text-faint">{formatPercent(o.probability)}</span>
