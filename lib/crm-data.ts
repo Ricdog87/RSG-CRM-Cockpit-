@@ -79,6 +79,8 @@ export async function getAccounts(): Promise<Account[]> {
         contact_phone: str(r.contact_phone),
         mrr: num(r.mrr),
         ort: str(r.ort),
+        strasse: str(r.strasse) || undefined,
+        plz: str(r.plz) || undefined,
         since: str(r.since),
         owner: str(r.owner) || undefined,
         country: str(r.country) || undefined,
