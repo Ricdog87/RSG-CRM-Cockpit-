@@ -5,6 +5,7 @@ import { getNotesForCandidate } from "@/lib/notes-data";
 import { getConsentForCandidate } from "@/lib/consent-data";
 import { getSubmissionsForCandidate } from "@/lib/submissions-data";
 import { getInterviewsForCandidate, getOffersForCandidate } from "@/lib/hiring-data";
+import { getReferencesForCandidate } from "@/lib/references-data";
 import { getTasksForRelated } from "@/lib/tasks-data";
 import { getEmailActivitiesForCandidate } from "@/lib/email-data";
 import { updateCandidate } from "@/lib/crm-actions";
@@ -25,6 +26,7 @@ import { CandidateMatch } from "@/components/cockpit/CandidateMatch";
 import { CandidateMandateMatch } from "@/components/cockpit/CandidateMandateMatch";
 import { InterviewsCard, OffersCard } from "@/components/cockpit/HiringCards";
 import { SequenceEnroll } from "@/components/cockpit/SequenceEnroll";
+import { ReferencesCard } from "@/components/cockpit/ReferencesCard";
 import { CandidateSkills } from "@/components/cockpit/CandidateSkills";
 import { CandidateActivity } from "@/components/cockpit/CandidateActivity";
 import { CandidateConsent } from "@/components/cockpit/CandidateConsent";
@@ -80,7 +82,7 @@ export default async function KandidatDetailPage({
   const c = await getCandidate(params.id);
   if (!c) notFound();
 
-  const [notes, tasks, emails, accounts, consent, submissions, mandates, interviews, offers] =
+  const [notes, tasks, emails, accounts, consent, submissions, mandates, interviews, offers, references] =
     await Promise.all([
       getNotesForCandidate(c.id),
       getTasksForRelated("candidate", c.id),
@@ -91,6 +93,7 @@ export default async function KandidatDetailPage({
       getMandates(),
       getInterviewsForCandidate(c.id),
       getOffersForCandidate(c.id),
+      getReferencesForCandidate(c.id),
     ]);
 
   // Mandat-Auswahl im Bearbeiten-Dialog (Kandidat:in einem Suchprojekt zuordnen).
@@ -361,6 +364,14 @@ export default async function KandidatDetailPage({
                 defaultSalary={c.salary_expectation}
                 offers={offers}
               />
+            </CardBody>
+          </Card>
+
+          {/* Referenzen */}
+          <Card>
+            <CardBody>
+              <SectionHeader title="Referenzen" hint="Referenz-Check & Feedback" />
+              <ReferencesCard candidateId={c.id} references={references} />
             </CardBody>
           </Card>
 

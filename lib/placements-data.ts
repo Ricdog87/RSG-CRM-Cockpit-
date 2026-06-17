@@ -26,6 +26,9 @@ function mapPlacement(r: Row): Placement {
     status: (str(r.status) || "aktiv") as PlacementStatus,
     notes: str(r.notes) || undefined,
     created_at: str(r.created_at) || undefined,
+    client_nps: r.client_nps == null ? undefined : Number(r.client_nps),
+    candidate_nps: r.candidate_nps == null ? undefined : Number(r.candidate_nps),
+    aftercare_notes: str(r.aftercare_notes) || undefined,
   };
 }
 

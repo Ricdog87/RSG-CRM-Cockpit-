@@ -10,6 +10,7 @@ import {
   setPlacementStatus,
   deletePlacement,
 } from "@/lib/placements-actions";
+import { updatePlacementAftercare } from "@/lib/references-actions";
 import {
   placementSplitDate,
   placementGuaranteeUntil,
@@ -153,6 +154,8 @@ export function PlacementsCard({
                     <IconTrash size={14} />
                   </button>
                 </div>
+
+                <AftercareBlock placement={p} mandateId={mandateId} onSaved={() => router.refresh()} />
               </li>
             );
           })}
@@ -232,6 +235,88 @@ export function PlacementsCard({
           <IconPlus size={15} /> Platzierung erfassen
         </button>
       )}
+    </div>
+  );
+}
+
+/** Aftercare/NPS je Platzierung: Zufriedenheit Kunde & Kandidat:in (0–10). */
+function AftercareBlock({
+  placement,
+  mandateId,
+  onSaved,
+}: {
+  placement: Placement;
+  mandateId: string;
+  onSaved: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pending, start] = useTransition();
+  const [clientNps, setClientNps] = useState<string>(placement.client_nps != null ? String(placement.client_nps) : "");
+  const [candNps, setCandNps] = useState<string>(placement.candidate_nps != null ? String(placement.candidate_nps) : "");
+  const [notes, setNotes] = useState(placement.aftercare_notes ?? "");
+  const [err, setErr] = useState<string | null>(null);
+
+  const hasData = placement.client_nps != null || placement.candidate_nps != null || placement.aftercare_notes;
+
+  function save() {
+    setErr(null);
+    start(async () => {
+      const res = await updatePlacementAftercare(placement.id, mandateId, {
+        client_nps: clientNps === "" ? null : Number(clientNps),
+        candidate_nps: candNps === "" ? null : Number(candNps),
+        aftercare_notes: notes || null,
+      });
+      if (!res.ok) return setErr(res.error ?? "Speichern fehlgeschlagen.");
+      setOpen(false);
+      onSaved();
+    });
+  }
+
+  return (
+    <div className="mt-2 border-t border-border/60 pt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="text-[0.7rem] font-medium text-sky-deep hover:underline"
+      >
+        Aftercare / NPS
+        {hasData ? (
+          <span className="ml-1 text-faint">
+            (Kunde {placement.client_nps ?? "–"} · Kandidat {placement.candidate_nps ?? "–"})
+          </span>
+        ) : null}
+      </button>
+      {open ? (
+        <div className="mt-2 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-[0.7rem] text-muted">
+              NPS Kunde (0–10)
+              <select value={clientNps} onChange={(e) => setClientNps(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-border bg-surface px-2 py-1 text-sm text-ink">
+                <option value="">—</option>
+                {[0,1,2,3,4,5,6,7,8,9,10].map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+            <label className="block text-[0.7rem] text-muted">
+              NPS Kandidat:in (0–10)
+              <select value={candNps} onChange={(e) => setCandNps(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-border bg-surface px-2 py-1 text-sm text-ink">
+                <option value="">—</option>
+                {[0,1,2,3,4,5,6,7,8,9,10].map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+          </div>
+          <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Aftercare-Notizen (Onboarding, Feedback …)"
+            className="w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-ink" />
+          {err ? <p className="text-xs text-danger">{err}</p> : null}
+          <div className="flex justify-end">
+            <button type="button" onClick={save} disabled={pending}
+              className="rounded-lg bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand-deep disabled:opacity-60">
+              {pending ? "…" : "Speichern"}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

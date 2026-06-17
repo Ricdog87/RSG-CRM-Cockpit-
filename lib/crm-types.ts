@@ -201,6 +201,24 @@ export interface Placement {
   status: PlacementStatus;
   notes?: string;
   created_at?: string;
+  /** Aftercare/NPS (0–10) nach der Platzierung. */
+  client_nps?: number;
+  candidate_nps?: number;
+  aftercare_notes?: string;
+}
+
+export type ReferenceStatus = "angefragt" | "ausstehend" | "erhalten" | "abgelehnt";
+
+/** Referenz-Check je Kandidat:in. */
+export interface CandidateReference {
+  id: string;
+  candidate_id: string;
+  referee_name?: string;
+  relationship?: string;
+  contact?: string;
+  status: ReferenceStatus;
+  feedback?: string;
+  created_at?: string;
 }
 
 function addMonths(iso: string, months: number): string | undefined {
