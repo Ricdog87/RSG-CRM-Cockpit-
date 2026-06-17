@@ -9,6 +9,7 @@ import {
   getMandates,
   getCandidates,
 } from "@/lib/crm-data";
+import { buildBriefing } from "@/lib/ai/briefing";
 import { formatEur } from "@/lib/format";
 
 const SYSTEM = `Du bist der CRM-Co-Pilot von RSG (Recruiting Solutions Group).
@@ -18,14 +19,20 @@ Antworte knapp und konkret auf Deutsch, nenne Zahlen, und gib bei Handlungsfrage
 
 /** Baut einen kompakten, geerdeten Kontext-Snapshot aus den CRM-Daten. */
 async function buildContext(): Promise<string> {
-  const [cockpit, accounts, opps, ki, mandates, candidates] = await Promise.all([
+  const [cockpit, accounts, opps, ki, mandates, candidates, briefing] = await Promise.all([
     getCockpitData(),
     getAccounts(),
     getOpportunities(),
     getKiProjects(),
     getMandates(),
     getCandidates(),
+    buildBriefing(),
   ]);
+
+  const topSignals = briefing.signals
+    .slice(0, 6)
+    .map((s) => `  • [${s.severity}] ${s.title} – ${s.detail} → ${s.action}`)
+    .join("\n");
 
   const open = opps.filter((o) => o.stage !== "gewonnen" && o.stage !== "verloren");
   const weighted = open.reduce((s, o) => s + (o.value * o.probability) / 100, 0);
@@ -65,6 +72,10 @@ async function buildContext(): Promise<string> {
     `KI-Projekte: ${ki.filter((p) => p.status === "live").length} live, ${ki.filter((p) => p.status === "onboarding").length} im Onboarding`,
     `Recruiting: ${openPositions} offene Stellen, Volumen ${formatEur(openVolume)}`,
     `Kandidaten: ${candidates.filter((c) => c.stage !== "platziert" && c.stage !== "abgelehnt").length} aktiv, ${candidates.filter((c) => c.stage === "interview").length} in Interviews, ${candidates.filter((c) => c.stage === "platziert").length} platziert`,
+    "",
+    "== Heute wichtig (priorisierte Signale) ==",
+    `Kritisch: ${briefing.counts.kritisch} · Wichtig: ${briefing.counts.wichtig} · Chancen: ${briefing.counts.chance} · Auf dem Spiel: ${formatEur(briefing.atRisk)}`,
+    topSignals || "  (keine akuten Signale)",
   ].join("\n");
 }
 

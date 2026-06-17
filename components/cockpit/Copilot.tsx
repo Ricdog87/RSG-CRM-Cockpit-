@@ -14,10 +14,10 @@ interface Msg {
 }
 
 const SUGGESTIONS = [
-  "Wie ist mein wiederkehrender Bestand?",
-  "Welche Verkaufschance sollte ich zuerst angehen?",
-  "Wie viele offene Stellen habe ich gerade?",
-  "Warum ist mein Override pausiert?",
+  "Was soll ich heute zuerst angehen?",
+  "Welche Kunden sind gefährdet (Churn/Renewal)?",
+  "Wo sind meine offenen Stellen am dringendsten?",
+  "Wie sieht mein Forecast diesen Monat aus?",
 ];
 
 /** KI-Co-Pilot: Trigger in der Topbar + Chat-Dialog über das eigene CRM. */
