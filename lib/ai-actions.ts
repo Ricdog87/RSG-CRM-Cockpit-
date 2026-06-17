@@ -4,6 +4,8 @@ import { analyzeLead } from "@/lib/ai/lead-intelligence";
 import { scoreOpportunity, heuristicScore } from "@/lib/ai/scoring";
 import { discoverLeads } from "@/lib/ai/discovery";
 import { askCopilot } from "@/lib/ai/copilot";
+import { buildBriefing } from "@/lib/ai/briefing";
+import { narrateBriefing } from "@/lib/ai/briefing-narrate";
 import { getOpportunities } from "@/lib/crm-data";
 import { createAccount, type ActionResult } from "@/lib/crm-actions";
 import type {
@@ -199,6 +201,28 @@ export async function prioritizePipelineAction(): Promise<{
     return {
       ok: false,
       error: e instanceof Error ? e.message : "Priorisierung fehlgeschlagen.",
+    };
+  }
+}
+
+/**
+ * KI-Tages-Briefing: formuliert aus den (deterministisch berechneten) Signalen
+ * ein kurzes, motivierendes Coaching. Wird on-demand vom Dashboard aufgerufen.
+ */
+export async function narrateBriefingAction(): Promise<{
+  ok: boolean;
+  text?: string;
+  mode?: "live" | "demo";
+  error?: string;
+}> {
+  try {
+    const b = await buildBriefing();
+    const { text, mode } = await narrateBriefing(b);
+    return { ok: true, text, mode };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Briefing fehlgeschlagen.",
     };
   }
 }

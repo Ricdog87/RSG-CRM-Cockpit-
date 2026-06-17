@@ -1,0 +1,280 @@
+import "server-only";
+import {
+  getOpportunities,
+  getKiProjects,
+  getMandates,
+  getCandidates,
+  getAccounts,
+} from "@/lib/crm-data";
+import { getOpenTasks } from "@/lib/tasks-data";
+import { getInvoiceSummary } from "@/lib/invoices-data";
+import { mandateFeePerPosition } from "@/lib/crm-types";
+import type { BusinessLine } from "@/lib/crm-types";
+
+/**
+ * Intelligentes Tages-Briefing: leitet aus den echten CRM-Daten die wichtigsten
+ * Handlungssignale ab (überfällige Aufgaben, gefährdete Pipeline, Renewals,
+ * fällige Mandate, offene Rechnungen, Kandidaten-Entscheidungen, kalte Leads).
+ * Vollständig deterministisch – funktioniert ohne KI-Provider. Die KI-Schicht
+ * (briefing-narrate) formuliert daraus optional ein motivierendes Coaching.
+ */
+export type BriefingSeverity = "kritisch" | "wichtig" | "chance";
+
+export interface BriefingSignal {
+  id: string;
+  severity: BriefingSeverity;
+  category: string;
+  title: string;
+  detail: string;
+  action: string;
+  href: string;
+  line?: BusinessLine;
+  /** € Wirkung (für Sortierung/Anzeige), 0 wenn n/a */
+  value: number;
+  /** interner Prioritäts-Score (Sortierung) */
+  score: number;
+}
+
+export interface Briefing {
+  signals: BriefingSignal[];
+  generatedAt: string;
+  counts: { kritisch: number; wichtig: number; chance: number };
+  /** Summe gefährdeter/fälliger € (Pipeline, Renewals, Rechnungen) */
+  atRisk: number;
+}
+
+const DAY = 86400000;
+
+function daysUntil(iso?: string | null): number | null {
+  if (!iso) return null;
+  const t = new Date((iso.length <= 10 ? iso + "T00:00:00" : iso)).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.round((t - Date.now()) / DAY);
+}
+
+const sev: Record<BriefingSeverity, number> = { kritisch: 1000, wichtig: 500, chance: 200 };
+
+/** Logarithmischer €-Bonus (deckelt sehr große Werte). */
+function valueBonus(eur: number): number {
+  if (eur <= 0) return 0;
+  return Math.min(120, Math.round(Math.log10(eur + 1) * 30));
+}
+
+export async function buildBriefing(): Promise<Briefing> {
+  const [opps, ki, mandates, candidates, accounts, tasks, invoices] = await Promise.all([
+    getOpportunities(),
+    getKiProjects(),
+    getMandates(),
+    getCandidates(),
+    getAccounts(),
+    getOpenTasks(),
+    getInvoiceSummary(),
+  ]);
+
+  const signals: BriefingSignal[] = [];
+  const push = (s: Omit<BriefingSignal, "score"> & { urgency?: number }) => {
+    const { urgency = 0, ...rest } = s;
+    signals.push({ ...rest, score: sev[s.severity] + urgency + valueBonus(s.value) });
+  };
+
+  // 1) Aufgaben: überfällig + heute fällig.
+  for (const t of tasks) {
+    const d = daysUntil(t.due_date);
+    if (d == null) continue;
+    const href =
+      t.related_type === "customer" && t.related_id
+        ? `/cockpit/kunden/${t.related_id}`
+        : "/cockpit/aufgaben";
+    if (d < 0) {
+      push({
+        id: `task-${t.id}`,
+        severity: "kritisch",
+        category: "Aufgabe",
+        title: t.title,
+        detail: `${Math.abs(d)} Tag(e) überfällig${t.related_label ? ` · ${t.related_label}` : ""}`,
+        action: "Jetzt erledigen oder neu terminieren",
+        href,
+        value: 0,
+        urgency: Math.min(300, Math.abs(d) * 20),
+      });
+    } else if (d === 0) {
+      push({
+        id: `task-${t.id}`,
+        severity: "wichtig",
+        category: "Aufgabe",
+        title: t.title,
+        detail: `heute fällig${t.related_label ? ` · ${t.related_label}` : ""}`,
+        action: "Heute abschließen",
+        href,
+        value: 0,
+        urgency: 120,
+      });
+    }
+  }
+
+  // 2) KI-Renewals & Churn-Risiko (Vertragsende ≤60T, Churn hoch, Health Risiko).
+  for (const p of ki) {
+    if (p.status === "gekuendigt" || p.status === "angebot") continue;
+    const d = daysUntil(p.contract_end);
+    const renewalSoon = d != null && d <= 60;
+    const churnHigh = p.churn_risk === "hoch";
+    const risiko = p.health === "risiko";
+    if (!renewalSoon && !churnHigh && !risiko) continue;
+    const arr = p.mrr * 12;
+    const critical = churnHigh || (d != null && d <= 14);
+    push({
+      id: `ki-${p.id}`,
+      severity: critical ? "kritisch" : "wichtig",
+      category: "Renewal",
+      title: `${p.account_name} – ${p.product || "KI-Projekt"}`,
+      detail: churnHigh
+        ? `Churn-Risiko hoch · ${formatMrr(p.mrr)} MRR`
+        : renewalSoon
+          ? `Verlängerung ${d != null ? (d < 0 ? `${Math.abs(d)} T überfällig` : `in ${d} T`) : "bald"} · ${formatMrr(p.mrr)} MRR`
+          : `Health „Risiko" · ${formatMrr(p.mrr)} MRR`,
+      action: churnHigh || risiko ? "Erfolgs-Call vereinbaren, Mehrwert sichern" : "Verlängerung anstoßen",
+      href: `/cockpit/projekte/ki/${p.id}`,
+      line: "ki",
+      value: arr,
+      urgency: d != null ? Math.max(0, 200 - Math.max(0, d) * 2) : 100,
+    });
+  }
+
+  // 3) Pipeline: offene Chancen mit nahem/überfälligem erwartetem Abschluss.
+  for (const o of opps) {
+    if (o.stage === "gewonnen" || o.stage === "verloren") continue;
+    const d = daysUntil(o.expected_close);
+    if (d == null || d > 21) continue;
+    const annual = o.value_type === "mrr" ? o.value * 12 : o.value;
+    const overdue = d < 0;
+    push({
+      id: `opp-${o.id}`,
+      severity: overdue ? "kritisch" : "wichtig",
+      category: "Pipeline",
+      title: `${o.account_name}${o.title ? ` – ${o.title}` : ""}`,
+      detail: `${overdue ? `Abschluss ${Math.abs(d)} T überfällig` : `Abschluss in ${d} T`} · ${o.stage} · ${o.probability}%`,
+      action: overdue ? "Entscheidung einholen oder Phase aktualisieren" : "Nachfassen und Abschluss terminieren",
+      href: "/cockpit/sales",
+      line: o.line,
+      value: annual,
+      urgency: overdue ? 220 : Math.max(0, 160 - d * 5),
+    });
+  }
+
+  // 4) Recruiting-Mandate mit naher Deadline & offenen Stellen.
+  for (const m of mandates) {
+    if (m.status === "angebot" || m.status === "besetzt") continue;
+    const offen = Math.max(0, m.positions - m.filled);
+    if (offen <= 0) continue;
+    const d = daysUntil(m.deadline);
+    const dueSoon = d != null && d <= 21;
+    const fewCandidates = (m.candidate_count ?? 0) < 3;
+    if (!dueSoon && !fewCandidates) continue;
+    const volumen = offen * mandateFeePerPosition(m);
+    const overdue = d != null && d < 0;
+    push({
+      id: `mandate-${m.id}`,
+      severity: overdue ? "kritisch" : "wichtig",
+      category: "Recruiting",
+      title: `${m.account_name} – ${m.role}`,
+      detail: `${offen} offene Stelle(n)${d != null ? (overdue ? ` · ${Math.abs(d)} T überfällig` : ` · Deadline in ${d} T`) : ""} · ${m.candidate_count ?? 0} Kandidat:innen`,
+      action: fewCandidates ? "Pipeline füllen: aktiv sourcen & ansprechen" : "Kandidat:innen vorstellen, Interviews takten",
+      href: "/cockpit/projekte/recruiting",
+      line: "recruiting",
+      value: volumen,
+      urgency: overdue ? 200 : dueSoon ? Math.max(0, 150 - (d ?? 0) * 5) : 60,
+    });
+  }
+
+  // 5) Überfällige Rechnungen.
+  if (invoices.overdue > 0) {
+    push({
+      id: "inv-overdue",
+      severity: "kritisch",
+      category: "Rechnung",
+      title: "Überfällige Honorar-Rechnungen",
+      detail: `${formatEurShort(invoices.overdue)} überfällig von ${formatEurShort(invoices.outstanding)} offen`,
+      action: "Zahlungserinnerung senden / nachhaken",
+      href: "/cockpit/projekte/recruiting",
+      value: invoices.overdue,
+      urgency: 180,
+    });
+  }
+
+  // 6) Kandidat:innen in Interview-Phase (Entscheidung treiben).
+  const interviewing = candidates.filter((c) => c.stage === "interview");
+  if (interviewing.length > 0) {
+    push({
+      id: "cand-interview",
+      severity: "wichtig",
+      category: "Kandidaten",
+      title: `${interviewing.length} Kandidat:in(nen) im Interview`,
+      detail: "Feedback einholen und Entscheidung beschleunigen",
+      action: "Status nachhalten, Angebot vorbereiten",
+      href: "/cockpit/kandidaten",
+      line: "recruiting",
+      value: 0,
+      urgency: 90,
+    });
+  }
+  const toScreen = candidates.filter((c) => c.stage === "neu").length;
+  if (toScreen >= 3) {
+    push({
+      id: "cand-screen",
+      severity: "chance",
+      category: "Kandidaten",
+      title: `${toScreen} neue Kandidat:innen zu sichten`,
+      detail: "Schnelles Screening hält die Pipeline warm",
+      action: "Screening durchführen und einordnen",
+      href: "/cockpit/kandidaten",
+      line: "recruiting",
+      value: 0,
+      urgency: 30,
+    });
+  }
+
+  // 7) Kalte Leads ohne Projekt – Reaktivierung als Chance.
+  const leadAccounts = accounts.filter((a) => a.lifecycle === "lead");
+  if (leadAccounts.length > 0) {
+    push({
+      id: "leads-cold",
+      severity: "chance",
+      category: "Akquise",
+      title: `${leadAccounts.length} Lead(s) ohne Abschluss`,
+      detail: "Warm halten: Erstkontakt oder Follow-up",
+      action: "Top-Leads kontaktieren (Kaltakquise-Ziel)",
+      href: "/cockpit/leads",
+      value: 0,
+      urgency: 20,
+    });
+  }
+
+  signals.sort((a, b) => b.score - a.score);
+  const top = signals.slice(0, 8);
+
+  const counts = {
+    kritisch: signals.filter((s) => s.severity === "kritisch").length,
+    wichtig: signals.filter((s) => s.severity === "wichtig").length,
+    chance: signals.filter((s) => s.severity === "chance").length,
+  };
+  const atRisk =
+    opps
+      .filter((o) => {
+        const d = daysUntil(o.expected_close);
+        return o.stage !== "gewonnen" && o.stage !== "verloren" && d != null && d <= 21;
+      })
+      .reduce((s, o) => s + (o.value_type === "mrr" ? o.value * 12 : o.value), 0) +
+    invoices.overdue +
+    ki
+      .filter((p) => p.status !== "gekuendigt" && (p.churn_risk === "hoch" || (daysUntil(p.contract_end) ?? 999) <= 60))
+      .reduce((s, p) => s + p.mrr * 12, 0);
+
+  return { signals: top, generatedAt: new Date().toISOString(), counts, atRisk };
+}
+
+function formatMrr(v: number): string {
+  return `${formatEurShort(v)}/M`;
+}
+function formatEurShort(v: number): string {
+  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v || 0);
+}

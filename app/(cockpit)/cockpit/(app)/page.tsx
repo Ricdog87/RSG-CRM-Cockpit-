@@ -12,6 +12,8 @@ import { mandateFeePerPosition, mandateRevenue, type SalesStage } from "@/lib/cr
 import { getUpcomingMilestones } from "@/lib/placements-data";
 import { getInvoiceSummary } from "@/lib/invoices-data";
 import { getActivityStats } from "@/lib/activity-data";
+import { buildBriefing } from "@/lib/ai/briefing";
+import { DailyBriefing } from "@/components/cockpit/DailyBriefing";
 import { DailyGoals } from "@/components/cockpit/DailyGoals";
 import { KpiRow } from "@/components/cockpit/KpiRow";
 import { StatCard } from "@/components/cockpit/StatCard";
@@ -78,7 +80,7 @@ function LineHeader({ eyebrow, title, accent }: { eyebrow: string; title: string
 }
 
 export default async function CockpitPage() {
-  const [data, identity, opportunities, kiProjects, mandates, candidates, accounts, openTasks, milestones, invoiceSummary, activityStats] =
+  const [data, identity, opportunities, kiProjects, mandates, candidates, accounts, openTasks, milestones, invoiceSummary, activityStats, briefing] =
     await Promise.all([
       getCockpitData(),
       getPartnerIdentity(),
@@ -91,6 +93,7 @@ export default async function CockpitPage() {
       getUpcomingMilestones(),
       getInvoiceSummary(),
       getActivityStats(),
+      buildBriefing(),
     ]);
 
   // ── Tagesziele / Streak / Wochenübersicht (Arbeitswoche Mo–Do) ────────
@@ -189,6 +192,10 @@ export default async function CockpitPage() {
     <div className="space-y-6">
       <section className="animate-fade-up" aria-label="Begrüßung">
         <DashboardHero name={identity.display_name} goalsDone={goalsDoneToday} streak={streak} dayMode={todayMode} />
+      </section>
+
+      <section className="animate-fade-up" aria-label="Tages-Briefing">
+        <DailyBriefing signals={briefing.signals} counts={briefing.counts} atRisk={briefing.atRisk} />
       </section>
 
       <section className="animate-fade-up" aria-label="Schnellzugriff">
