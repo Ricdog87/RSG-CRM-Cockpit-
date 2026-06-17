@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceClient, hasServiceRole } from "@/lib/supabase/service";
 import { exchangeCode, buildRedirectUri } from "@/lib/google-calendar";
 
 export const runtime = "nodejs";
@@ -9,24 +10,20 @@ export const dynamic = "force-dynamic";
  * GET /api/google/callback
  *
  * Google leitet hierher nach der Nutzer-Zustimmung weiter.
- * Query-Parameter von Google:
- *   code  — Authorization Code (einmalig, kurzlebig)
- *   state — partnerId (aus /api/google/connect übergeben)
- *   error — z.B. "access_denied" wenn Nutzer ablehnt
  *
- * Ablauf:
- *   1. Code gegen Tokens tauschen
- *   2. Tokens in google_calendar_tokens speichern (Upsert)
- *   3. Zurück zur Kalender-Seite mit ?google_connected=1
+ * Sicherheit (CSRF / Token-Injection):
+ *   Die Tokens werden AUSSCHLIESSLICH fuer die per Session authentifizierte
+ *   Partner-ID gespeichert – niemals fuer eine aus `state` uebernommene ID.
+ *   `state` wird zusaetzlich als CSRF-Check gegen die Session-Partner-ID geprueft.
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state"); // = partnerId
+  const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
   const base = url.origin;
 
-  // ── Fehler von Google (z.B. Nutzer hat abgebrochen) ───────────────
+  // ── Fehler von Google (z.B. Nutzer hat abgebrochen) ────────────────
   if (error) {
     return NextResponse.redirect(
       `${base}/cockpit/kalender?google_error=${encodeURIComponent(error)}`
@@ -39,16 +36,49 @@ export async function GET(req: Request) {
     );
   }
 
+  if (!hasServiceRole()) {
+    return NextResponse.redirect(
+      `${base}/cockpit/kalender?google_error=not_configured`
+    );
+  }
+
+  // ── Session ist Pflicht – ohne eingeloggten User kein Token-Schreiben ─
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.redirect(`${base}/cockpit/login`);
+  }
+
+  // ── Partner-ID aus der Session ableiten (NICHT aus state) ───────────
+  const svc = createServiceClient();
+  const { data: partner } = await svc
+    .from("partners")
+    .select("id")
+    .eq("auth_user_id", user.id)
+    .single();
+  if (!partner) {
+    return NextResponse.redirect(
+      `${base}/cockpit/kalender?google_error=no_partner`
+    );
+  }
+  const partnerId = (partner as { id: string }).id;
+
+  // ── CSRF-Check: state muss zur Session-Partner-ID passen ────────────
+  if (state !== partnerId) {
+    return NextResponse.redirect(
+      `${base}/cockpit/kalender?google_error=state_mismatch`
+    );
+  }
+
   try {
-    // ── Code gegen Tokens tauschen ─────────────────────────────────
+    // ── Code gegen Tokens tauschen ──────────────────────────────────
     const redirectUri = buildRedirectUri(base);
     const tokens = await exchangeCode(code, redirectUri);
 
-    // refresh_token ist nur beim ERSTEN Verbinden vorhanden
-    // (danach nur wenn prompt=consent, was wir in buildAuthUrl setzen).
+    // refresh_token kommt nur mit prompt=consent (so in buildAuthUrl gesetzt).
     if (!tokens.refresh_token) {
-      // Sollte nicht passieren (prompt=consent erzwingt refresh_token),
-      // aber als Safety-Net abfangen.
       return NextResponse.redirect(
         `${base}/cockpit/kalender?google_error=no_refresh_token`
       );
@@ -56,20 +86,17 @@ export async function GET(req: Request) {
 
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
 
-    // ── Tokens speichern (Upsert: überschreibt bestehende Verbindung) ─
-    const svc = createServiceClient();
-    const { error: dbErr } = await svc
-      .from("google_calendar_tokens")
-      .upsert(
-        {
-          partner_id: state,
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          expires_at: expiresAt.toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "partner_id" }
-      );
+    // ── Tokens speichern (Upsert fuer die Session-Partner-ID) ───────
+    const { error: dbErr } = await svc.from("google_calendar_tokens").upsert(
+      {
+        partner_id: partnerId,
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        expires_at: expiresAt.toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "partner_id" }
+    );
 
     if (dbErr) throw dbErr;
 
