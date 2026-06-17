@@ -70,6 +70,14 @@ export const AUTOMATIONS: AutomationDef[] = [
     trigger: "Kandidat:in → Platziert",
     action: "Aufgabe erstellen",
   },
+  {
+    key: "placement_invoice",
+    title: "Mandat besetzt → Rechnung-Aufgabe",
+    description:
+      "Wird ein Recruiting-Mandat auf „Besetzt“ gesetzt, entsteht automatisch eine Aufgabe „Honorar-Rechnung stellen“ (morgen) beim Kunden.",
+    trigger: "Mandat → Besetzt",
+    action: "Aufgabe erstellen",
+  },
 ];
 
 /** Prüft, ob eine Regel aktiv ist (Default: an). Client kann Session- oder Service-Role-Client sein. */

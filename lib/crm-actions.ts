@@ -1297,12 +1297,39 @@ export async function updateCandidate(
 
 /** Schnelles Verschieben eines Mandats im Kanban-Board (Status). */
 export async function setMandateStatus(id: string, status: string): Promise<ActionResult> {
-  return update(
+  const res = await update(
     "recruiting_mandates",
     id,
     { status },
     "/cockpit/projekte/recruiting"
   );
+  // Workflow: Mandat besetzt → Honorar-Rechnung stellen.
+  if (res.ok && !res.demo && status === "besetzt") {
+    try {
+      const { id: pid } = await currentPartnerId();
+      if (pid) {
+        const supabase = createClient();
+        const { data: m } = await supabase
+          .from("recruiting_mandates")
+          .select("account_name, role")
+          .eq("id", id)
+          .maybeSingle();
+        const mand = m as { account_name?: string; role?: string } | null;
+        const accName = mand?.account_name ?? "";
+        const accId = accName ? await resolveAccountId(supabase, accName) : null;
+        await autoTask(supabase, pid, "placement_invoice", {
+          related_type: accId ? "customer" : "none",
+          related_id: accId,
+          related_label: `${accName}${mand?.role ? ` – ${mand.role}` : ""}`,
+          title: `Honorar-Rechnung stellen: ${accName}${mand?.role ? ` (${mand.role})` : ""}`,
+          dueInDays: 1,
+        });
+      }
+    } catch (e) {
+      logDataError("automation:placement_invoice", e);
+    }
+  }
+  return res;
 }
 
 export async function updateMandate(
