@@ -1,5 +1,5 @@
-import { getCockpitData } from "@/lib/data";
-import {
+import { getCockpitData, getPartnerIdentity } from "@/lib/data";
+import { DashboardHero } from "@/components/cockpit/DashboardHero";import {
   getOpportunities,
   getKiProjects,
   getMandates,
@@ -78,9 +78,10 @@ function LineHeader({ eyebrow, title, accent }: { eyebrow: string; title: string
 }
 
 export default async function CockpitPage() {
-  const [data, opportunities, kiProjects, mandates, candidates, accounts, openTasks, milestones, invoiceSummary, activityStats] =
+  const [data, identity, opportunities, kiProjects, mandates, candidates, accounts, openTasks, milestones, invoiceSummary, activityStats] =
     await Promise.all([
       getCockpitData(),
+      getPartnerIdentity(),
       getOpportunities(),
       getKiProjects(),
       getMandates(),
@@ -181,6 +182,10 @@ export default async function CockpitPage() {
 
   return (
     <div className="space-y-6">
+      <section className="animate-fade-up" aria-label="Begrüßung">
+        <DashboardHero name={identity.display_name} />
+      </section>
+
       <section className="animate-fade-up" aria-label="Schnellzugriff">
         <QuickActions />
       </section>
