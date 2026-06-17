@@ -233,6 +233,28 @@ export async function buildBriefing(): Promise<Briefing> {
     });
   }
 
+  // 6b) Inaktive Bestandskunden reaktivieren (≥45 T ohne Aktivität).
+  const inactive = accounts
+    .filter((a) => (a.lifecycle === "kunde" || a.lifecycle === "bestand") && !a.synthetic)
+    .map((a) => ({ a, d: a.last_activity_at ? -(daysUntil(a.last_activity_at) ?? 0) : null }))
+    .filter((x) => x.d != null && x.d >= 45)
+    .sort((x, y) => (y.a.mrr - x.a.mrr) || ((y.d ?? 0) - (x.d ?? 0)))
+    .slice(0, 2);
+  for (const { a, d } of inactive) {
+    push({
+      id: `react-${a.id}`,
+      severity: a.mrr > 0 ? "wichtig" : "chance",
+      category: "Kunde",
+      title: `${a.name} – seit ${d} T still`,
+      detail: a.mrr > 0 ? `${formatMrr(a.mrr)} Bestand ohne Kontakt` : "Bestandskunde ohne Kontakt",
+      action: "Reaktivieren: kurzes Check-in, Mehrwert/Upsell prüfen",
+      href: `/cockpit/kunden/${a.id}`,
+      line: a.line,
+      value: a.mrr * 12,
+      urgency: a.mrr > 0 ? 70 : 25,
+    });
+  }
+
   // 7) Kalte Leads ohne Projekt – Reaktivierung als Chance.
   const leadAccounts = accounts.filter((a) => a.lifecycle === "lead");
   if (leadAccounts.length > 0) {

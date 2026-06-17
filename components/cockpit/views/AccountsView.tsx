@@ -30,6 +30,7 @@ export function AccountsView({
   const [lifecycle, setLifecycle] = useState<Lifecycle | "all">("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("mrr");
+  const [health, setHealth] = useState<"all" | "risk" | "watch" | "top">("all");
 
   async function onDelete(id: string) {
     setItems((prev) => prev.filter((a) => a.id !== id));
@@ -50,6 +51,14 @@ export function AccountsView({
     if (lifecycle !== "all") {
       pool = pool.filter((a) => a.lifecycle === lifecycle);
     }
+    if (health !== "all") {
+      pool = pool.filter((a) => {
+        const t = healthById[a.id]?.tone;
+        if (health === "risk") return t === "danger";
+        if (health === "watch") return t === "warning" || t === "danger";
+        return t === "success";
+      });
+    }
     if (q) {
       pool = pool.filter((a) =>
         [a.name, a.branche, a.segment, a.ort, a.contact_name, a.contact_email]
@@ -64,7 +73,11 @@ export function AccountsView({
       arr.sort((a, b) => (healthById[a.id]?.score ?? 999) - (healthById[b.id]?.score ?? 999));
     else arr.sort((a, b) => (b.mrr ?? 0) - (a.mrr ?? 0));
     return arr;
-  }, [afterLineFilter, lifecycle, q, sort, healthById]);
+  }, [afterLineFilter, lifecycle, q, sort, health, healthById]);
+
+  const hasHealth = Object.keys(healthById).length > 0;
+  const healthCount = (tone: "danger" | "warning" | "success") =>
+    afterLineFilter.filter((a) => healthById[a.id]?.tone === tone).length;
 
   return (
     <div className="space-y-4">
@@ -116,6 +129,19 @@ export function AccountsView({
           { value: "bestand", label: "Bestand", count: afterLineFilter.filter((a) => a.lifecycle === "bestand").length },
         ]}
       />
+
+      {hasHealth ? (
+        <FilterTabs<"all" | "risk" | "watch" | "top">
+          value={health}
+          onChange={setHealth}
+          options={[
+            { value: "all", label: "Health: alle", count: afterLineFilter.length },
+            { value: "risk", label: "🔴 Gefährdet", count: healthCount("danger") },
+            { value: "watch", label: "🟠 Beobachten", count: healthCount("warning") + healthCount("danger") },
+            { value: "top", label: "🟢 Top", count: healthCount("success") },
+          ]}
+        />
+      ) : null}
 
       <AccountsTable
         accounts={shown}
