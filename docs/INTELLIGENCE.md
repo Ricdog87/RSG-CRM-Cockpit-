@@ -43,15 +43,20 @@ sind gefährdet?“).
 `lib/automations.ts` + Ausführung in `lib/crm-actions.ts`. Pro Regel in
 `/cockpit/automatisierungen` umschaltbar (Default: an):
 
-| Trigger | Aktion |
-|---|---|
-| Neuer Lead-Account | Aufgabe „Erstkontakt vereinbaren“ (+2 T) |
-| Chance → Gewonnen | Onboarding-Aufgabe beim Account |
-| Inbound-E-Mail (Webhook) | Aufgabe „Auf E-Mail antworten“ |
-| **Neues Mandat** | Aufgabe „Kandidat:innen sourcen“ (+2 T) |
-| **Neues KI-Projekt** | Aufgabe „Kickoff-Termin vereinbaren“ (+2 T) |
-| **Kandidat:in → Interview** | Aufgabe „Interview-Feedback einholen“ (+2 T) |
-| **Kandidat:in → Platziert** | Aftercare/NPS-Aufgabe (+90 T) |
+| Trigger | Aktion | Kategorie |
+|---|---|---|
+| Neuer Lead-Account | „Erstkontakt vereinbaren“ (+2 T) | Sales |
+| Chance → Gewonnen | Onboarding-Aufgabe | Sales |
+| Chance → Verloren | Win-Back-Wiedervorlage (+90 T) | Sales |
+| Inbound-E-Mail (Webhook) | „Auf E-Mail antworten“ | Allgemein |
+| Neues Mandat | „Kandidat:innen sourcen“ (+2 T) | Recruiting |
+| Neues KI-Projekt | „Kickoff-Termin vereinbaren“ (+2 T) | KI |
+| Kandidat:in → Interview | „Interview-Feedback einholen“ (+2 T) | Recruiting |
+| Kandidat:in → Platziert | Aftercare/NPS (+90 T) | Recruiting |
+| Mandat → Besetzt | „Honorar-Rechnung stellen“ (+1 T) | Recruiting |
+
+Gruppiert nach Kategorie auf `/cockpit/automatisierungen`, jede Regel einzeln
+umschaltbar.
 
 ## 6. Outbound-Sequenzen (Kadenzen)
 `lib/sequences.ts` – Multi-Step-Kadenzen als terminierte Aufgaben:
@@ -63,6 +68,13 @@ sind gefährdet?“).
 `components/cockpit/PortfolioInsights.tsx` – Konzentrationsrisiko (Top-MRR-
 Anteil), MRR unter Beobachtung (Churn/Renewal), aktive Kunden vs. Leads,
 Gesamt-Pipeline mit Win-Rate & Ø-Deal.
+
+## 7b. Beziehungs-Intelligenz & Deal-Rotting
+- **KI-Beziehungs-Zusammenfassung** (Kunden-Detail): fasst den Stand aus den
+  letzten Notizen + E-Mails zusammen, schlägt nächsten Schritt vor.
+- **Deal-Rotting**: offene Chancen mit überfälligem Abschluss werden im Sales-
+  Board rot markiert.
+- **Nächste beste Aktion → 1-Klick-Aufgabe** auf der Account-Intelligence-Card.
 
 ## 8. Wochen-Review (Freitag)
 `lib/ai/weekly-review.ts` – an Review-/freien Tagen erscheint im Dashboard ein
