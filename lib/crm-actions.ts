@@ -164,6 +164,55 @@ function revalidateMany(paths: string | string[]) {
   for (const p of Array.isArray(paths) ? paths : [paths]) revalidatePath(p);
 }
 
+/**
+ * Übernimmt den Kunden automatisch ins CRM, wenn er bei Projekt-Anlage noch
+ * nicht existiert (Account = Firmenname). Best-effort, blockiert nie die
+ * Projekt-Erstellung. Setzt Geschäftslinie + Lifecycle „Kunde".
+ */
+async function ensureAccount(
+  name: string,
+  opts: { line: "ki" | "recruiting"; segment?: string; ort?: string; mrr?: number; contact?: string }
+): Promise<void> {
+  const n = (name || "").trim();
+  if (!n || useMockData) return;
+  try {
+    const { id: pid } = await currentPartnerId();
+    if (!pid) return;
+    const supabase = createClient();
+    const { data: existing } = await supabase
+      .from("accounts")
+      .select("id")
+      .ilike("name", n)
+      .maybeSingle();
+    if ((existing as { id?: string } | null)?.id) return;
+
+    const row: Record<string, unknown> = {
+      partner_id: pid,
+      name: n,
+      line: opts.line,
+      lifecycle: "kunde",
+      segment: opts.segment || null,
+      ort: opts.ort || null,
+      contact_name: opts.contact || null,
+      mrr: opts.mrr ?? 0,
+    };
+    // Graceful: noch nicht migrierte Spalten weglassen.
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const { error } = await supabase.from("accounts").insert(row);
+      if (!error) break;
+      const m = error.message.match(MISSING_COL);
+      if (m && m[1] in row) {
+        delete row[m[1]];
+        continue;
+      }
+      break;
+    }
+    revalidatePath("/cockpit/kunden");
+  } catch {
+    /* Kundenübernahme darf das Projekt nie blockieren */
+  }
+}
+
 /** Bestehende Account-Schlüssel (Name + E-Mail) für den Dubletten-Abgleich. */
 async function accountKeys(): Promise<{ name: string; email?: string }[]> {
   if (useMockData) {
@@ -359,7 +408,7 @@ export async function createKiProject(
   fd: FormData
 ): Promise<ActionResult> {
   if (!s(fd, "account_name")) return { ok: false, error: "Account ist erforderlich." };
-  return insertGraceful(
+  const res = await insertGraceful(
     "ki_projects",
     {
       account_name: s(fd, "account_name"),
@@ -378,6 +427,16 @@ export async function createKiProject(
     },
     "/cockpit/projekte/ki"
   );
+  // Kunde automatisch übernehmen (inkl. MRR & Ansprechpartner aus dem Projekt).
+  if (res.ok && !res.demo) {
+    await ensureAccount(s(fd, "account_name"), {
+      line: "ki",
+      segment: s(fd, "segment"),
+      mrr: n(fd, "mrr"),
+      contact: s(fd, "decision_maker") || s(fd, "tech_contact"),
+    });
+  }
+  return res;
 }
 
 export async function createSegment(
@@ -402,7 +461,7 @@ export async function createMandate(
 ): Promise<ActionResult> {
   if (!s(fd, "account_name")) return { ok: false, error: "Account ist erforderlich." };
   const pricing = s(fd, "pricing_model") === "percent" ? "percent" : "fixed";
-  return insertGraceful(
+  const res = await insertGraceful(
     "recruiting_mandates",
     {
       account_name: s(fd, "account_name"),
@@ -422,6 +481,11 @@ export async function createMandate(
     },
     "/cockpit/projekte/recruiting"
   );
+  // Kunde automatisch übernehmen, falls noch nicht im CRM (Recruiting-Linie).
+  if (res.ok && !res.demo) {
+    await ensureAccount(s(fd, "account_name"), { line: "recruiting" });
+  }
+  return res;
 }
 
 // ---------- Update / Stage-Wechsel ----------------------------------
