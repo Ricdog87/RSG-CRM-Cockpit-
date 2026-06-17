@@ -4,14 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MandatesList } from "@/components/cockpit/MandatesList";
 import { MandatesBoard } from "@/components/cockpit/MandatesBoard";
+import { MandatesByCustomer } from "@/components/cockpit/MandatesByCustomer";
 import { MandateFormDialog } from "@/components/cockpit/MandateFormDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
-import { IconPencil, IconLayers, IconTasks } from "@/components/ui/icons";
+import { IconPencil, IconLayers, IconTasks, IconUsers } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
 import { deleteMandate } from "@/lib/crm-actions";
 import type { RecruitingMandate, Candidate } from "@/lib/crm-types";
 
-type View = "board" | "liste";
+type View = "board" | "kunden" | "liste";
 
 /** Mandate als verschiebbares Kanban-Board oder Liste – mit Bearbeiten/Löschen. */
 export function MandatesView({
@@ -61,6 +62,7 @@ export function MandatesView({
       <div className="flex items-center gap-1 rounded-xl border border-border bg-surface p-1 w-fit">
         {([
           { key: "board", label: "Board", icon: IconLayers },
+          { key: "kunden", label: "Kunden", icon: IconUsers },
           { key: "liste", label: "Liste", icon: IconTasks },
         ] as const).map((v) => {
           const Icon = v.icon;
@@ -82,6 +84,8 @@ export function MandatesView({
 
       {view === "board" ? (
         <MandatesBoard mandates={items} candidates={candidates} renderActions={renderActions} />
+      ) : view === "kunden" ? (
+        <MandatesByCustomer mandates={items} candidates={candidates} renderActions={renderActions} />
       ) : (
         <MandatesList mandates={items} candidates={candidates} renderActions={renderActions} />
       )}
