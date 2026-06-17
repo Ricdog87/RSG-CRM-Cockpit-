@@ -156,11 +156,11 @@ export default async function KalenderPage({
             <div className="grid gap-3 text-xs text-muted sm:grid-cols-2">
               <p>
                 <span className="font-medium text-ink">Google Kalender:</span>{" "}
-                Andere Kalender → „Per URL hinzufügen" → Link einfügen.
+                Andere Kalender → „Per URL hinzufügen“ → Link einfügen.
               </p>
               <p>
                 <span className="font-medium text-ink">Outlook:</span>{" "}
-                Kalender hinzufügen → „Aus dem Internet abonnieren" → Link einfügen.
+                Kalender hinzufügen → „Aus dem Internet abonnieren“ → Link einfügen.
               </p>
             </div>
           </div>
