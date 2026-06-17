@@ -27,6 +27,9 @@ export interface ActivityInput {
   line: "ki" | "recruiting";
   subject?: string;
   account_name?: string;
+  /** Nur für Kaltakquise-Neukunden: gehen in den neuen Account. */
+  contact_name?: string;
+  contact_phone?: string;
 }
 
 /**
@@ -61,12 +64,31 @@ export async function logActivity(input: ActivityInput): Promise<ActionResult> {
       let accId = (a as { id?: string } | null)?.id;
 
       if (!accId) {
-        const { data: ins } = await supabase
-          .from("accounts")
-          .insert({ partner_id: pid, name: acc, line: input.line, lifecycle: "lead", mrr: 0 })
-          .select("id")
-          .single();
-        accId = (ins as { id?: string } | null)?.id;
+        const row: Record<string, unknown> = {
+          partner_id: pid,
+          name: acc,
+          line: input.line,
+          lifecycle: "lead",
+          mrr: 0,
+          contact_name: input.contact_name?.trim() || null,
+          contact_phone: input.contact_phone?.trim() || null,
+        };
+        // Graceful: noch nicht migrierte Spalten (z.B. contact_phone) weglassen.
+        let ins: { id?: string } | null = null;
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const res = await supabase.from("accounts").insert(row).select("id").single();
+          if (!res.error) {
+            ins = res.data as { id?: string };
+            break;
+          }
+          const m = res.error.message.match(/column "?([a-z_]+)"? .*does not exist/i);
+          if (m && m[1] in row) {
+            delete row[m[1]];
+            continue;
+          }
+          break;
+        }
+        accId = ins?.id;
         revalidatePath("/cockpit/kunden");
       }
 

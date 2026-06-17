@@ -58,7 +58,13 @@ export function DailyGoals({
   const [wEmails, setWEmails] = useState(stats.weekEmails);
   const [account, setAccount] = useState("");
   const [subject, setSubject] = useState("");
+  const [contact, setContact] = useState("");
+  const [phone, setPhone] = useState("");
   const [week, setWeek] = useState(stats.week);
+
+  const accTrim = account.trim();
+  const isExisting = accTrim.length > 0 && accounts.some((a) => a.toLowerCase() === accTrim.toLowerCase());
+  const isNewCustomer = accTrim.length > 0 && !isExisting;
 
   function log(kind: "call" | "email", line: "ki" | "recruiting") {
     if (kind === "call") {
@@ -70,10 +76,19 @@ export function DailyGoals({
     }
     setWeek((w) => ({ ...w, [line]: { ...w[line], [kind]: w[line][kind] + 1 } }));
     start(async () => {
-      const res = await logActivity({ kind, line, account_name: account, subject });
+      const res = await logActivity({
+        kind,
+        line,
+        account_name: account,
+        subject,
+        contact_name: contact,
+        contact_phone: phone,
+      });
       if (res.ok) {
         setAccount("");
         setSubject("");
+        setContact("");
+        setPhone("");
         if (!res.demo) router.refresh();
       }
     });
@@ -185,10 +200,16 @@ export function DailyGoals({
             <AccountCombobox options={accounts} value={account} onValueChange={setAccount} placeholder="Kunde (für Korrespondenz)" />
             <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Thema (optional)" className={inputCls} />
           </div>
-          {account.trim() && accounts.some((a) => a.toLowerCase() === account.trim().toLowerCase()) ? (
-            <p className="text-[0.7rem] text-success">✓ Wird beim Kunden „{account.trim()}“ als Korrespondenz hinterlegt.</p>
-          ) : account.trim() ? (
-            <p className="text-[0.7rem] text-brand-deep">✦ Neukunde „{account.trim()}“ wird als Lead angelegt + Korrespondenz hinterlegt.</p>
+          {isNewCustomer ? (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Ansprechpartner:in (optional)" className={inputCls} />
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" placeholder="Telefon (optional)" className={inputCls} />
+              </div>
+              <p className="text-[0.7rem] text-brand-deep">✦ Neukunde „{accTrim}“ wird als Lead angelegt + Korrespondenz hinterlegt.</p>
+            </>
+          ) : isExisting ? (
+            <p className="text-[0.7rem] text-success">✓ Wird beim Kunden „{accTrim}“ als Korrespondenz hinterlegt.</p>
           ) : null}
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 text-xs text-faint"><IconPhone size={12} /> Call:</span>
