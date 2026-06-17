@@ -237,6 +237,32 @@ export interface Interview {
   created_at?: string;
 }
 
+export type InvoiceStatus = "entwurf" | "gestellt" | "bezahlt";
+
+/** Honorar-Rechnung an den Kunden (an den Zahlungsplan gekoppelt). */
+export interface Invoice {
+  id: string;
+  mandate_id?: string;
+  placement_id?: string;
+  account_name: string;
+  role?: string;
+  label?: string;
+  amount: number;
+  issue_date?: string;
+  due_date?: string;
+  paid_date?: string;
+  invoice_no?: string;
+  status: InvoiceStatus;
+  notes?: string;
+  created_at?: string;
+}
+
+/** Überfällig: gestellt, fällig in der Vergangenheit, noch nicht bezahlt. */
+export function invoiceOverdue(inv: Pick<Invoice, "status" | "due_date">): boolean {
+  if (inv.status !== "gestellt" || !inv.due_date) return false;
+  return inv.due_date < new Date().toISOString().slice(0, 10);
+}
+
 export type OfferStatus = "entwurf" | "versendet" | "in_verhandlung" | "angenommen" | "abgelehnt";
 
 /** Angebot je Kandidat:in (Gehalt, Eintritt, Status, Ablehnungsgrund). */

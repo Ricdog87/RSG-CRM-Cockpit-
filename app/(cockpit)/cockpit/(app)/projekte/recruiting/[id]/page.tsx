@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMandates, getCandidates } from "@/lib/crm-data";
 import { getPlacementsForMandate } from "@/lib/placements-data";
+import { getInvoicesForMandate } from "@/lib/invoices-data";
 import { mandateRevenue } from "@/lib/crm-types";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/cockpit/StatCard";
@@ -10,6 +11,7 @@ import { MandateCandidates } from "@/components/cockpit/MandateCandidates";
 import { MandateMatchPanel } from "@/components/cockpit/MandateMatchPanel";
 import { JobPostingCard } from "@/components/cockpit/JobPostingCard";
 import { PlacementsCard } from "@/components/cockpit/PlacementsCard";
+import { InvoicesCard } from "@/components/cockpit/InvoicesCard";
 import { IconChevronRight, IconBriefcase, IconUserCheck, IconEuro, IconTarget } from "@/components/ui/icons";
 import { formatEur, formatNumber, formatDate } from "@/lib/format";
 import type { MandateStatus } from "@/lib/crm-types";
@@ -29,15 +31,21 @@ export default async function MandateDetailPage({
 }: {
   params: { id: string };
 }) {
-  const [mandates, candidates, placements] = await Promise.all([
+  const [mandates, candidates, placements, invoices] = await Promise.all([
     getMandates(),
     getCandidates(),
     getPlacementsForMandate(params.id),
+    getInvoicesForMandate(params.id),
   ]);
   const m = mandates.find((x) => x.id === params.id);
   if (!m) notFound();
 
   const list = candidates.filter((c) => c.mandate_id === m.id);
+  // Platzierungen ohne erzeugte Rechnungen → „aus Plan erzeugen".
+  const invoicedPlacementIds = new Set(invoices.map((i) => i.placement_id).filter(Boolean));
+  const placementsToInvoice = placements
+    .filter((p) => !invoicedPlacementIds.has(p.id))
+    .map((p) => ({ id: p.id, label: p.candidate_name }));
   const st = statusMeta[m.status] ?? statusMeta.offen;
   const offen = Math.max(0, m.positions - m.filled);
   const perPos = m.positions > 0 ? mandateRevenue(m) / m.positions : 0;
@@ -131,6 +139,18 @@ export default async function MandateDetailPage({
             defaultFee={mandateRevenue(m)}
             candidates={list.map((c) => ({ id: c.id, name: c.name }))}
             placements={placements}
+          />
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody>
+          <SectionHeader title="Rechnungen" hint="Honorar an den Kunden · Zahlstatus" />
+          <InvoicesCard
+            mandateId={m.id}
+            accountName={m.account_name}
+            invoices={invoices}
+            placements={placementsToInvoice}
           />
         </CardBody>
       </Card>
