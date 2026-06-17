@@ -141,6 +141,11 @@ export default async function CockpitPage() {
   });
   const todayMode: "work" | "review" | "off" =
     nowD.getDay() >= 1 && nowD.getDay() <= 4 ? "work" : nowD.getDay() === 5 ? "review" : "off";
+  const goalsDoneToday =
+    (activityStats.callsToday >= 15 ? 1 : 0) +
+    (activityStats.emailsToday >= 10 ? 1 : 0) +
+    (newRecruitingToday ? 1 : 0) +
+    (newKiToday ? 1 : 0);
 
   // Kombinierter Forecast (Gesamt-Pipeline): Recruiting-Honorar-Angebote +
   // KI-MRR-Angebote ×12 (ARR-Sicht).
@@ -183,7 +188,7 @@ export default async function CockpitPage() {
   return (
     <div className="space-y-6">
       <section className="animate-fade-up" aria-label="Begrüßung">
-        <DashboardHero name={identity.display_name} />
+        <DashboardHero name={identity.display_name} goalsDone={goalsDoneToday} streak={streak} dayMode={todayMode} />
       </section>
 
       <section className="animate-fade-up" aria-label="Schnellzugriff">

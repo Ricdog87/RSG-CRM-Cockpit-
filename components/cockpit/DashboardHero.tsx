@@ -32,10 +32,35 @@ function greet(h: number): { text: string; emoji: string } {
   return { text: "Späte Schicht", emoji: "🌙" };
 }
 
-export function DashboardHero({ name }: { name: string }) {
+export function DashboardHero({
+  name,
+  goalsDone = 0,
+  streak = 0,
+  dayMode = "work",
+}: {
+  name: string;
+  goalsDone?: number;
+  streak?: number;
+  dayMode?: "work" | "review" | "off";
+}) {
   const firstName = (name || "").trim().split(" ")[0] || "Champion";
   const [now, setNow] = useState<Date | null>(null);
   const [qi, setQi] = useState(0);
+
+  // Performance-gekoppelte Ansage – schlägt den rotierenden Spruch.
+  function perfMessage(): string | null {
+    if (dayMode === "off") return `Wochenende – Energie tanken, ${firstName}. Montag wird stark. 🌟`;
+    if (dayMode === "review") return "Review-Tag: Bilanz ziehen, Forecast schärfen, Woche krönen. 📊";
+    if (goalsDone >= 4)
+      return streak >= 3
+        ? `🔥 Unstoppable! ${streak} Tage in Folge alle Ziele – du bist on fire!`
+        : "🔥 4/4 – du bist heute on fire!";
+    if (streak >= 3) return `🔥 ${streak}-Tage-Streak läuft – heute dranbleiben, ${firstName}!`;
+    if (goalsDone === 3) return "3/4 – nur noch ein Ziel. Finish strong! 💪";
+    if (goalsDone === 2) return `Halbzeit erreicht – Tempo halten, ${firstName}! 🚀`;
+    if (goalsDone === 1) return "Erster Punkt steht. Jetzt nachlegen! 👊";
+    return null; // 0/4 am Arbeitstag → rotierender Motivationsspruch
+  }
 
   useEffect(() => {
     setNow(new Date());
@@ -72,8 +97,8 @@ export function DashboardHero({ name }: { name: string }) {
           <h1 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">
             {g.text}, {firstName} {g.emoji}
           </h1>
-          <p className="mt-2 max-w-xl text-sm font-medium text-white/90 sm:text-base">
-            {QUOTES[qi]}
+          <p className="mt-2 max-w-xl text-sm font-semibold text-white sm:text-base">
+            {perfMessage() ?? QUOTES[qi]}
           </p>
         </div>
 
