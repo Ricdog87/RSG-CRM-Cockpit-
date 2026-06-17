@@ -956,6 +956,11 @@ export async function addNote(
     body: body.trim(),
   });
   if (insErr) return { ok: false, error: insErr.message };
+  // Letzte Aktivität aktualisieren (Health-Score/Briefing); graceful.
+  await supabase
+    .from("accounts")
+    .update({ last_activity_at: new Date().toISOString() })
+    .eq("id", accountId);
   revalidatePath(`/cockpit/kunden/${accountId}`);
   return { ok: true };
 }

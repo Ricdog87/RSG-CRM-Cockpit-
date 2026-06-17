@@ -53,14 +53,14 @@ export function Topbar({ partnerName }: { partnerName: string }) {
 
         <Copilot />
 
-        <button
-          type="button"
-          aria-label="Benachrichtigungen"
+        <Link
+          href="/cockpit/aufgaben"
+          aria-label="Aufgaben & Benachrichtigungen"
           className="relative rounded-xl border border-border bg-elevated/60 p-2 text-muted transition-colors hover:text-ink"
         >
           <IconBell size={18} />
           <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-sky" />
-        </button>
+        </Link>
       </div>
     </header>
   );

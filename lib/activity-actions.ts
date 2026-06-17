@@ -100,6 +100,12 @@ export async function logActivity(input: ActivityInput): Promise<ActionResult> {
       const label = input.kind === "call" ? "Anruf" : input.kind === "email" ? "E-Mail" : "Termin";
       const body = `${label} (${input.line === "ki" ? "KI" : "Recruiting"})${input.subject ? `: ${input.subject}` : ""}`;
       await supabase.from("account_notes").insert({ partner_id: pid, account_id: accId, body });
+      // Letzte Aktivität aktualisieren (für Health-Score & Briefing); graceful,
+      // falls die Spalte fehlt – blockiert nie.
+      await supabase
+        .from("accounts")
+        .update({ last_activity_at: new Date().toISOString() })
+        .eq("id", accId);
       revalidatePath(`/cockpit/kunden/${accId}`);
     }
   }
