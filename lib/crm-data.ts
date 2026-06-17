@@ -130,6 +130,15 @@ function mapKiProject(r: Row): KiProject {
     kickoff_date: str(r.kickoff_date) || undefined,
     decision_maker: str(r.decision_maker) || undefined,
     tech_contact: str(r.tech_contact) || undefined,
+    contract_start: str(r.contract_start) || undefined,
+    contract_end: str(r.contract_end) || undefined,
+    term_months: r.term_months == null ? undefined : Number(r.term_months),
+    billing_cycle: str(r.billing_cycle) || undefined,
+    auto_renew: r.auto_renew == null ? undefined : Boolean(r.auto_renew),
+    churn_risk: (str(r.churn_risk) || undefined) as KiProject["churn_risk"],
+    nps: r.nps == null ? undefined : Number(r.nps),
+    upsell_potential: str(r.upsell_potential) || undefined,
+    upsell_value: r.upsell_value == null ? undefined : Number(r.upsell_value),
   };
 }
 

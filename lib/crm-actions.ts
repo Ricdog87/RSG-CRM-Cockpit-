@@ -867,6 +867,39 @@ export async function deleteTask(id: string): Promise<ActionResult> {
 
 // ---------- KI-Projekt Schnellaktionen (Cockpit) --------------------
 
+export async function updateKiProjectContract(
+  id: string,
+  patch: {
+    contract_start?: string | null;
+    contract_end?: string | null;
+    term_months?: number | null;
+    billing_cycle?: string | null;
+    auto_renew?: boolean;
+    churn_risk?: string | null;
+    nps?: number | null;
+    upsell_potential?: string | null;
+    upsell_value?: number | null;
+  }
+): Promise<ActionResult> {
+  if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
+  return updateGraceful(
+    "ki_projects",
+    id,
+    {
+      contract_start: patch.contract_start || null,
+      contract_end: patch.contract_end || null,
+      term_months: patch.term_months ?? null,
+      billing_cycle: patch.billing_cycle || null,
+      auto_renew: Boolean(patch.auto_renew),
+      churn_risk: patch.churn_risk || null,
+      nps: patch.nps ?? null,
+      upsell_potential: patch.upsell_potential || null,
+      upsell_value: patch.upsell_value ?? null,
+    },
+    ["/cockpit/projekte/ki", `/cockpit/projekte/ki/${id}`]
+  );
+}
+
 export async function setKiProjectStatus(id: string, status: string): Promise<ActionResult> {
   const res = await update("ki_projects", id, { status }, "/cockpit/projekte/ki");
   if (res.ok) revalidatePath(`/cockpit/projekte/ki/${id}`);

@@ -95,6 +95,16 @@ export interface KiProject {
   kickoff_date?: string;
   decision_maker?: string;
   tech_contact?: string;
+  /** Vertrag / Renewal / Churn / Upsell */
+  contract_start?: string;
+  contract_end?: string;
+  term_months?: number;
+  billing_cycle?: string;
+  auto_renew?: boolean;
+  churn_risk?: "niedrig" | "mittel" | "hoch";
+  nps?: number;
+  upsell_potential?: string;
+  upsell_value?: number;
 }
 
 export type MandateStatus =

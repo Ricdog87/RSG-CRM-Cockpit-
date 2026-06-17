@@ -14,6 +14,7 @@ import { EditDialog } from "@/components/cockpit/EditDialog";
 import { KiProjectControls } from "@/components/cockpit/KiProjectControls";
 import { MilestonesCard, ReadinessChecklist } from "@/components/cockpit/KiProjectPlan";
 import { KiMetricsCard } from "@/components/cockpit/KiMetricsCard";
+import { KiContractCard } from "@/components/cockpit/KiContractCard";
 import {
   IconChevronRight,
   IconPhone,
@@ -186,6 +187,13 @@ export default async function KiProjectDetailPage({ params }: { params: { id: st
               ) : (
                 <p className="text-sm text-muted">{p.account_name}</p>
               )}
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardBody>
+              <SectionHeader title="Vertrag & Renewal" hint="Laufzeit · Churn · Upsell" />
+              <KiContractCard project={p} />
             </CardBody>
           </Card>
 
