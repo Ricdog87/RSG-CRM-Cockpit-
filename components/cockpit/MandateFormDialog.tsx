@@ -273,6 +273,7 @@ export function MandateFormDialog({
             <div>
               <label className="mb-1 block text-xs font-medium text-muted">Status</label>
               <select name="status" defaultValue={mandate?.status ?? "offen"} className={inputClass}>
+                <option value="angebot">Angebot / Planung</option>
                 <option value="offen">Offen</option>
                 <option value="in_arbeit">In Arbeit</option>
                 <option value="interviews">Interviews</option>

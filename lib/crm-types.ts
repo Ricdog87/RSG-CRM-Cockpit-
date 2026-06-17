@@ -112,6 +112,7 @@ export interface KiProject {
 }
 
 export type MandateStatus =
+  | "angebot"
   | "offen"
   | "in_arbeit"
   | "interviews"

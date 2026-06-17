@@ -19,6 +19,7 @@ import {
 } from "@/lib/crm-types";
 
 const COLUMNS: { stage: MandateStatus; label: string; tone: "neutral" | "sky" | "brand" | "success" | "warning" }[] = [
+  { stage: "angebot", label: "Angebot / Planung", tone: "neutral" },
   { stage: "offen", label: "Offen", tone: "neutral" },
   { stage: "in_arbeit", label: "In Arbeit", tone: "sky" },
   { stage: "interviews", label: "Interviews", tone: "brand" },

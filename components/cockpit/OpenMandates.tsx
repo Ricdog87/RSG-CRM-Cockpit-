@@ -14,6 +14,7 @@ const statusMeta: Record<
   MandateStatus,
   { label: string; tone: "neutral" | "sky" | "brand" | "success" | "warning" }
 > = {
+  angebot: { label: "Angebot", tone: "neutral" },
   offen: { label: "Offen", tone: "neutral" },
   in_arbeit: { label: "In Arbeit", tone: "sky" },
   interviews: { label: "Interviews", tone: "brand" },
@@ -40,7 +41,7 @@ export function OpenMandates({
   limit?: number;
 }) {
   const open = mandates.filter(
-    (m) => m.status !== "besetzt" && m.filled < m.positions
+    (m) => m.status !== "besetzt" && m.status !== "angebot" && m.filled < m.positions
   );
   const totalOpen = open.reduce((sum, m) => sum + openValue(m), 0);
   const shown = open.slice(0, limit);

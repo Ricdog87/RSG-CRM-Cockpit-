@@ -14,6 +14,7 @@ import {
 } from "@/lib/crm-types";
 
 const statusMeta: Record<MandateStatus, { label: string; tone: "neutral" | "sky" | "brand" | "success" | "warning" }> = {
+  angebot: { label: "Angebot", tone: "neutral" },
   offen: { label: "Offen", tone: "neutral" },
   in_arbeit: { label: "In Arbeit", tone: "sky" },
   interviews: { label: "Interviews", tone: "brand" },

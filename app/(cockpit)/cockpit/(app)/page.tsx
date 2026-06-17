@@ -8,7 +8,7 @@ import {
 } from "@/lib/crm-data";
 import { getOpenTasks } from "@/lib/tasks-data";
 import type { Deal, DealStage } from "@/lib/types";
-import { mandateFeePerPosition, type SalesStage } from "@/lib/crm-types";
+import { mandateFeePerPosition, mandateRevenue, type SalesStage } from "@/lib/crm-types";
 import { getUpcomingMilestones } from "@/lib/placements-data";
 import { getInvoiceSummary } from "@/lib/invoices-data";
 import { KpiRow } from "@/components/cockpit/KpiRow";
@@ -92,12 +92,17 @@ export default async function CockpitPage() {
 
   // ── Recruiting-Kennzahlen ────────────────────────────────────────────
   const recruitingDeals = opportunities.filter((o) => o.line === "recruiting").map(toDeal);
-  const offeneStellen = mandates.reduce((s, m) => s + Math.max(0, m.positions - m.filled), 0);
-  const offeneMandate = mandates.filter((m) => m.status !== "besetzt" && m.filled < m.positions).length;
-  const offenesHonorar = mandates.reduce(
+  // „Angebot / Planung" = Forecast, nicht gewonnen.
+  const wonMandates = mandates.filter((m) => m.status !== "angebot");
+  const offeneStellen = wonMandates.reduce((s, m) => s + Math.max(0, m.positions - m.filled), 0);
+  const offeneMandate = wonMandates.filter((m) => m.status !== "besetzt" && m.filled < m.positions).length;
+  const offenesHonorar = wonMandates.reduce(
     (s, m) => s + Math.max(0, m.positions - m.filled) * mandateFeePerPosition(m),
     0
   );
+  const recruitingForecast = mandates
+    .filter((m) => m.status === "angebot")
+    .reduce((s, m) => s + mandateRevenue(m), 0);
   const aktiveKandidaten = candidates.filter((c) => c.stage !== "platziert" && c.stage !== "abgelehnt").length;
 
   // ── KI-Kennzahlen ────────────────────────────────────────────────────
@@ -124,9 +129,10 @@ export default async function CockpitPage() {
       {/* ═══════════ RSG Recruiting ═══════════ */}
       <LineHeader eyebrow="Geschäftslinie · Personalvermittlung" title="RSG Recruiting" accent="bg-brand" />
       <section className="animate-fade-up" aria-label="Recruiting-Kennzahlen">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <StatCard label="Offene Mandate" value={formatNumber(offeneMandate)} hint={`${formatNumber(offeneStellen)} offene Stellen`} accent="brand" icon={IconBriefcase} />
           <StatCard label="Offenes Honorar" value={formatEur(offenesHonorar)} hint="noch zu besetzen" accent="warning" icon={IconEuro} />
+          <StatCard label="Forecast (Angebot)" value={formatEur(recruitingForecast)} hint="in Planung/Angebot" accent="neutral" icon={IconTrendingUp} />
           <StatCard label="Aktive Kandidat:innen" value={formatNumber(aktiveKandidaten)} hint="in Prozess" accent="sky" icon={IconUserCheck} />
           <StatCard label="Offene Rechnungen" value={formatEur(invoiceSummary.outstanding)} hint={invoiceSummary.overdue > 0 ? `${formatEur(invoiceSummary.overdue)} überfällig` : "gestellt"} accent={invoiceSummary.overdue > 0 ? "warning" : "success"} icon={IconEuro} />
         </div>

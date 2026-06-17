@@ -20,6 +20,7 @@ const statusMeta: Record<
   MandateStatus,
   { label: string; tone: "neutral" | "sky" | "brand" | "success" | "warning" }
 > = {
+  angebot: { label: "Angebot", tone: "neutral" },
   offen: { label: "Offen", tone: "neutral" },
   in_arbeit: { label: "In Arbeit", tone: "sky" },
   interviews: { label: "Interviews", tone: "brand" },
@@ -29,6 +30,7 @@ const statusMeta: Record<
 
 /** Farb-Akzent (linker Rand) je Status – macht die Übersicht scanbarer. */
 const statusAccent: Record<MandateStatus, string> = {
+  angebot: "border-l-sky/50",
   offen: "border-l-border",
   in_arbeit: "border-l-sky",
   interviews: "border-l-brand",
