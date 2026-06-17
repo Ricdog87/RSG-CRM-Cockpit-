@@ -1,4 +1,5 @@
-import { getAccounts } from "@/lib/crm-data";
+import { getAccounts, getMandates, getKiProjects, getOpportunities, getCandidates, accountKey } from "@/lib/crm-data";
+import { computeAccountIntel } from "@/lib/account-intel";
 import { createAccount } from "@/lib/crm-actions";
 import { autofillAccountAction } from "@/lib/ai-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
@@ -13,7 +14,41 @@ import { formatEur, formatNumber } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function KundenPage() {
-  const accounts = await getAccounts();
+  const [accounts, mandates, kiProjects, opportunities, candidates] = await Promise.all([
+    getAccounts(),
+    getMandates(),
+    getKiProjects(),
+    getOpportunities(),
+    getCandidates(),
+  ]);
+
+  // Health-Score je Account aus den (einmalig geladenen) verknüpften Daten.
+  const group = <T,>(items: T[], keyFn: (t: T) => string) => {
+    const m = new Map<string, T[]>();
+    for (const it of items) {
+      const k = accountKey(keyFn(it));
+      const arr = m.get(k);
+      if (arr) arr.push(it);
+      else m.set(k, [it]);
+    }
+    return m;
+  };
+  const mByName = group(mandates, (m) => m.account_name);
+  const kByName = group(kiProjects, (p) => p.account_name);
+  const oByName = group(opportunities, (o) => o.account_name);
+  const cByName = group(candidates, (c) => c.mandate_account);
+  const healthById: Record<string, { score: number; tone: string; label: string }> = {};
+  for (const a of accounts) {
+    const k = accountKey(a.name);
+    const intel = computeAccountIntel({
+      account: a,
+      opportunities: oByName.get(k) ?? [],
+      kiProjects: kByName.get(k) ?? [],
+      mandates: mByName.get(k) ?? [],
+      candidates: cByName.get(k) ?? [],
+    });
+    healthById[a.id] = { score: intel.score, tone: intel.tone, label: intel.label };
+  }
 
   const ki = accounts.filter((a) => a.line === "ki");
   const recruiting = accounts.filter((a) => a.line === "recruiting");
@@ -76,7 +111,7 @@ export default async function KundenPage() {
 
       <BackfillAccountsButton derivedCount={derivedCount} />
 
-      <AccountsView accounts={accounts} />
+      <AccountsView accounts={accounts} healthById={healthById} />
     </div>
   );
 }

@@ -16,13 +16,35 @@ const lifecycleMeta: Record<
   bestand: { label: "Bestand", tone: "success" },
 };
 
+const healthDot: Record<string, string> = {
+  success: "bg-success",
+  sky: "bg-sky",
+  warning: "bg-warning",
+  danger: "bg-danger",
+};
+
+function HealthPill({ info }: { info?: { score: number; tone: string; label: string } }) {
+  if (!info) return null;
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full border border-border bg-elevated px-1.5 py-0.5 text-[0.65rem] font-semibold text-muted"
+      title={`Health ${info.score}/100 · ${info.label}`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${healthDot[info.tone] ?? "bg-elevated"}`} />
+      {info.score}
+    </span>
+  );
+}
+
 /** Account-/Kundenliste (Customer Management). */
 export function AccountsTable({
   accounts,
   renderActions,
+  healthById = {},
 }: {
   accounts: Account[];
   renderActions?: (a: Account) => React.ReactNode;
+  healthById?: Record<string, { score: number; tone: string; label: string }>;
 }) {
   if (accounts.length === 0) {
     return (
@@ -64,6 +86,7 @@ export function AccountsTable({
                         {a.name}
                       </Link>
                       <LineBadge line={a.line} />
+                      <HealthPill info={healthById[a.id]} />
                       {a.synthetic ? <Badge tone="neutral">abgeleitet</Badge> : null}
                     </div>
                     {a.contact_name ? (
@@ -92,6 +115,7 @@ export function AccountsTable({
                       {a.name}
                     </Link>
                     <LineBadge line={a.line} />
+                    <HealthPill info={healthById[a.id]} />
                     {a.synthetic ? <Badge tone="neutral">abgeleitet</Badge> : null}
                   </div>
                   <p className="truncate text-xs text-faint">

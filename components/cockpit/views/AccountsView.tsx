@@ -12,10 +12,18 @@ import { updateAccount, deleteAccount } from "@/lib/crm-actions";
 import type { Account, BusinessLine, Lifecycle } from "@/lib/crm-types";
 
 type LineFilter = "all" | BusinessLine;
-type Sort = "mrr" | "name" | "lifecycle";
+type Sort = "mrr" | "name" | "lifecycle" | "health";
+
+export type HealthInfo = { score: number; tone: string; label: string };
 
 /** Account-Liste mit Suche, Sortierung, Linien-Filter, Lifecycle-Filter, Bearbeiten und Löschen. */
-export function AccountsView({ accounts }: { accounts: Account[] }) {
+export function AccountsView({
+  accounts,
+  healthById = {},
+}: {
+  accounts: Account[];
+  healthById?: Record<string, HealthInfo>;
+}) {
   const router = useRouter();
   const [items, setItems] = useState(accounts);
   const [filter, setFilter] = useState<LineFilter>("all");
@@ -52,9 +60,11 @@ export function AccountsView({ accounts }: { accounts: Account[] }) {
     const arr = [...pool];
     if (sort === "name") arr.sort((a, b) => a.name.localeCompare(b.name));
     else if (sort === "lifecycle") arr.sort((a, b) => a.lifecycle.localeCompare(b.lifecycle));
+    else if (sort === "health")
+      arr.sort((a, b) => (healthById[a.id]?.score ?? 999) - (healthById[b.id]?.score ?? 999));
     else arr.sort((a, b) => (b.mrr ?? 0) - (a.mrr ?? 0));
     return arr;
-  }, [afterLineFilter, lifecycle, q, sort]);
+  }, [afterLineFilter, lifecycle, q, sort, healthById]);
 
   return (
     <div className="space-y-4">
@@ -75,6 +85,7 @@ export function AccountsView({ accounts }: { accounts: Account[] }) {
           className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-ink focus-visible:ring-2 focus-visible:ring-brand"
         >
           <option value="mrr">MRR ↓</option>
+          <option value="health">Health ↑ (Risiko zuerst)</option>
           <option value="name">Name A–Z</option>
           <option value="lifecycle">Lifecycle</option>
         </select>
@@ -108,6 +119,7 @@ export function AccountsView({ accounts }: { accounts: Account[] }) {
 
       <AccountsTable
         accounts={shown}
+        healthById={healthById}
         renderActions={(a) => (
           <RowActions
             confirmText={`„${a.name}“ wirklich löschen?`}
