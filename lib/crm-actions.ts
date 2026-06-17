@@ -367,6 +367,7 @@ export async function createMandate(
       fee_percent: pricing === "percent" ? n(fd, "fee_percent") || 25 : null,
       deposit: pricing === "fixed" ? n(fd, "deposit") : 0,
       split_payment: s(fd, "split_payment") === "1",
+      job_posting: s(fd, "job_posting") || null,
       candidate_count: 0,
       deadline: s(fd, "deadline") || null,
     },
@@ -730,6 +731,7 @@ export async function updateMandate(
       fee_percent: pricing === "percent" ? n(fd, "fee_percent") || 25 : null,
       deposit: pricing === "fixed" ? n(fd, "deposit") : 0,
       split_payment: s(fd, "split_payment") === "1",
+      job_posting: s(fd, "job_posting") || null,
       deadline: s(fd, "deadline") || null,
     },
     ["/cockpit/projekte/recruiting", `/cockpit/projekte/recruiting/${id}`]

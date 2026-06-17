@@ -257,6 +257,23 @@ export function MandateFormDialog({
             </div>
           </div>
 
+          {/* Original-Stellenausschreibung – Futter fürs intelligente Matching */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted">
+              Original-Stellenausschreibung (vom Kunden)
+            </label>
+            <textarea
+              name="job_posting"
+              rows={5}
+              defaultValue={mandate?.job_posting ?? ""}
+              placeholder="Original-Anzeige hier einfügen – das CRM versteht so genau, was gesucht wird (Aufgaben, Anforderungen, Benefits …)."
+              className={inputClass + " resize-y"}
+            />
+            <p className="mt-1 text-[0.7rem] text-faint">
+              Optional, aber empfohlen: verbessert Search &amp; Match und kann anonymisiert geteilt werden.
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-muted">Status</label>

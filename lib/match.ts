@@ -49,20 +49,33 @@ function scoreMatch(
     Candidate,
     "role" | "skills" | "zip" | "location" | "willing_to_relocate" | "salary_expectation" | "availability"
   >,
-  mandate: Pick<RecruitingMandate, "role" | "target_salary">,
+  mandate: Pick<
+    RecruitingMandate,
+    "role" | "target_salary" | "job_posting" | "job_posting_anonymized"
+  >,
   jobCoords: Coords
 ): { score: number; factors: string[] } {
   const factors: string[] = [];
 
-  // Rolle & Skills (0–50)
+  // Rolle & Skills (0–50): Rollen-Titel (0–40) + Keyword-Treffer aus der
+  // hinterlegten Stellenausschreibung (0–10) → intelligenteres Matching.
   const roleTokens = new Set(tokens(mandate.role));
   const candTokens = new Set([...tokens(cand.role), ...(cand.skills ?? []).flatMap(tokens)]);
   let overlap = 0;
   roleTokens.forEach((t) => {
     if (candTokens.has(t)) overlap++;
   });
-  const roleScore = roleTokens.size > 0 ? Math.round((overlap / roleTokens.size) * 50) : 25;
+  const roleBase = roleTokens.size > 0 ? (overlap / roleTokens.size) * 40 : 20;
+
+  const postingText = mandate.job_posting_anonymized || mandate.job_posting || "";
+  const jobTokens = new Set(tokens(postingText));
+  let kwHits = 0;
+  if (jobTokens.size) candTokens.forEach((t) => { if (jobTokens.has(t)) kwHits++; });
+  const kwBonus = Math.min(10, kwHits * 2);
+
+  const roleScore = Math.round(roleBase + kwBonus);
   if (roleScore >= 25) factors.push("Rolle passt");
+  if (kwBonus >= 4) factors.push("Anzeige-Keywords passen");
 
   // Standort über Distanz (0–20)
   let locScore = 8;

@@ -146,6 +146,9 @@ export async function getMandates(): Promise<RecruitingMandate[]> {
         fee_percent: r.fee_percent != null ? Number(r.fee_percent) : undefined,
         deposit: r.deposit != null ? Number(r.deposit) : undefined,
         split_payment: r.split_payment == null ? undefined : Boolean(r.split_payment),
+        job_posting: str(r.job_posting) || undefined,
+        job_posting_anonymized: str(r.job_posting_anonymized) || undefined,
+        share_token: str(r.share_token) || undefined,
       })),
     { column: "deadline", ascending: true }
   );

@@ -7,6 +7,7 @@ import { StatCard } from "@/components/cockpit/StatCard";
 import { Badge } from "@/components/ui/Badge";
 import { MandateCandidates } from "@/components/cockpit/MandateCandidates";
 import { MandateMatchPanel } from "@/components/cockpit/MandateMatchPanel";
+import { JobPostingCard } from "@/components/cockpit/JobPostingCard";
 import { IconChevronRight, IconBriefcase, IconUserCheck, IconEuro, IconTarget } from "@/components/ui/icons";
 import { formatEur, formatNumber, formatDate } from "@/lib/format";
 import type { MandateStatus } from "@/lib/crm-types";
@@ -76,6 +77,22 @@ export default async function MandateDetailPage({
         <StatCard label="Kandidat:innen" value={formatNumber(list.length)} hint="zugeordnet" accent="sky" icon={IconTarget} />
         <StatCard label="Erwarteter Umsatz" value={formatEur(mandateRevenue(m))} hint={`${formatEur(offen * perPos)} offen`} accent="warning" icon={IconEuro} />
       </div>
+
+      <Card>
+        <CardBody>
+          <SectionHeader
+            title="Stellenausschreibung"
+            hint="Original hinterlegen · anonymisiert teilen"
+          />
+          <JobPostingCard
+            mandateId={m.id}
+            role={m.role}
+            jobPosting={m.job_posting}
+            anonymized={m.job_posting_anonymized}
+            shareToken={m.share_token}
+          />
+        </CardBody>
+      </Card>
 
       <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.05] to-sky/[0.04]">
         <CardBody>

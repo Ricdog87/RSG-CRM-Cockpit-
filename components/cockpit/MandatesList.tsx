@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { IconUserCheck, IconChevronRight } from "@/components/ui/icons";
+import { IconUserCheck, IconChevronRight, IconFolder } from "@/components/ui/icons";
 import { formatDate, formatEur } from "@/lib/format";
 import {
   mandateRevenue,
@@ -25,6 +25,15 @@ const statusMeta: Record<
   interviews: { label: "Interviews", tone: "brand" },
   besetzt: { label: "Besetzt", tone: "success" },
   pausiert: { label: "Pausiert", tone: "warning" },
+};
+
+/** Farb-Akzent (linker Rand) je Status – macht die Übersicht scanbarer. */
+const statusAccent: Record<MandateStatus, string> = {
+  offen: "border-l-border",
+  in_arbeit: "border-l-sky",
+  interviews: "border-l-brand",
+  besetzt: "border-l-success",
+  pausiert: "border-l-warning",
 };
 
 const stageMeta: Record<
@@ -106,12 +115,24 @@ export function MandatesList({
         }
 
         return (
-          <Card key={m.id} className="card-hover">
+          <Card key={m.id} className={`card-hover overflow-hidden border-l-4 ${statusAccent[m.status]}`}>
             <CardBody className="space-y-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-ink">{m.role}</p>
                   <p className="truncate text-xs text-faint">{m.account_name}</p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                    {m.job_posting ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-sky/10 px-2 py-0.5 text-[0.65rem] font-medium text-sky-deep">
+                        <IconFolder size={11} /> Anzeige hinterlegt
+                      </span>
+                    ) : null}
+                    {m.job_posting_anonymized ? (
+                      <span className="rounded-full bg-success/10 px-2 py-0.5 text-[0.65rem] font-medium text-success">
+                        anonymisiert teilbar
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="flex flex-none items-center gap-1">
                   <Badge tone={st.tone}>{st.label}</Badge>

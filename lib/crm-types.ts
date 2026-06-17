@@ -113,6 +113,12 @@ export interface RecruitingMandate {
    * 50 % nach 3 Monaten Betriebszugehörigkeit.
    */
   split_payment?: boolean;
+  /** Original-Stellenausschreibung des Kunden (Volltext). */
+  job_posting?: string;
+  /** Anonymisierte Fassung der Stellenausschreibung (ohne Kundenbezug). */
+  job_posting_anonymized?: string;
+  /** Öffentlicher Token für die Stellen-Seite (/stelle/<token>). */
+  share_token?: string;
 }
 
 /** Honorar je Stelle (Festpreis ODER % vom Zielgehalt). */
