@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { IconClose } from "@/components/ui/icons";
 
 /** Schlanker, zugänglicher Modal-Dialog (Client). */
@@ -17,6 +18,9 @@ export function Dialog({
   description?: string;
   children: React.ReactNode;
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -30,9 +34,11 @@ export function Dialog({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  // Per Portal an <body>, damit `position: fixed` nicht von transformierten
+  // Vorfahren (animate-fade-up / card-hover) eingefangen wird.
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center"
       role="dialog"
@@ -63,6 +69,7 @@ export function Dialog({
         </div>
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
