@@ -89,6 +89,12 @@ export interface KiProject {
   setup_fee?: number;
   go_live: string;
   health: Health;
+  /** Cockpit-Stammdaten */
+  use_case?: string;
+  project_manager?: string;
+  kickoff_date?: string;
+  decision_maker?: string;
+  tech_contact?: string;
 }
 
 export type MandateStatus =

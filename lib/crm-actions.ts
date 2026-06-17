@@ -364,6 +364,11 @@ export async function createKiProject(
       setup_fee: n(fd, "setup_fee"),
       go_live: s(fd, "go_live") || null,
       health: s(fd, "health") || "neutral",
+      use_case: s(fd, "use_case") || null,
+      project_manager: s(fd, "project_manager") || null,
+      kickoff_date: s(fd, "kickoff_date") || null,
+      decision_maker: s(fd, "decision_maker") || null,
+      tech_contact: s(fd, "tech_contact") || null,
     },
     "/cockpit/projekte/ki"
   );
@@ -764,6 +769,20 @@ export async function deleteTask(id: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+// ---------- KI-Projekt Schnellaktionen (Cockpit) --------------------
+
+export async function setKiProjectStatus(id: string, status: string): Promise<ActionResult> {
+  const res = await update("ki_projects", id, { status }, "/cockpit/projekte/ki");
+  if (res.ok) revalidatePath(`/cockpit/projekte/ki/${id}`);
+  return res;
+}
+
+export async function setKiProjectHealth(id: string, health: string): Promise<ActionResult> {
+  const res = await update("ki_projects", id, { health }, "/cockpit/projekte/ki");
+  if (res.ok) revalidatePath(`/cockpit/projekte/ki/${id}`);
+  return res;
+}
+
 // ---------- Update der übrigen Entitäten ----------------------------
 
 export async function updateCandidate(
@@ -866,8 +885,13 @@ export async function updateKiProject(
       setup_fee: n(fd, "setup_fee"),
       go_live: s(fd, "go_live") || null,
       health: s(fd, "health") || "neutral",
+      use_case: s(fd, "use_case") || null,
+      project_manager: s(fd, "project_manager") || null,
+      kickoff_date: s(fd, "kickoff_date") || null,
+      decision_maker: s(fd, "decision_maker") || null,
+      tech_contact: s(fd, "tech_contact") || null,
     },
-    "/cockpit/projekte/ki"
+    ["/cockpit/projekte/ki", `/cockpit/projekte/ki/${id}`]
   );
 }
 

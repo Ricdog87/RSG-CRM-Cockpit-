@@ -183,6 +183,11 @@ export const KIPROJECT_FIELDS: FormField[] = [
     placeholder: "Token, Wartung & Updates",
   },
   { name: "go_live", label: "Go-Live", type: "date" },
+  { name: "use_case", label: "Use-Case", type: "textarea", full: true, placeholder: "Was automatisiert die KI? Ziel & Erfolgskriterien." },
+  { name: "project_manager", label: "Projektverantwortlich (intern)" },
+  { name: "kickoff_date", label: "Kickoff", type: "date" },
+  { name: "decision_maker", label: "Entscheider (Kunde)" },
+  { name: "tech_contact", label: "Technischer Ansprechpartner" },
 ];
 
 export const OPPORTUNITY_FIELDS: FormField[] = [

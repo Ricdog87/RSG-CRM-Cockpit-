@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -59,10 +60,12 @@ export function KiProjectsTable({
                 className="grid grid-cols-2 gap-2 px-5 py-3.5 lg:grid-cols-12 lg:items-center lg:gap-3"
               >
                 <div className="col-span-2 min-w-0 lg:col-span-4">
-                  <p className="truncate text-sm font-medium text-ink">{p.account_name}</p>
-                  <p className="truncate text-xs text-faint">
-                    {p.product} · Go-Live {formatDate(p.go_live)}
-                  </p>
+                  <Link href={`/cockpit/projekte/ki/${p.id}`} className="group">
+                    <p className="truncate text-sm font-medium text-ink group-hover:text-brand-deep group-hover:underline">{p.account_name}</p>
+                    <p className="truncate text-xs text-faint">
+                      {p.product} · Go-Live {formatDate(p.go_live)}
+                    </p>
+                  </Link>
                 </div>
                 <div className="hidden min-w-0 lg:col-span-2 lg:block">
                   <p className="truncate text-sm text-muted">{p.segment}</p>

@@ -114,24 +114,43 @@ export async function getOpportunities(): Promise<Opportunity[]> {
   );
 }
 
+function mapKiProject(r: Row): KiProject {
+  return {
+    id: str(r.id),
+    account_name: str(r.account_name, "Account"),
+    product: str(r.product),
+    segment: str(r.segment),
+    status: (str(r.status, "onboarding") as KiStatus),
+    mrr: num(r.mrr),
+    setup_fee: num(r.setup_fee),
+    go_live: str(r.go_live),
+    health: (str(r.health, "neutral") as Health),
+    use_case: str(r.use_case) || undefined,
+    project_manager: str(r.project_manager) || undefined,
+    kickoff_date: str(r.kickoff_date) || undefined,
+    decision_maker: str(r.decision_maker) || undefined,
+    tech_contact: str(r.tech_contact) || undefined,
+  };
+}
+
 export async function getKiProjects(): Promise<KiProject[]> {
-  return load(
-    "ki_projects",
-    mockKiProjects,
-    (rows) =>
-      rows.map((r) => ({
-        id: str(r.id),
-        account_name: str(r.account_name, "Account"),
-        product: str(r.product),
-        segment: str(r.segment),
-        status: (str(r.status, "onboarding") as KiStatus),
-        mrr: num(r.mrr),
-        setup_fee: num(r.setup_fee),
-        go_live: str(r.go_live),
-        health: (str(r.health, "neutral") as Health),
-      })),
-    { column: "go_live", ascending: false }
-  );
+  return load("ki_projects", mockKiProjects, (rows) => rows.map(mapKiProject), {
+    column: "go_live",
+    ascending: false,
+  });
+}
+
+/** Einzelnes KI-Projekt für das Cockpit (RLS-scoped). */
+export async function getKiProject(id: string): Promise<KiProject | null> {
+  if (useMockData) return mockKiProjects.find((p) => p.id === id) ?? null;
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase.from("ki_projects").select("*").eq("id", id).maybeSingle();
+    if (error || !data) return null;
+    return mapKiProject(data as Row);
+  } catch {
+    return null;
+  }
 }
 
 export async function getMandates(): Promise<RecruitingMandate[]> {
