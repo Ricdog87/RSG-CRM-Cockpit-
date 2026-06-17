@@ -138,7 +138,11 @@ export function MandateMatchPanel({ mandateId }: { mandateId: string }) {
                     ) : null}
                   </div>
                   <div className="flex-none">
-                    {presented ? (
+                    {m.rejected ? (
+                      <span className="inline-flex items-center gap-1 rounded-lg border border-danger/30 bg-danger/10 px-2.5 py-1.5 text-xs font-medium text-danger">
+                        Absage erhalten
+                      </span>
+                    ) : presented ? (
                       <span className="inline-flex items-center gap-1 rounded-lg border border-border bg-elevated px-2.5 py-1.5 text-xs font-medium text-muted">
                         <IconCheck size={13} className="text-success" /> Vorgestellt
                       </span>

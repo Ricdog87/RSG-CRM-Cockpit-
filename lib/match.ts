@@ -20,6 +20,8 @@ export interface CandidateMatch {
   score: number;
   factors: string[];
   already: boolean;
+  /** Hat für DIESES Mandat bereits eine Absage erhalten. */
+  rejected: boolean;
 }
 
 export interface MandateMatch {
@@ -154,6 +156,8 @@ export async function matchCandidatesToMandate(
 
   const matches: CandidateMatch[] = candidates.map((c) => {
     const { score, factors } = scoreMatch(c, m, jobCoords);
+    // Absage für genau dieses Mandat (zugeordnet + Phase „abgelehnt").
+    const rejected = c.mandate_id === mandateId && c.stage === "abgelehnt";
     return {
       id: c.id,
       name: c.name,
@@ -165,10 +169,17 @@ export async function matchCandidatesToMandate(
       score,
       factors,
       already: pairs.has(`${c.id}:${mandateId}`),
+      rejected,
     };
   });
 
-  matches.sort((a, b) => Number(a.already) - Number(b.already) || b.score - a.score);
+  // Abgesagte Kandidat:innen nach ganz unten, dann bereits vorgestellte, dann Score.
+  matches.sort(
+    (a, b) =>
+      Number(a.rejected) - Number(b.rejected) ||
+      Number(a.already) - Number(b.already) ||
+      b.score - a.score
+  );
   return { ok: true, mandateRole: m.role, matches: matches.slice(0, 25) };
 }
 

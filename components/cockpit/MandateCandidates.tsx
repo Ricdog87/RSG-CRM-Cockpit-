@@ -14,6 +14,7 @@ const COLUMNS: BoardColumn<CandidateStage>[] = [
   { stage: "interview", label: "Interview", tone: "brand" },
   { stage: "angebot", label: "Angebot", tone: "brand" },
   { stage: "platziert", label: "Platziert", tone: "success" },
+  { stage: "abgelehnt", label: "Absage", tone: "danger" },
 ];
 const OPTIONS = COLUMNS.map((c) => ({ value: c.stage, label: c.label }));
 

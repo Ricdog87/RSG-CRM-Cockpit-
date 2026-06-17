@@ -94,6 +94,7 @@ export const CANDIDATE_FIELDS: FormField[] = [
       { value: "interview", label: "Interview" },
       { value: "angebot", label: "Angebot" },
       { value: "platziert", label: "Platziert" },
+      { value: "abgelehnt", label: "Absage" },
     ],
   },
   { name: "source", label: "Quelle", placeholder: "z.B. LinkedIn" },
