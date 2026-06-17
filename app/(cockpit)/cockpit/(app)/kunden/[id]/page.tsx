@@ -112,6 +112,14 @@ export default async function AccountDetailPage({
               <p className="mt-1 truncate text-sm text-ink">{account.contact_phone || "—"}</p>
             </div>
             <div>
+              <p className="kpi-label">Adresse</p>
+              <p className="mt-1 text-sm text-ink">
+                {[account.strasse, [account.plz, account.ort].filter(Boolean).join(" ")]
+                  .filter(Boolean)
+                  .join(", ") || "—"}
+              </p>
+            </div>
+            <div>
               <p className="kpi-label">Segment</p>
               <p className="mt-1 text-sm text-ink">{account.segment || "—"}</p>
             </div>
