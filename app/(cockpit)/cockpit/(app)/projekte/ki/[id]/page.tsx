@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getKiProject, getAccounts } from "@/lib/crm-data";
 import { getTasksForRelated } from "@/lib/tasks-data";
 import { getMilestonesForProject, getReadinessForProject } from "@/lib/ki-plan-data";
+import { getMetricsForProject } from "@/lib/ki-metrics-data";
 import { updateKiProject } from "@/lib/crm-actions";
 import { KIPROJECT_FIELDS, withDatalist } from "@/lib/crm-forms";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
@@ -12,6 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { KiProjectControls } from "@/components/cockpit/KiProjectControls";
 import { MilestonesCard, ReadinessChecklist } from "@/components/cockpit/KiProjectPlan";
+import { KiMetricsCard } from "@/components/cockpit/KiMetricsCard";
 import {
   IconChevronRight,
   IconPhone,
@@ -48,12 +50,13 @@ function Prop({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export default async function KiProjectDetailPage({ params }: { params: { id: string } }) {
-  const [p, accounts, tasks, milestones, readiness] = await Promise.all([
+  const [p, accounts, tasks, milestones, readiness, metrics] = await Promise.all([
     getKiProject(params.id),
     getAccounts(),
     getTasksForRelated("project", params.id),
     getMilestonesForProject(params.id),
     getReadinessForProject(params.id),
+    getMetricsForProject(params.id),
   ]);
   if (!p) notFound();
 
@@ -128,6 +131,13 @@ export default async function KiProjectDetailPage({ params }: { params: { id: st
         <CardBody>
           <SectionHeader title="Projektplan" hint="Meilensteine bis Go-Live & Betrieb" />
           <MilestonesCard projectId={p.id} milestones={milestones} />
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody>
+          <SectionHeader title="Betrieb & Performance" hint="monatliche Kennzahlen · objektive Health" />
+          <KiMetricsCard projectId={p.id} metrics={metrics} />
         </CardBody>
       </Card>
 
