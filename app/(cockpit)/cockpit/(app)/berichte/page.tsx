@@ -1,10 +1,13 @@
-import { getOpportunities, getMandates } from "@/lib/crm-data";
+import { getOpportunities, getMandates, getCandidates } from "@/lib/crm-data";
+import { getPlacements } from "@/lib/placements-data";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { FunnelChart, ForecastChart } from "@/components/cockpit/BerichteCharts";
-import { IconTarget, IconEuro, IconTrendingUp, IconBriefcase } from "@/components/ui/icons";
-import { formatEur, formatPercent } from "@/lib/format";
+import { SourceRoiTable, type SourceRoiRow } from "@/components/cockpit/SourceRoiTable";
+import { IconTarget, IconEuro, IconTrendingUp, IconBriefcase, IconUserCheck, IconClock } from "@/components/ui/icons";
+import { formatEur, formatNumber, formatPercent } from "@/lib/format";
+import type { CandidateStage } from "@/lib/crm-types";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +22,21 @@ const STAGES: { key: string; label: string }[] = [
 
 const MONTHS = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
 
+const RECRUIT_FUNNEL: { key: CandidateStage; label: string }[] = [
+  { key: "neu", label: "Neu" },
+  { key: "screening", label: "Screening" },
+  { key: "interview", label: "Interview" },
+  { key: "angebot", label: "Angebot" },
+  { key: "platziert", label: "Platziert" },
+];
+
 export default async function BerichtePage() {
-  const [opps, mandates] = await Promise.all([getOpportunities(), getMandates()]);
+  const [opps, mandates, candidates, placements] = await Promise.all([
+    getOpportunities(),
+    getMandates(),
+    getCandidates(),
+    getPlacements(),
+  ]);
 
   const open = opps.filter((o) => o.stage !== "gewonnen" && o.stage !== "verloren");
   const won = opps.filter((o) => o.stage === "gewonnen").length;
@@ -56,6 +72,49 @@ export default async function BerichtePage() {
   const filled = mandates.reduce((s, m) => s + m.filled, 0);
   const totalPositions = mandates.reduce((s, m) => s + m.positions, 0);
   const fillRate = totalPositions > 0 ? (filled / totalPositions) * 100 : 0;
+
+  // ---- Recruiting-KPIs --------------------------------------------------
+  const active = candidates.filter((c) => c.stage !== "abgelehnt");
+  const recruitFunnel = RECRUIT_FUNNEL.map(({ key, label }) => ({
+    stage: label,
+    count: active.filter((c) => c.stage === key).length,
+  }));
+
+  const placedCount = placements.length;
+  const placedFee = placements.reduce((s, p) => s + (p.agreed_fee ?? 0), 0);
+  const submittedToPlaced = active.length > 0 ? (placedCount / active.length) * 100 : 0;
+
+  // Time-to-Fill: Tage von Mandat-Anlage bis Eintritt der ersten Platzierung.
+  const mandateById = new Map(mandates.map((m) => [m.id, m]));
+  const ttfDays: number[] = [];
+  for (const p of placements) {
+    const m = p.mandate_id ? mandateById.get(p.mandate_id) : undefined;
+    if (m?.created_at && p.start_date) {
+      const a = new Date(m.created_at).getTime();
+      const b = new Date(p.start_date + "T00:00:00").getTime();
+      if (!Number.isNaN(a) && !Number.isNaN(b) && b >= a) ttfDays.push(Math.round((b - a) / 86400000));
+    }
+  }
+  const timeToFill = ttfDays.length ? Math.round(ttfDays.reduce((s, d) => s + d, 0) / ttfDays.length) : 0;
+
+  // Quellen-ROI: Kandidaten je Quelle vs. Platzierungen + Honorar.
+  const candById = new Map(candidates.map((c) => [c.id, c]));
+  const sourceMap = new Map<string, SourceRoiRow>();
+  for (const c of candidates) {
+    const key = c.source?.trim() || "Unbekannt";
+    const row = sourceMap.get(key) ?? { source: key, candidates: 0, placed: 0, fee: 0 };
+    row.candidates += 1;
+    sourceMap.set(key, row);
+  }
+  for (const p of placements) {
+    const c = p.candidate_id ? candById.get(p.candidate_id) : undefined;
+    const key = c?.source?.trim() || "Unbekannt";
+    const row = sourceMap.get(key) ?? { source: key, candidates: 0, placed: 0, fee: 0 };
+    row.placed += 1;
+    row.fee += p.agreed_fee ?? 0;
+    sourceMap.set(key, row);
+  }
+  const sourceRows = Array.from(sourceMap.values()).sort((a, b) => b.placed - a.placed || b.candidates - a.candidates);
 
   return (
     <div className="space-y-6">
@@ -116,6 +175,56 @@ export default async function BerichtePage() {
                 Noch keine datierten Abschlüsse für einen Forecast.
               </p>
             )}
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Recruiting-KPIs */}
+      <div className="pt-2">
+        <SectionHeader title="Recruiting" hint="Funnel, Time-to-Fill & Quellen-ROI" />
+      </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          label="Platzierungen"
+          value={formatNumber(placedCount)}
+          hint={`${formatEur(placedFee)} Honorar`}
+          accent="success"
+          icon={IconUserCheck}
+        />
+        <StatCard
+          label="Kandidat→Platzierung"
+          value={formatPercent(submittedToPlaced)}
+          hint={`${active.length} aktive Kandidat:innen`}
+          accent="brand"
+          icon={IconTrendingUp}
+        />
+        <StatCard
+          label="Time-to-Fill"
+          value={timeToFill > 0 ? `${timeToFill} T` : "—"}
+          hint="Mandat-Anlage → Eintritt"
+          accent="sky"
+          icon={IconClock}
+        />
+        <StatCard
+          label="Besetzungsquote"
+          value={formatPercent(fillRate)}
+          hint={`${filled} / ${totalPositions} Stellen`}
+          accent="warning"
+          icon={IconBriefcase}
+        />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardBody>
+            <SectionHeader title="Kandidaten-Funnel" hint="aktive Kandidat:innen je Phase" />
+            <FunnelChart data={recruitFunnel} />
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody>
+            <SectionHeader title="Quellen-ROI" hint="Kanäle → Platzierungen & Honorar" />
+            <SourceRoiTable rows={sourceRows} />
           </CardBody>
         </Card>
       </div>

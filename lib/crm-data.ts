@@ -149,6 +149,7 @@ export async function getMandates(): Promise<RecruitingMandate[]> {
         job_posting: str(r.job_posting) || undefined,
         job_posting_anonymized: str(r.job_posting_anonymized) || undefined,
         share_token: str(r.share_token) || undefined,
+        created_at: str(r.created_at) || undefined,
       })),
     { column: "deadline", ascending: true }
   );

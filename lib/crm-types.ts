@@ -119,6 +119,8 @@ export interface RecruitingMandate {
   job_posting_anonymized?: string;
   /** Öffentlicher Token für die Stellen-Seite (/stelle/<token>). */
   share_token?: string;
+  /** Anlagedatum (für Time-to-Fill). */
+  created_at?: string;
 }
 
 /** Honorar je Stelle (Festpreis ODER % vom Zielgehalt). */
