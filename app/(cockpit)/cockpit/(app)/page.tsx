@@ -14,6 +14,7 @@ import { getInvoiceSummary } from "@/lib/invoices-data";
 import { getActivityStats } from "@/lib/activity-data";
 import { buildBriefing } from "@/lib/ai/briefing";
 import { DailyBriefing } from "@/components/cockpit/DailyBriefing";
+import { WeeklyReview } from "@/components/cockpit/WeeklyReview";
 import { DailyGoals } from "@/components/cockpit/DailyGoals";
 import { KpiRow } from "@/components/cockpit/KpiRow";
 import { StatCard } from "@/components/cockpit/StatCard";
@@ -172,6 +173,26 @@ export default async function CockpitPage() {
 
   const aktiveKunden = accounts.filter((a) => a.lifecycle === "kunde" || a.lifecycle === "bestand").length;
 
+  // ── Wochen-Review (Freitag) ───────────────────────────────────────────
+  const weekStartMs = weekStart.getTime();
+  const inWeek = (iso?: string) => {
+    if (!iso) return false;
+    const t = new Date(iso).getTime();
+    return !Number.isNaN(t) && t >= weekStartMs;
+  };
+  const weeklyReviewInput = {
+    calls: activityStats.weekCalls,
+    emails: activityStats.weekEmails,
+    kiActivities: activityStats.week.ki.call + activityStats.week.ki.email,
+    recruitingActivities: activityStats.week.recruiting.call + activityStats.week.recruiting.email,
+    newMandates: mandates.filter((m) => inWeek(m.created_at)).length,
+    newKi: kiProjects.filter((p) => inWeek(p.created_at)).length,
+    placements: candidates.filter((c) => c.stage === "platziert" && inWeek(c.updated_at)).length,
+    atRisk: Math.round(briefing.atRisk),
+    kritisch: briefing.counts.kritisch,
+    wichtig: briefing.counts.wichtig,
+  };
+
   // ── Recruiting-Kennzahlen ────────────────────────────────────────────
   const recruitingDeals = opportunities.filter((o) => o.line === "recruiting").map(toDeal);
   // „Angebot / Planung" = Forecast, nicht gewonnen.
@@ -207,6 +228,12 @@ export default async function CockpitPage() {
       <section className="animate-fade-up" aria-label="Tages-Briefing">
         <DailyBriefing signals={briefing.signals} counts={briefing.counts} atRisk={briefing.atRisk} />
       </section>
+
+      {todayMode !== "work" ? (
+        <section className="animate-fade-up" aria-label="Wochen-Review">
+          <WeeklyReview input={weeklyReviewInput} />
+        </section>
+      ) : null}
 
       <section className="animate-fade-up" aria-label="Schnellzugriff">
         <QuickActions />

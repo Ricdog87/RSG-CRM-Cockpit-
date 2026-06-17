@@ -7,6 +7,7 @@ import { askCopilot } from "@/lib/ai/copilot";
 import { buildBriefing } from "@/lib/ai/briefing";
 import { narrateBriefing } from "@/lib/ai/briefing-narrate";
 import { draftFollowup, type FollowupDraft } from "@/lib/ai/followup";
+import { narrateWeeklyReview, type WeeklyReviewInput } from "@/lib/ai/weekly-review";
 import { getOpportunities } from "@/lib/crm-data";
 import { createAccount, type ActionResult } from "@/lib/crm-actions";
 import type {
@@ -225,6 +226,18 @@ export async function narrateBriefingAction(): Promise<{
       ok: false,
       error: e instanceof Error ? e.message : "Briefing fehlgeschlagen.",
     };
+  }
+}
+
+/** KI: formuliert ein Wochen-Review (Freitag) aus übergebenen Zahlen. */
+export async function narrateWeeklyReviewAction(
+  input: WeeklyReviewInput
+): Promise<{ ok: boolean; text?: string; mode?: "live" | "demo"; error?: string }> {
+  try {
+    const { text, mode } = await narrateWeeklyReview(input);
+    return { ok: true, text, mode };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Review fehlgeschlagen." };
   }
 }
 
