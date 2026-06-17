@@ -4,12 +4,15 @@ import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import { logDataError, isMissingTable } from "@/lib/log";
 
+export type AutomationCategory = "Sales & Leads" | "Recruiting" | "KI" | "Allgemein";
+
 export interface AutomationDef {
   key: string;
   title: string;
   description: string;
   trigger: string;
   action: string;
+  category?: AutomationCategory;
 }
 
 /** Definierte Workflow-Regeln (Logik in den jeweiligen Server-Aktionen). */
