@@ -237,6 +237,26 @@ export async function buildBriefing(pre?: BriefingInput): Promise<Briefing> {
       urgency: 90,
     });
   }
+  // Aktive Kandidat:innen ohne Update (>14 T) – Prozess am Laufen halten.
+  const staleCandidates = candidates.filter((c) => {
+    if (c.stage === "platziert" || c.stage === "abgelehnt" || c.stage === "neu") return false;
+    const d = c.updated_at ? -(daysUntil(c.updated_at) ?? 0) : null;
+    return d != null && d >= 14;
+  }).length;
+  if (staleCandidates >= 2) {
+    push({
+      id: "cand-stale",
+      severity: "wichtig",
+      category: "Kandidaten",
+      title: `${staleCandidates} Kandidat:in(nen) ohne Update >14 T`,
+      detail: "Prozess stockt – Status nachhalten, sonst springen sie ab",
+      action: "Nachfassen und nächsten Schritt setzen",
+      href: "/cockpit/kandidaten",
+      line: "recruiting",
+      value: 0,
+      urgency: 75,
+    });
+  }
   const toScreen = candidates.filter((c) => c.stage === "neu").length;
   if (toScreen >= 3) {
     push({
