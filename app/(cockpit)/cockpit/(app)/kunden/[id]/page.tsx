@@ -19,6 +19,7 @@ import { AccountContractCard } from "@/components/cockpit/AccountContractCard";
 import { AccountIntelCard } from "@/components/cockpit/AccountIntelCard";
 import { FollowupDrafter } from "@/components/cockpit/FollowupDrafter";
 import { AccountSequenceEnroll } from "@/components/cockpit/AccountSequenceEnroll";
+import { RelationshipSummary } from "@/components/cockpit/RelationshipSummary";
 import { computeAccountIntel } from "@/lib/account-intel";
 import { BackfillAccountsButton } from "@/components/cockpit/BackfillAccountsButton";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
@@ -186,6 +187,24 @@ export default async function AccountDetailPage({
 
       {/* Account-Intelligenz: Health-Score + nächste beste Aktion */}
       <AccountIntelCard intel={intel} accountId={account.id} accountName={account.name} />
+
+      {notes.length > 0 || emails.length > 0 ? (
+        <RelationshipSummary
+          account={account.name}
+          line={account.line}
+          touchpoints={[
+            ...notes.slice(0, 8).map((n) => ({ kind: "note" as const, date: n.created_at, text: n.body })),
+            ...emails.slice(0, 8).map((e) => ({
+              kind: "email" as const,
+              date: e.occurred_at,
+              direction: e.direction,
+              text: `${e.subject}${e.snippet ? ` – ${e.snippet}` : ""}`,
+            })),
+          ]
+            .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))
+            .slice(0, 12)}
+        />
+      ) : null}
 
       {/* Ansprechpartner:innen */}
       <AccountContacts accountId={account.id} contacts={contacts} />

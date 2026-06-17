@@ -8,6 +8,7 @@ import { buildBriefing } from "@/lib/ai/briefing";
 import { narrateBriefing } from "@/lib/ai/briefing-narrate";
 import { draftFollowup, type FollowupDraft } from "@/lib/ai/followup";
 import { narrateWeeklyReview, type WeeklyReviewInput } from "@/lib/ai/weekly-review";
+import { summarizeRelationship, type RelationshipInput } from "@/lib/ai/account-summary";
 import { getOpportunities } from "@/lib/crm-data";
 import { createAccount, type ActionResult } from "@/lib/crm-actions";
 import type {
@@ -238,6 +239,18 @@ export async function narrateWeeklyReviewAction(
     return { ok: true, text, mode };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Review fehlgeschlagen." };
+  }
+}
+
+/** KI: fasst den Beziehungsstand eines Kunden aus Notizen/E-Mails zusammen. */
+export async function summarizeAccountAction(
+  input: RelationshipInput
+): Promise<{ ok: boolean; summary?: string; mode?: "live" | "demo"; error?: string }> {
+  try {
+    const { summary, mode } = await summarizeRelationship(input);
+    return { ok: true, summary, mode };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Zusammenfassung fehlgeschlagen." };
   }
 }
 
