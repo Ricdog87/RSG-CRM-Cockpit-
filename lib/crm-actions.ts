@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import { findDuplicate } from "@/lib/dedupe";
+import { nameFromSyntheticId } from "@/lib/crm-data";
 import { accounts as mockAccounts } from "@/lib/crm-mock";
 import { automationEnabled, AUTOMATIONS } from "@/lib/automations";
 import { logDataError } from "@/lib/log";
@@ -237,6 +238,35 @@ async function resolveAccountId(
   if (!n) return null;
   const { data } = await supabase.from("accounts").select("id").ilike("name", n).maybeSingle();
   return (data as { id?: string } | null)?.id ?? null;
+}
+
+/**
+ * Macht aus einer abgeleiteten (virtuellen) Account-ID „ref:…“ einen echten
+ * Datensatz – beim ersten Schreibzugriff (Notiz/Aufgabe/Kontakt). Gibt die
+ * echte Account-ID zurück (oder null, falls nicht möglich).
+ */
+async function materializeAccount(
+  supabase: ReturnType<typeof createClient>,
+  pid: string,
+  accountId: string
+): Promise<string | null> {
+  if (!accountId.startsWith("ref:")) return accountId;
+  const name = nameFromSyntheticId(accountId);
+  if (!name) return null;
+  const existing = await resolveAccountId(supabase, name);
+  if (existing) return existing;
+  const row: Record<string, unknown> = { partner_id: pid, name, lifecycle: "kunde", mrr: 0 };
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const res = await supabase.from("accounts").insert(row).select("id").single();
+    if (!res.error) return (res.data as { id?: string } | null)?.id ?? null;
+    const m = res.error.message.match(MISSING_COL);
+    if (m && m[1] in row) {
+      delete row[m[1]];
+      continue;
+    }
+    break;
+  }
+  return null;
 }
 
 /**
@@ -950,6 +980,7 @@ export async function addNote(
   const { id, error } = await currentPartnerId();
   if (!id) return { ok: false, error };
   const supabase = createClient();
+  accountId = (await materializeAccount(supabase, id, accountId)) ?? accountId;
   const { error: insErr } = await supabase.from("account_notes").insert({
     partner_id: id,
     account_id: accountId,
@@ -995,6 +1026,7 @@ export async function addContact(
   const { id, error } = await currentPartnerId();
   if (!id) return { ok: false, error };
   const supabase = createClient();
+  accountId = (await materializeAccount(supabase, id, accountId)) ?? accountId;
   const { error: insErr } = await supabase.from("account_contacts").insert({
     partner_id: id,
     account_id: accountId,
@@ -1050,12 +1082,18 @@ export async function addTask(input: TaskInput): Promise<ActionResult> {
   if (!id) return { ok: false, error };
   const supabase = createClient();
 
+  // Virtuellen Kunden bei Bedarf materialisieren, damit der Bezug greift.
+  let relatedId = input.related_id ?? null;
+  if (input.related_type === "customer" && relatedId?.startsWith("ref:")) {
+    relatedId = (await materializeAccount(supabase, id, relatedId)) ?? relatedId;
+  }
+
   const { data: inserted, error: insErr } = await supabase
     .from("crm_tasks")
     .insert({
       partner_id: id,
       related_type: input.related_type ?? "none",
-      related_id: input.related_id ?? null,
+      related_id: relatedId,
       related_label: input.related_label ?? null,
       title: input.title.trim(),
       due_date: input.due_date || null,
