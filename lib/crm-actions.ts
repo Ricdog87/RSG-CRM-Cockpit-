@@ -499,6 +499,30 @@ export async function updateAccount(
   );
 }
 
+/** Vermittlungsvertrag/AGB je Kunde aktualisieren. */
+export async function updateAccountContract(
+  accountId: string,
+  patch: {
+    engagement_type?: string;
+    contract_status?: string;
+    contract_signed_at?: string | null;
+    fee_agreement?: string | null;
+  }
+): Promise<ActionResult> {
+  if (!accountId) return { ok: false, error: "Datensatz nicht gefunden." };
+  return updateGraceful(
+    "accounts",
+    accountId,
+    {
+      engagement_type: patch.engagement_type || null,
+      contract_status: patch.contract_status || "kein",
+      contract_signed_at: patch.contract_signed_at || null,
+      fee_agreement: patch.fee_agreement || null,
+    },
+    ["/cockpit/kunden", `/cockpit/kunden/${accountId}`]
+  );
+}
+
 // ---------- Löschen --------------------------------------------------
 
 async function remove(

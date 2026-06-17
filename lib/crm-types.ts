@@ -31,6 +31,11 @@ export interface Account {
   mrr: number;
   ort: string;
   since: string;
+  /** Vermittlungsvertrag/AGB: Mandatsart, Vertragsstatus, Unterzeichnung, Honorarvereinbarung. */
+  engagement_type?: "exklusiv" | "nicht_exklusiv" | "retainer";
+  contract_status?: "kein" | "versendet" | "unterzeichnet";
+  contract_signed_at?: string;
+  fee_agreement?: string;
 }
 
 export type SalesStage =

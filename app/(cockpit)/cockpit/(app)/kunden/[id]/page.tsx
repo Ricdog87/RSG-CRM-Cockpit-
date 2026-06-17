@@ -15,6 +15,7 @@ import { LineBadge } from "@/components/cockpit/LineBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconChevronRight } from "@/components/ui/icons";
 import { AccountEnrich } from "@/components/cockpit/AccountEnrich";
+import { AccountContractCard } from "@/components/cockpit/AccountContractCard";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -145,6 +146,13 @@ export default async function AccountDetailPage({
             limit={5}
             emptyText="Noch keine E-Mails. Setze deine BCC-Adresse (Postfach) ins BCC, um Mails automatisch hier zu protokollieren."
           />
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody>
+          <SectionHeader title="Vermittlungsvertrag" hint="Mandatsart, Status & Honorarvereinbarung" />
+          <AccountContractCard account={account} />
         </CardBody>
       </Card>
 

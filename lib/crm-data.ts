@@ -80,6 +80,10 @@ export async function getAccounts(): Promise<Account[]> {
         mrr: num(r.mrr),
         ort: str(r.ort),
         since: str(r.since),
+        engagement_type: (str(r.engagement_type) || undefined) as Account["engagement_type"],
+        contract_status: (str(r.contract_status) || undefined) as Account["contract_status"],
+        contract_signed_at: str(r.contract_signed_at) || undefined,
+        fee_agreement: str(r.fee_agreement) || undefined,
       })),
     { column: "mrr", ascending: false }
   );
