@@ -4,8 +4,11 @@ import {
   getKiProjects,
   getMandates,
   getCandidates,
+  getAccounts,
 } from "@/lib/crm-data";
 import { getOpenTasks } from "@/lib/tasks-data";
+import type { Deal, DealStage } from "@/lib/types";
+import type { SalesStage } from "@/lib/crm-types";
 import { getUpcomingMilestones } from "@/lib/placements-data";
 import { getInvoiceSummary } from "@/lib/invoices-data";
 import { KpiRow } from "@/components/cockpit/KpiRow";
@@ -25,18 +28,46 @@ import { QuickActions } from "@/components/cockpit/QuickActions";
 // Immer frisch rendern – Daten sind nutzer- und sessionspezifisch.
 export const dynamic = "force-dynamic";
 
+// Sales-Phase → Deal-Phase fürs Pipeline-Widget.
+const SALES_TO_DEAL: Record<SalesStage, DealStage> = {
+  neu: "neu",
+  qualifiziert: "qualifiziert",
+  demo: "qualifiziert",
+  angebot: "angebot",
+  verhandlung: "verhandlung",
+  gewonnen: "gewonnen",
+  verloren: "verloren",
+};
+
 export default async function CockpitPage() {
-  const [data, opportunities, kiProjects, mandates, candidates, openTasks, milestones, invoiceSummary] =
+  const [data, opportunities, kiProjects, mandates, candidates, accounts, openTasks, milestones, invoiceSummary] =
     await Promise.all([
       getCockpitData(),
       getOpportunities(),
       getKiProjects(),
       getMandates(),
       getCandidates(),
+      getAccounts(),
       getOpenTasks(),
       getUpcomingMilestones(),
       getInvoiceSummary(),
     ]);
+
+  // Pipeline aus den CRM-Verkaufschancen speisen (statt der leeren deals-Tabelle).
+  const pipelineDeals: Deal[] = opportunities.map((o) => ({
+    id: o.id,
+    customer_name: o.account_name,
+    product_name: o.title || o.account_name,
+    stage: SALES_TO_DEAL[o.stage] ?? "neu",
+    mrr_value: o.value,
+    probability: o.probability,
+    expected_close: o.expected_close || null,
+    updated_at: "",
+  }));
+  // Echte aktive Kund:innen aus dem CRM (Kunde/Bestand).
+  const aktiveKunden = accounts.filter(
+    (a) => a.lifecycle === "kunde" || a.lifecycle === "bestand"
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -53,7 +84,7 @@ export default async function CockpitPage() {
       {/* 3. Pipeline (Deals) + offene Mandate (Suchaufträge) nebeneinander */}
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="animate-fade-up" aria-label="Pipeline">
-          <Pipeline deals={data.pipeline} limit={5} viewAllHref="/cockpit/pipeline" />
+          <Pipeline deals={pipelineDeals} limit={5} viewAllHref="/cockpit/sales" />
         </section>
         <section className="animate-fade-up" aria-label="Offene Mandate">
           <OpenMandates mandates={mandates} limit={5} />
@@ -79,6 +110,7 @@ export default async function CockpitPage() {
           bestand={data.bestand}
           earnings={data.earnings}
           provisionAktuellerMonat={data.provisionAktuellerMonat}
+          aktiveKunden={aktiveKunden}
         />
       </section>
 

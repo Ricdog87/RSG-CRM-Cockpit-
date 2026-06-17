@@ -8,19 +8,23 @@ export function KpiRow({
   bestand,
   earnings,
   provisionAktuellerMonat,
+  aktiveKunden,
 }: {
   bestand: PartnerBestand;
   earnings: PartnerEarnings;
   provisionAktuellerMonat: number;
+  /** Echte aktive Kund:innen aus dem CRM (accounts). Fällt auf Bestand zurück. */
+  aktiveKunden?: number;
 }) {
   const overridePaused = earnings.override_pausiert > 0;
+  const kunden = aktiveKunden ?? bestand.aktive_kunden;
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <StatCard
         label="Aktive Kund:innen"
-        value={formatNumber(bestand.aktive_kunden)}
-        hint="zahlen aktuell deinen Bestand"
+        value={formatNumber(kunden)}
+        hint="Kunden & Bestand im CRM"
         accent="sky"
         icon={IconUsers}
       />
