@@ -1,8 +1,9 @@
-import { getOpportunities, getMandates, getCandidates, getKiProjects } from "@/lib/crm-data";
+import { getOpportunities, getMandates, getCandidates, getKiProjects, getAccounts } from "@/lib/crm-data";
 import { getPlacements } from "@/lib/placements-data";
 import { mandateRevenue } from "@/lib/crm-types";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
+import { PortfolioInsights, type Insight } from "@/components/cockpit/PortfolioInsights";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { FunnelChart, ForecastChart } from "@/components/cockpit/BerichteCharts";
 import { SourceRoiTable, type SourceRoiRow } from "@/components/cockpit/SourceRoiTable";
@@ -32,12 +33,13 @@ const RECRUIT_FUNNEL: { key: CandidateStage; label: string }[] = [
 ];
 
 export default async function BerichtePage() {
-  const [opps, mandates, candidates, placements, kiProjects] = await Promise.all([
+  const [opps, mandates, candidates, placements, kiProjects, accounts] = await Promise.all([
     getOpportunities(),
     getMandates(),
     getCandidates(),
     getPlacements(),
     getKiProjects(),
+    getAccounts(),
   ]);
 
   const open = opps.filter((o) => o.stage !== "gewonnen" && o.stage !== "verloren");
@@ -144,6 +146,48 @@ export default async function BerichtePage() {
     .slice(0, 8)
     .map(([key, value]) => ({ month: MONTHS[Number(key.slice(5, 7)) - 1], value: Math.round(value) }));
 
+  // ── Portfolio-Insights (computed „so what“) ───────────────────────────
+  const insights: Insight[] = [];
+  const liveKi = kiProjects.filter((p) => p.status !== "gekuendigt" && p.status !== "angebot");
+  const totalMrr = liveKi.reduce((s, p) => s + p.mrr, 0);
+  if (totalMrr > 0) {
+    const topMrr = Math.max(...liveKi.map((p) => p.mrr));
+    const concentration = Math.round((topMrr / totalMrr) * 100);
+    insights.push({
+      label: "Konzentrationsrisiko",
+      value: `${concentration}%`,
+      note:
+        concentration >= 30
+          ? "Top-Projekt dominiert den MRR – Basis verbreitern."
+          : "MRR gesund verteilt.",
+      tone: concentration >= 30 ? "warning" : "success",
+    });
+  }
+  const daysUntil = (iso?: string) => (iso ? Math.round((new Date(iso + "T00:00:00").getTime() - Date.now()) / 86400000) : null);
+  const atRiskMrr = liveKi
+    .filter((p) => p.churn_risk === "hoch" || ((daysUntil(p.contract_end) ?? 999) <= 60))
+    .reduce((s, p) => s + p.mrr, 0);
+  insights.push({
+    label: "MRR unter Beobachtung",
+    value: `${formatEur(atRiskMrr)}/M`,
+    note: atRiskMrr > 0 ? "Churn-Risiko/Renewal ≤60 T – proaktiv handeln." : "Kein akutes Churn-Risiko.",
+    tone: atRiskMrr > 0 ? "danger" : "success",
+  });
+  const activeCustomers = accounts.filter((a) => a.lifecycle === "kunde" || a.lifecycle === "bestand").length;
+  const leads = accounts.filter((a) => a.lifecycle === "lead").length;
+  insights.push({
+    label: "Aktive Kunden",
+    value: formatNumber(activeCustomers),
+    note: `${formatNumber(leads)} Leads in der Pipeline`,
+    tone: "brand",
+  });
+  insights.push({
+    label: "Gesamt-Pipeline",
+    value: formatEur(gesamtPipeline),
+    note: `Win-Rate ${formatPercent(winRate)} · Ø ${formatEur(avgDeal)}/Deal`,
+    tone: "sky",
+  });
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -151,6 +195,8 @@ export default async function BerichtePage() {
         title="Berichte"
         description="Pipeline-Funnel, Forecast und Vertriebskennzahlen auf einen Blick."
       />
+
+      <PortfolioInsights insights={insights} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
