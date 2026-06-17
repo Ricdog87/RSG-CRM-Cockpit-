@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { IconPhone, IconMail, IconCheck, IconBriefcase, IconBolt } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
+import { AccountCombobox } from "@/components/cockpit/AccountCombobox";
 import { logActivity } from "@/lib/activity-actions";
 import type { ActivityStats } from "@/lib/activity-data";
 
@@ -37,6 +38,7 @@ export function DailyGoals({
   dayMode,
   callGoalWeek,
   emailGoalWeek,
+  accounts = [],
 }: {
   stats: ActivityStats;
   newRecruitingToday: boolean;
@@ -46,6 +48,7 @@ export function DailyGoals({
   dayMode: "work" | "review" | "off";
   callGoalWeek: number;
   emailGoalWeek: number;
+  accounts?: string[];
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -179,9 +182,14 @@ export function DailyGoals({
         <div className="space-y-2 rounded-xl border border-border bg-surface p-3">
           <p className="text-xs font-semibold text-ink">Aktivität erfassen</p>
           <div className="grid grid-cols-2 gap-2">
-            <input value={account} onChange={(e) => setAccount(e.target.value)} placeholder="Kunde (optional)" className={inputCls} />
+            <AccountCombobox options={accounts} value={account} onValueChange={setAccount} placeholder="Kunde (für Korrespondenz)" />
             <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Thema (optional)" className={inputCls} />
           </div>
+          {account.trim() && accounts.some((a) => a.toLowerCase() === account.trim().toLowerCase()) ? (
+            <p className="text-[0.7rem] text-success">✓ Wird beim Kunden „{account.trim()}“ als Korrespondenz hinterlegt.</p>
+          ) : account.trim() ? (
+            <p className="text-[0.7rem] text-brand-deep">✦ Neukunde „{account.trim()}“ wird als Lead angelegt + Korrespondenz hinterlegt.</p>
+          ) : null}
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 text-xs text-faint"><IconPhone size={12} /> Call:</span>
             <button type="button" disabled={pending} onClick={() => log("call", "ki")} className={cn(chip, "border-sky/40 bg-sky/10 text-sky-deep hover:bg-sky/15")}>+ KI</button>

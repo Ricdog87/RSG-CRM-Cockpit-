@@ -207,6 +207,7 @@ export default async function CockpitPage() {
             dayMode={todayMode}
             callGoalWeek={60}
             emailGoalWeek={40}
+            accounts={accounts.map((a) => a.name)}
           />
         </section>
         <section className="animate-fade-up" aria-label="Tagesordnung">

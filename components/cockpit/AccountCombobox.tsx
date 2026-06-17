@@ -14,16 +14,24 @@ export function AccountCombobox({
   name,
   options,
   defaultValue = "",
+  value,
+  onValueChange,
   placeholder,
   required,
 }: {
-  name: string;
+  name?: string;
   options: string[];
   defaultValue?: string;
+  /** Controlled-Modus (z.B. Aktivitäts-Logger): value + onValueChange. */
+  value?: string;
+  onValueChange?: (v: string) => void;
   placeholder?: string;
   required?: boolean;
 }) {
-  const [value, setValue] = useState(defaultValue);
+  const controlled = onValueChange !== undefined;
+  const [inner, setInner] = useState(defaultValue);
+  const val = controlled ? value ?? "" : inner;
+  const setVal = (v: string) => (controlled ? onValueChange!(v) : setInner(v));
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -35,7 +43,7 @@ export function AccountCombobox({
     return () => document.removeEventListener("pointerdown", onDoc);
   }, []);
 
-  const q = value.trim().toLowerCase();
+  const q = val.trim().toLowerCase();
   const matches = (q ? options.filter((o) => o.toLowerCase().includes(q)) : options).slice(0, 8);
   const exact = options.some((o) => o.toLowerCase() === q);
   const showNew = q.length > 0 && !exact;
@@ -44,12 +52,12 @@ export function AccountCombobox({
     <div ref={ref} className="relative">
       <input
         name={name}
-        value={value}
+        value={val}
         required={required}
         placeholder={placeholder}
         autoComplete="off"
         onChange={(e) => {
-          setValue(e.target.value);
+          setVal(e.target.value);
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
@@ -63,7 +71,7 @@ export function AccountCombobox({
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-1.5 border-b border-border/60 px-3 py-2.5 text-left text-sm font-semibold text-brand-deep hover:bg-brand/5"
             >
-              + Neuen Kunden anlegen: „{value.trim()}“
+              + Neuen Kunden anlegen: „{val.trim()}“
             </button>
           ) : null}
           {matches.map((o) => (
@@ -71,7 +79,7 @@ export function AccountCombobox({
               key={o}
               type="button"
               onClick={() => {
-                setValue(o);
+                setVal(o);
                 setOpen(false);
               }}
               className="block w-full truncate px-3 py-2 text-left text-sm text-ink hover:bg-elevated"

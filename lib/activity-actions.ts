@@ -52,12 +52,24 @@ export async function logActivity(input: ActivityInput): Promise<ActionResult> {
     return { ok: false, error: insErr.message };
   }
 
-  // Wenn ein Kunde zugeordnet ist: zusätzlich als Notiz beim Account ablegen.
+  // Kundenbezug: bei vorhandenem Account Notiz ablegen – sonst (Kaltakquise)
+  // den Kunden direkt als Lead anlegen und die Korrespondenz hinterlegen.
   const acc = input.account_name?.trim();
   if (acc) {
     try {
       const { data: a } = await supabase.from("accounts").select("id").ilike("name", acc).maybeSingle();
-      const accId = (a as { id?: string } | null)?.id;
+      let accId = (a as { id?: string } | null)?.id;
+
+      if (!accId) {
+        const { data: ins } = await supabase
+          .from("accounts")
+          .insert({ partner_id: pid, name: acc, line: input.line, lifecycle: "lead", mrr: 0 })
+          .select("id")
+          .single();
+        accId = (ins as { id?: string } | null)?.id;
+        revalidatePath("/cockpit/kunden");
+      }
+
       if (accId) {
         const label = input.kind === "call" ? "Anruf" : input.kind === "email" ? "E-Mail" : "Termin";
         const body = `${label} (${input.line === "ki" ? "KI" : "Recruiting"})${input.subject ? `: ${input.subject}` : ""}`;
@@ -65,7 +77,7 @@ export async function logActivity(input: ActivityInput): Promise<ActionResult> {
         revalidatePath(`/cockpit/kunden/${accId}`);
       }
     } catch {
-      /* Notiz beim Kunden ist optional */
+      /* Kundenanlage/Notiz ist best-effort und darf das Logging nicht blockieren */
     }
   }
 
