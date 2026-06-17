@@ -17,6 +17,7 @@ import { IconChevronRight } from "@/components/ui/icons";
 import { AccountEnrich } from "@/components/cockpit/AccountEnrich";
 import { AccountContractCard } from "@/components/cockpit/AccountContractCard";
 import { AccountIntelCard } from "@/components/cockpit/AccountIntelCard";
+import { FollowupDrafter } from "@/components/cockpit/FollowupDrafter";
 import { computeAccountIntel } from "@/lib/account-intel";
 import { BackfillAccountsButton } from "@/components/cockpit/BackfillAccountsButton";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
@@ -82,6 +83,18 @@ export default async function AccountDetailPage({
       ...tasks.map((t) => t.due_date),
     ],
   });
+
+  // Kompakter Kontext für den KI-Follow-up-Entwurf.
+  const followupContext = [
+    `Branche/Segment: ${[account.branche, account.segment].filter(Boolean).join(" · ") || "—"}`,
+    `Status: ${account.lifecycle}`,
+    mandates.length ? `Mandate: ${mandates.map((m) => `${m.role} (${m.status})`).join(", ")}` : "",
+    kiProjects.length ? `KI-Projekte: ${kiProjects.map((p) => `${p.product || "KI"} (${p.status})`).join(", ")}` : "",
+    notes[0]?.body ? `Letzte Notiz: ${notes[0].body.slice(0, 240)}` : "",
+    `Empfehlung (Health-Score ${intel.score}): ${intel.nextAction}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return (
     <div className="space-y-6">
@@ -176,14 +189,24 @@ export default async function AccountDetailPage({
       {/* Ansprechpartner:innen */}
       <AccountContacts accountId={account.id} contacts={contacts} />
 
-      {/* KI-Analyse des Accounts */}
-      <AccountEnrich
-        company={account.name}
-        domain={account.contact_email ? account.contact_email.split("@")[1] : undefined}
-        notes={[account.branche, account.segment, account.ort]
-          .filter(Boolean)
-          .join(" · ")}
-      />
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* KI-Analyse des Accounts */}
+        <AccountEnrich
+          company={account.name}
+          domain={account.contact_email ? account.contact_email.split("@")[1] : undefined}
+          notes={[account.branche, account.segment, account.ort]
+            .filter(Boolean)
+            .join(" · ")}
+        />
+        {/* KI-Follow-up-Entwurf */}
+        <FollowupDrafter
+          account={account.name}
+          line={account.line}
+          context={followupContext}
+          goal={intel.nextAction}
+          recipientEmail={account.contact_email || undefined}
+        />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Aufgaben */}

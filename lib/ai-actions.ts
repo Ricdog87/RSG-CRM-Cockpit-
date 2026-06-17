@@ -6,6 +6,7 @@ import { discoverLeads } from "@/lib/ai/discovery";
 import { askCopilot } from "@/lib/ai/copilot";
 import { buildBriefing } from "@/lib/ai/briefing";
 import { narrateBriefing } from "@/lib/ai/briefing-narrate";
+import { draftFollowup, type FollowupDraft } from "@/lib/ai/followup";
 import { getOpportunities } from "@/lib/crm-data";
 import { createAccount, type ActionResult } from "@/lib/crm-actions";
 import type {
@@ -224,6 +225,23 @@ export async function narrateBriefingAction(): Promise<{
       ok: false,
       error: e instanceof Error ? e.message : "Briefing fehlgeschlagen.",
     };
+  }
+}
+
+/** KI: entwirft eine Follow-up-E-Mail für einen Kunden. */
+export async function draftFollowupAction(input: {
+  account: string;
+  line: "ki" | "recruiting";
+  context: string;
+  tone?: "freundlich" | "direkt" | "beratend";
+  goal?: string;
+  sender?: string;
+}): Promise<{ ok: boolean; draft?: FollowupDraft; error?: string }> {
+  if (!input.account?.trim()) return { ok: false, error: "Kein Kunde." };
+  try {
+    return { ok: true, draft: await draftFollowup(input) };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Entwurf fehlgeschlagen." };
   }
 }
 
