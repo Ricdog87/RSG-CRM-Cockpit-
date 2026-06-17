@@ -6,6 +6,7 @@ import {
   IconBriefcase,
   IconTrophy,
   IconChart,
+  IconSpark,
 } from "@/components/ui/icons";
 
 const QUICK_ACTIONS = [
@@ -26,6 +27,12 @@ const QUICK_ACTIONS = [
     href: "/cockpit/kunden",
     icon: IconBriefcase,
     accent: "text-violet-500 bg-violet-500/10",
+  },
+  {
+    label: "Leads",
+    href: "/cockpit/leads",
+    icon: IconSpark,
+    accent: "text-sky-500 bg-sky-500/10",
   },
   {
     label: "Chancen",
