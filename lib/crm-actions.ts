@@ -275,11 +275,47 @@ export async function createOpportunity(
   );
 }
 
+/** Normalisiert einen Personennamen für den Dubletten-Abgleich. */
+function normPerson(v: string): string {
+  return v.toLowerCase().normalize("NFKD").replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** Bestehende Kandidat:innen (Name + E-Mail) für den Dubletten-Abgleich. */
+async function candidateKeys(): Promise<{ name: string; email?: string }[]> {
+  if (useMockData) return [];
+  const supabase = createClient();
+  const { data } = await supabase.from("candidates").select("name, email");
+  return ((data as Array<{ name?: string; email?: string }> | null) ?? []).map((r) => ({
+    name: String(r.name ?? ""),
+    email: r.email ? String(r.email) : undefined,
+  }));
+}
+
 export async function createCandidate(
   _prev: ActionResult | null,
   fd: FormData
 ): Promise<ActionResult> {
   if (!s(fd, "name")) return { ok: false, error: "Name ist erforderlich." };
+
+  // Intelligenter Dubletten-Abgleich (gleiche E-Mail ODER gleicher Name),
+  // mit „Trotzdem anlegen" überstimmbar.
+  if (s(fd, "force") !== "1" && !useMockData) {
+    const name = s(fd, "name");
+    const email = s(fd, "email").toLowerCase();
+    const nn = normPerson(name);
+    const existing = await candidateKeys();
+    const dup = existing.find(
+      (e) => (email && e.email && e.email.toLowerCase() === email) || (nn && normPerson(e.name) === nn)
+    );
+    if (dup) {
+      return {
+        ok: false,
+        duplicate: true,
+        error: `Mögliche Dublette zu „${dup.name}". Erneut bestätigen, um trotzdem anzulegen.`,
+      };
+    }
+  }
+
   return insertGraceful(
     "candidates",
     {

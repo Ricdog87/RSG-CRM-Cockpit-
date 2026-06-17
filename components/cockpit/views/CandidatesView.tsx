@@ -284,14 +284,19 @@ export function CandidatesView({
     setActiveTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   }
 
+  // Talent-Pool: verfügbare Kandidat:innen ohne aktuelles Mandat (Bench).
+  const talentPool = base.filter((c) => !c.mandate_id && !c.mandate_account);
+
   const q = query.trim().toLowerCase();
   const filtered = useMemo(() => {
     let pool =
       filter === "abgelehnt"
         ? rejected
-        : filter === "all"
-          ? base
-          : base.filter((c) => c.mandate_account === filter);
+        : filter === "pool"
+          ? talentPool
+          : filter === "all"
+            ? base
+            : base.filter((c) => c.mandate_account === filter);
     if (activeTags.length) {
       pool = pool.filter((c) => (c.tags ?? []).some((t) => activeTags.includes(t)));
     }
@@ -303,7 +308,7 @@ export function CandidatesView({
       );
     }
     return pool;
-  }, [filter, q, base, rejected, activeTags]);
+  }, [filter, q, base, rejected, talentPool, activeTags]);
 
   const displayed = useMemo(() => {
     const arr = [...filtered];
@@ -396,6 +401,9 @@ export function CandidatesView({
         onChange={setFilter}
         options={[
           { value: "all", label: "Alle Mandate", count: base.length },
+          ...(talentPool.length > 0
+            ? [{ value: "pool", label: "Talent-Pool", count: talentPool.length }]
+            : []),
           ...mandates.map((m) => ({
             value: m,
             label: m,
