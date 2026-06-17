@@ -30,6 +30,9 @@ export interface Account {
   /** monatlich wiederkehrender Umsatz (KI), 0 bei Recruiting */
   mrr: number;
   ort: string;
+  /** Postanschrift (Excel-Import): Straße/Hausnummer + PLZ. */
+  strasse?: string;
+  plz?: string;
   since: string;
   /** HubSpot-Import: zuständiger Mitarbeiter, Land/Region, externe ID, letzte Aktivität. */
   owner?: string;
