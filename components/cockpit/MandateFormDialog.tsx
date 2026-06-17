@@ -7,6 +7,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { IconPlus } from "@/components/ui/icons";
 import { createMandate, updateMandate, type ActionResult } from "@/lib/crm-actions";
+import { AccountCombobox } from "@/components/cockpit/AccountCombobox";
 import { formatEur } from "@/lib/format";
 import { mandatePaymentSchedule, type RecruitingMandate } from "@/lib/crm-types";
 
@@ -93,20 +94,13 @@ export function MandateFormDialog({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label className="mb-1 block text-xs font-medium text-muted">Account *</label>
-              <input
+              <AccountCombobox
                 name="account_name"
-                list="mandate-accounts"
-                defaultValue={mandate?.account_name}
-                required
-                autoComplete="off"
+                options={accountNames}
+                defaultValue={mandate?.account_name ?? ""}
                 placeholder="Muster GmbH"
-                className={inputClass}
+                required
               />
-              <datalist id="mandate-accounts">
-                {accountNames.map((a) => (
-                  <option key={a} value={a} />
-                ))}
-              </datalist>
             </div>
             <div className="sm:col-span-2">
               <label className="mb-1 block text-xs font-medium text-muted">Position</label>

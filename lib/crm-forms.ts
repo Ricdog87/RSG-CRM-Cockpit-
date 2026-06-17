@@ -253,6 +253,21 @@ export function withDatalist(
   );
 }
 
+/**
+ * Wandelt ein Feld in eine Combobox (Tippen + Vorschläge, Freitext erlaubt →
+ * neue Einträge werden angelegt). Besser als datalist bei vielen Optionen.
+ */
+export function withCombobox(
+  fields: FormField[],
+  fieldName: string,
+  values: string[]
+): FormField[] {
+  const options = Array.from(new Set(values.filter(Boolean))).map((v) => ({ value: v, label: v }));
+  return fields.map((f) =>
+    f.name === fieldName ? { ...f, type: "combobox" as const, options } : f
+  );
+}
+
 /** Setzt die Optionen eines Select-Feldes (z.B. Mandate fürs Kandidaten-Formular). */
 export function withSelectOptions(
   fields: FormField[],

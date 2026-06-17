@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/cockpit/PageHeader";
 import { KiProjectsView } from "@/components/cockpit/views/KiProjectsView";
 import { KiRenewals } from "@/components/cockpit/KiRenewals";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
-import { KIPROJECT_FIELDS, withDatalist } from "@/lib/crm-forms";
+import { KIPROJECT_FIELDS, withCombobox } from "@/lib/crm-forms";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { IconPhone, IconSpark, IconEuro, IconAlert } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
@@ -33,7 +33,7 @@ export default async function KiProjektePage() {
             triggerLabel="KI-Auftrag anlegen"
             title="Neues KI-Projekt"
             description="Implementierung, monatlicher Fixpreis und Status erfassen."
-            fields={withDatalist(KIPROJECT_FIELDS, "account_name", accountNames)}
+            fields={withCombobox(KIPROJECT_FIELDS, "account_name", accountNames)}
             action={createKiProject}
             autoOpenParam="new"
           />

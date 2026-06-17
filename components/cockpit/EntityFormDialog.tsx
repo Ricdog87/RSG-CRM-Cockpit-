@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
+import { AccountCombobox } from "@/components/cockpit/AccountCombobox";
 import { IconPlus, IconSpark } from "@/components/ui/icons";
 import type { ActionResult } from "@/lib/crm-actions";
 
@@ -15,7 +16,7 @@ export type AutofillFn = (
 export interface FormField {
   name: string;
   label: string;
-  type?: "text" | "email" | "number" | "date" | "select" | "textarea" | "datalist";
+  type?: "text" | "email" | "number" | "date" | "select" | "textarea" | "datalist" | "combobox";
   options?: { value: string; label: string }[];
   required?: boolean;
   placeholder?: string;
@@ -205,6 +206,14 @@ export function EntityFormDialog({
                     defaultValue={initial?.[f.name] ?? f.defaultValue}
                     required={f.required}
                     className={inputClass}
+                  />
+                ) : f.type === "combobox" ? (
+                  <AccountCombobox
+                    name={f.name}
+                    options={(f.options ?? []).map((o) => o.value)}
+                    defaultValue={initial?.[f.name] ?? f.defaultValue ?? ""}
+                    placeholder={f.placeholder}
+                    required={f.required}
                   />
                 ) : f.type === "datalist" ? (
                   <>

@@ -5,7 +5,7 @@ import { getTasksForRelated } from "@/lib/tasks-data";
 import { getMilestonesForProject, getReadinessForProject } from "@/lib/ki-plan-data";
 import { getMetricsForProject } from "@/lib/ki-metrics-data";
 import { updateKiProject } from "@/lib/crm-actions";
-import { KIPROJECT_FIELDS, withDatalist } from "@/lib/crm-forms";
+import { KIPROJECT_FIELDS, withCombobox } from "@/lib/crm-forms";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { Badge } from "@/components/ui/Badge";
@@ -65,7 +65,7 @@ export default async function KiProjectDetailPage({ params }: { params: { id: st
   const st = statusMeta[p.status] ?? statusMeta.onboarding;
   const he = healthMeta[p.health] ?? healthMeta.neutral;
   const arr = p.mrr * 12;
-  const editFields = withDatalist(KIPROJECT_FIELDS, "account_name", accounts.map((a) => a.name));
+  const editFields = withCombobox(KIPROJECT_FIELDS, "account_name", accounts.map((a) => a.name));
   const openTasks = tasks.filter((t) => !t.done);
 
   return (
