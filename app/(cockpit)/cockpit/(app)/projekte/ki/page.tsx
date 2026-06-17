@@ -3,6 +3,8 @@ import { createKiProject } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { KiProjectsView } from "@/components/cockpit/views/KiProjectsView";
 import { KiRenewals } from "@/components/cockpit/KiRenewals";
+import { ActivityLogger } from "@/components/cockpit/ActivityLogger";
+import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { KIPROJECT_FIELDS, withCombobox } from "@/lib/crm-forms";
 import { StatCard } from "@/components/cockpit/StatCard";
@@ -88,6 +90,13 @@ export default async function KiProjektePage() {
       </div>
 
       <KiRenewals projects={projects} />
+
+      <Card>
+        <CardBody>
+          <SectionHeader title="KI-Aktivität erfassen" hint="Call/E-Mail → Korrespondenz beim Kunden + Wiedervorlage" />
+          <ActivityLogger accounts={accountNames} lineLock="ki" />
+        </CardBody>
+      </Card>
 
       <KiProjectsView projects={projects} accountNames={accountNames} />
     </div>

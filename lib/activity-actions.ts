@@ -30,11 +30,14 @@ export interface ActivityInput {
   /** Nur für Kaltakquise-Neukunden: gehen in den neuen Account. */
   contact_name?: string;
   contact_phone?: string;
+  /** Wiedervorlage in X Tagen anlegen (0 = keine). */
+  followupDays?: number;
 }
 
 /**
  * Loggt eine Aktivität (Call/E-Mail) für die Tagesziele & den Wochenfokus.
- * Optional mit Kundenbezug → erscheint auch in der Kunden-Korrespondenz.
+ * Mit Kundenbezug → Korrespondenz beim Kunden (bestehend oder neu als Lead).
+ * Optional: Wiedervorlage-Aufgabe.
  */
 export async function logActivity(input: ActivityInput): Promise<ActionResult> {
   if (useMockData) return DEMO;
@@ -55,54 +58,68 @@ export async function logActivity(input: ActivityInput): Promise<ActionResult> {
     return { ok: false, error: insErr.message };
   }
 
-  // Kundenbezug: bei vorhandenem Account Notiz ablegen – sonst (Kaltakquise)
-  // den Kunden direkt als Lead anlegen und die Korrespondenz hinterlegen.
+  // Kundenbezug: bestehenden Account finden oder (Kaltakquise) neu als Lead anlegen.
   const acc = input.account_name?.trim();
-  if (acc) {
-    try {
-      const { data: a } = await supabase.from("accounts").select("id").ilike("name", acc).maybeSingle();
-      let accId = (a as { id?: string } | null)?.id;
+  let accId: string | undefined;
+  let warning: string | undefined;
 
-      if (!accId) {
-        const row: Record<string, unknown> = {
-          partner_id: pid,
-          name: acc,
-          line: input.line,
-          lifecycle: "lead",
-          mrr: 0,
-          contact_name: input.contact_name?.trim() || null,
-          contact_phone: input.contact_phone?.trim() || null,
-        };
-        // Graceful: noch nicht migrierte Spalten (z.B. contact_phone) weglassen.
-        let ins: { id?: string } | null = null;
-        for (let attempt = 0; attempt < 5; attempt++) {
-          const res = await supabase.from("accounts").insert(row).select("id").single();
-          if (!res.error) {
-            ins = res.data as { id?: string };
-            break;
-          }
-          const m = res.error.message.match(/column "?([a-z_]+)"? .*does not exist/i);
-          if (m && m[1] in row) {
-            delete row[m[1]];
-            continue;
-          }
+  if (acc) {
+    const { data: a } = await supabase.from("accounts").select("id").ilike("name", acc).maybeSingle();
+    accId = (a as { id?: string } | null)?.id;
+
+    if (!accId) {
+      const row: Record<string, unknown> = {
+        partner_id: pid,
+        name: acc,
+        line: input.line,
+        lifecycle: "lead",
+        mrr: 0,
+        contact_name: input.contact_name?.trim() || null,
+        contact_phone: input.contact_phone?.trim() || null,
+      };
+      let lastErr = "";
+      for (let attempt = 0; attempt < 6; attempt++) {
+        const res = await supabase.from("accounts").insert(row).select("id").single();
+        if (!res.error) {
+          accId = (res.data as { id?: string } | null)?.id;
           break;
         }
-        accId = ins?.id;
-        revalidatePath("/cockpit/kunden");
+        lastErr = res.error.message;
+        const m = res.error.message.match(/column "?([a-z_]+)"? .*does not exist/i);
+        if (m && m[1] in row) {
+          delete row[m[1]];
+          continue;
+        }
+        break;
       }
+      if (!accId) warning = `Aktivität gespeichert, aber Neukunde „${acc}" konnte nicht angelegt werden: ${lastErr}`;
+      else revalidatePath("/cockpit/kunden");
+    }
 
-      if (accId) {
-        const label = input.kind === "call" ? "Anruf" : input.kind === "email" ? "E-Mail" : "Termin";
-        const body = `${label} (${input.line === "ki" ? "KI" : "Recruiting"})${input.subject ? `: ${input.subject}` : ""}`;
-        await supabase.from("account_notes").insert({ partner_id: pid, account_id: accId, body });
-        revalidatePath(`/cockpit/kunden/${accId}`);
-      }
-    } catch {
-      /* Kundenanlage/Notiz ist best-effort und darf das Logging nicht blockieren */
+    if (accId) {
+      const label = input.kind === "call" ? "Anruf" : input.kind === "email" ? "E-Mail" : "Termin";
+      const body = `${label} (${input.line === "ki" ? "KI" : "Recruiting"})${input.subject ? `: ${input.subject}` : ""}`;
+      await supabase.from("account_notes").insert({ partner_id: pid, account_id: accId, body });
+      revalidatePath(`/cockpit/kunden/${accId}`);
     }
   }
 
+  // Wiedervorlage / Nachfass-Aufgabe.
+  const days = input.followupDays ?? 0;
+  if (days > 0) {
+    const due = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+    await supabase.from("crm_tasks").insert({
+      partner_id: pid,
+      related_type: accId ? "customer" : "none",
+      related_id: accId ?? null,
+      related_label: acc || input.subject || "Nachfassen",
+      title: `Nachfassen${acc ? ` bei ${acc}` : ""}${input.subject ? ` – ${input.subject}` : ""}`,
+      due_date: due,
+    });
+    revalidatePath("/cockpit/aufgaben");
+    revalidatePath("/cockpit/kalender");
+  }
+
   revalidatePath("/cockpit");
-  return { ok: true };
+  return { ok: true, warning };
 }

@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/cockpit/PageHeader";
 import { MandatesView } from "@/components/cockpit/views/MandatesView";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { MandateFormDialog } from "@/components/cockpit/MandateFormDialog";
+import { ActivityLogger } from "@/components/cockpit/ActivityLogger";
+import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { mandateRevenue } from "@/lib/crm-types";
 import { IconBriefcase, IconUserCheck, IconEuro, IconTrendingUp } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
@@ -81,6 +83,13 @@ export default async function RecruitingProjektePage() {
           icon={IconBriefcase}
         />
       </div>
+
+      <Card>
+        <CardBody>
+          <SectionHeader title="Recruiting-Aktivität erfassen" hint="Call/E-Mail → Korrespondenz beim Kunden + Wiedervorlage" />
+          <ActivityLogger accounts={accountNames} lineLock="recruiting" />
+        </CardBody>
+      </Card>
 
       <MandatesView
         mandates={mandates}
