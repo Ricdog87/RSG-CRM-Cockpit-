@@ -5,6 +5,8 @@ const nextConfig = {
   // mupdf (PDF→Foto-Extraktion) ist ESM mit top-level await – nicht bundlen.
   experimental: {
     serverComponentsExternalPackages: ["mupdf"],
+    // CV-Upload über Server Actions (öffentlicher Stellen-Link) – Default 1 MB zu klein.
+    serverActions: { bodySizeLimit: "10mb" },
   },
 
   async headers() {
