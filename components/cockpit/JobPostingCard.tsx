@@ -121,7 +121,7 @@ export function JobPostingCard({
             disabled={pending}
             className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand to-sky px-2.5 py-1.5 text-xs font-semibold text-white shadow-glow active:scale-95 disabled:opacity-60"
           >
-            <IconSpark size={13} /> {pending ? "anonymisiert …" : anonText ? "Neu anonymisieren" : "Anonymisieren"}
+            <IconSpark size={13} /> {pending ? "erstellt …" : anonText ? "Neu erstellen" : "Anonyme Stellenanzeige erstellen"}
           </button>
         </div>
         {anonText ? (

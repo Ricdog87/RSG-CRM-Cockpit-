@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getJobByShareToken } from "@/lib/job-posting-data";
+import { JobInterestForm } from "@/components/cockpit/JobInterestForm";
 
 export const dynamic = "force-dynamic";
 
@@ -124,6 +125,9 @@ export default async function StellePage({
             RSG-Ansprechpartner für mehr Informationen.
           </p>
         )}
+        <div className="mt-6 border-t border-border pt-6">
+          <JobInterestForm token={params.token} role={job.role} />
+        </div>
       </div>
     </Shell>
   );

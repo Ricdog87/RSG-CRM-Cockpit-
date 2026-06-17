@@ -44,8 +44,8 @@ export function Dialog({
         onClick={onClose}
         aria-hidden
       />
-      <div className="relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-t-2xl border border-border bg-surface shadow-card sm:max-w-lg sm:rounded-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+      <div className="relative z-10 flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-border bg-surface shadow-card sm:max-w-lg sm:rounded-2xl">
+        <div className="flex flex-none items-start justify-between gap-4 border-b border-border bg-surface px-5 py-4">
           <div>
             <h2 className="text-base font-bold text-ink">{title}</h2>
             {description ? (
@@ -61,7 +61,7 @@ export function Dialog({
             <IconClose size={18} />
           </button>
         </div>
-        <div className="px-5 py-4">{children}</div>
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
       </div>
     </div>
   );

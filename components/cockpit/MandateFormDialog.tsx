@@ -270,7 +270,8 @@ export function MandateFormDialog({
               className={inputClass + " resize-y"}
             />
             <p className="mt-1 text-[0.7rem] text-faint">
-              Optional, aber empfohlen: verbessert Search &amp; Match und kann anonymisiert geteilt werden.
+              Nach dem Speichern: im Mandat über „Anonyme Stellenanzeige erstellen“ einen
+              Bewerber-Link generieren (mit „Interessiert / Nicht interessiert“).
             </p>
           </div>
 
