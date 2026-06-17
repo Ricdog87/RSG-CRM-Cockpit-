@@ -14,6 +14,7 @@ type Filter = "all" | KiStatus;
 
 const STATUS: { value: Filter; label: string }[] = [
   { value: "all", label: "Alle" },
+  { value: "angebot", label: "Angebot" },
   { value: "live", label: "Live" },
   { value: "onboarding", label: "Onboarding" },
   { value: "optimierung", label: "Optimierung" },

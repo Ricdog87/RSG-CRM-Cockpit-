@@ -71,6 +71,7 @@ export interface Opportunity {
 }
 
 export type KiStatus =
+  | "angebot"
   | "onboarding"
   | "live"
   | "optimierung"

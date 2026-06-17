@@ -6,7 +6,7 @@ import { KiRenewals } from "@/components/cockpit/KiRenewals";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { KIPROJECT_FIELDS, withCombobox } from "@/lib/crm-forms";
 import { StatCard } from "@/components/cockpit/StatCard";
-import { IconPhone, IconSpark, IconEuro, IconAlert } from "@/components/ui/icons";
+import { IconPhone, IconSpark, IconEuro, IconAlert, IconTrendingUp } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -18,9 +18,14 @@ export default async function KiProjektePage() {
   const live = projects.filter((p) => p.status === "live");
   const onboarding = projects.filter((p) => p.status === "onboarding");
   const risiko = projects.filter((p) => p.health === "risiko");
-  const active = projects.filter((p) => p.status !== "gekuendigt");
+  // Aktiv = gewonnen & laufend (Angebot/Planung zählt NICHT als realisierter Umsatz).
+  const active = projects.filter((p) => p.status !== "gekuendigt" && p.status !== "angebot");
   const mrr = active.reduce((s, p) => s + p.mrr, 0);
   const setupTotal = active.reduce((s, p) => s + (p.setup_fee ?? 0), 0);
+  // Forecast = Projekte im Status „Angebot / Planung".
+  const angebot = projects.filter((p) => p.status === "angebot");
+  const forecastMrr = angebot.reduce((s, p) => s + p.mrr, 0);
+  const forecastSetup = angebot.reduce((s, p) => s + (p.setup_fee ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -40,7 +45,14 @@ export default async function KiProjektePage() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <StatCard
+          label="Forecast (Angebot)"
+          value={`${formatEur(forecastMrr)}/M`}
+          hint={`${formatNumber(angebot.length)} in Planung${forecastSetup > 0 ? ` · +${formatEur(forecastSetup)} Setup` : ""}`}
+          accent="sky"
+          icon={IconTrendingUp}
+        />
         <StatCard
           label="Live-Projekte"
           value={formatNumber(live.length)}

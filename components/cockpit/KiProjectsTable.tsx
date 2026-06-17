@@ -7,8 +7,9 @@ import type { Health, KiProject, KiStatus } from "@/lib/crm-types";
 
 const statusMeta: Record<
   KiStatus,
-  { label: string; tone: "sky" | "success" | "brand" | "warning" | "danger" }
+  { label: string; tone: "neutral" | "sky" | "success" | "brand" | "warning" | "danger" }
 > = {
+  angebot: { label: "Angebot", tone: "neutral" },
   onboarding: { label: "Onboarding", tone: "sky" },
   live: { label: "Live", tone: "success" },
   optimierung: { label: "Optimierung", tone: "brand" },

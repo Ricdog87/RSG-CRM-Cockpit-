@@ -6,6 +6,7 @@ import { setKiProjectStatus, setKiProjectHealth } from "@/lib/crm-actions";
 import type { Health, KiStatus } from "@/lib/crm-types";
 
 const STATUS: { value: KiStatus; label: string }[] = [
+  { value: "angebot", label: "Angebot / Planung" },
   { value: "onboarding", label: "Onboarding" },
   { value: "live", label: "Live" },
   { value: "optimierung", label: "Optimierung" },

@@ -102,12 +102,14 @@ export default async function CockpitPage() {
 
   // ── KI-Kennzahlen ────────────────────────────────────────────────────
   const kiDeals = opportunities.filter((o) => o.line === "ki").map(toDeal);
-  const kiActive = kiProjects.filter((p) => p.status !== "gekuendigt");
-  const kiLive = kiActive.filter((p) => p.status === "live").length;
-  const kiOnboarding = kiActive.filter((p) => p.status === "onboarding").length;
+  // Aktiv = gewonnen & laufend (Status „Angebot" zählt als Forecast, nicht als MRR).
+  const kiActive = kiProjects.filter((p) => p.status !== "gekuendigt" && p.status !== "angebot");
+  const kiLive = kiProjects.filter((p) => p.status === "live").length;
+  const kiOnboarding = kiProjects.filter((p) => p.status === "onboarding").length;
   const kiMrr = kiActive.reduce((s, p) => s + p.mrr, 0);
   const kiArr = kiMrr * 12;
   const kiSetup = kiActive.reduce((s, p) => s + (p.setup_fee ?? 0), 0);
+  const kiForecast = kiProjects.filter((p) => p.status === "angebot").reduce((s, p) => s + p.mrr, 0);
 
   return (
     <div className="space-y-6">
@@ -147,10 +149,11 @@ export default async function CockpitPage() {
       {/* ═══════════ RSG AI ═══════════ */}
       <LineHeader eyebrow="Geschäftslinie · KI & Telefonassistenz" title="RSG AI" accent="bg-sky" />
       <section className="animate-fade-up" aria-label="KI-Kennzahlen">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Live-Projekte" value={formatNumber(kiLive)} hint={`${formatNumber(kiOnboarding)} im Onboarding`} accent="success" icon={IconPhone} />
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <StatCard label="MRR aktiv" value={`${formatEur(kiMrr)}/M`} hint="wiederkehrend" accent="brand" icon={IconEuro} />
           <StatCard label="ARR" value={formatEur(kiArr)} hint="Jahresumsatz (MRR×12)" accent="sky" icon={IconTrendingUp} />
+          <StatCard label="Forecast (Angebot)" value={`${formatEur(kiForecast)}/M`} hint="in Planung/Angebot" accent="neutral" icon={IconTrendingUp} />
+          <StatCard label="Live-Projekte" value={formatNumber(kiLive)} hint={`${formatNumber(kiOnboarding)} im Onboarding`} accent="success" icon={IconPhone} />
           <StatCard label="Implementierung" value={formatEur(kiSetup)} hint="einmalig (aktiv)" accent="warning" icon={IconBolt} />
         </div>
       </section>

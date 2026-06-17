@@ -28,7 +28,8 @@ import type { Health, KiStatus } from "@/lib/crm-types";
 
 export const dynamic = "force-dynamic";
 
-const statusMeta: Record<KiStatus, { label: string; tone: "sky" | "success" | "brand" | "warning" | "danger" }> = {
+const statusMeta: Record<KiStatus, { label: string; tone: "neutral" | "sky" | "success" | "brand" | "warning" | "danger" }> = {
+  angebot: { label: "Angebot / Planung", tone: "neutral" },
   onboarding: { label: "Onboarding", tone: "sky" },
   live: { label: "Live", tone: "success" },
   optimierung: { label: "Optimierung", tone: "brand" },

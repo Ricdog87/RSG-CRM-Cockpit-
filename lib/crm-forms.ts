@@ -153,6 +153,7 @@ export const KIPROJECT_FIELDS: FormField[] = [
     label: "Status",
     type: "select",
     options: [
+      { value: "angebot", label: "Angebot / Planung" },
       { value: "onboarding", label: "Onboarding" },
       { value: "live", label: "Live" },
       { value: "optimierung", label: "Optimierung" },
