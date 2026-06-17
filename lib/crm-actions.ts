@@ -171,7 +171,15 @@ function revalidateMany(paths: string | string[]) {
  */
 async function ensureAccount(
   name: string,
-  opts: { line: "ki" | "recruiting"; segment?: string; ort?: string; mrr?: number; contact?: string }
+  opts: {
+    line: "ki" | "recruiting";
+    segment?: string;
+    ort?: string;
+    mrr?: number;
+    contact?: string;
+    branche?: string;
+    contact_email?: string;
+  }
 ): Promise<void> {
   const n = (name || "").trim();
   if (!n || useMockData) return;
@@ -191,9 +199,11 @@ async function ensureAccount(
       name: n,
       line: opts.line,
       lifecycle: "kunde",
+      branche: opts.branche || null,
       segment: opts.segment || null,
       ort: opts.ort || null,
       contact_name: opts.contact || null,
+      contact_email: opts.contact_email || null,
       mrr: opts.mrr ?? 0,
     };
     // Graceful: noch nicht migrierte Spalten weglassen.
@@ -433,7 +443,10 @@ export async function createKiProject(
       line: "ki",
       segment: s(fd, "segment"),
       mrr: n(fd, "mrr"),
-      contact: s(fd, "decision_maker") || s(fd, "tech_contact"),
+      branche: s(fd, "acc_branche"),
+      ort: s(fd, "acc_ort"),
+      contact: s(fd, "acc_contact_name") || s(fd, "decision_maker") || s(fd, "tech_contact"),
+      contact_email: s(fd, "acc_contact_email"),
     });
   }
   return res;
@@ -483,7 +496,13 @@ export async function createMandate(
   );
   // Kunde automatisch übernehmen, falls noch nicht im CRM (Recruiting-Linie).
   if (res.ok && !res.demo) {
-    await ensureAccount(s(fd, "account_name"), { line: "recruiting" });
+    await ensureAccount(s(fd, "account_name"), {
+      line: "recruiting",
+      branche: s(fd, "acc_branche"),
+      ort: s(fd, "acc_ort"),
+      contact: s(fd, "acc_contact_name"),
+      contact_email: s(fd, "acc_contact_email"),
+    });
   }
   return res;
 }

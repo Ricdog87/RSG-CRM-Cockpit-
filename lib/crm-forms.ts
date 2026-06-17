@@ -188,6 +188,11 @@ export const KIPROJECT_FIELDS: FormField[] = [
   { name: "kickoff_date", label: "Kickoff", type: "date" },
   { name: "decision_maker", label: "Entscheider (Kunde)" },
   { name: "tech_contact", label: "Technischer Ansprechpartner" },
+  // Kundendaten – wandern automatisch in den Account, falls der Kunde neu ist.
+  { name: "acc_branche", label: "Kunde: Branche", placeholder: "nur falls neuer Kunde" },
+  { name: "acc_ort", label: "Kunde: Ort" },
+  { name: "acc_contact_name", label: "Kunde: Ansprechpartner:in" },
+  { name: "acc_contact_email", label: "Kunde: E-Mail", type: "email" },
 ];
 
 export const OPPORTUNITY_FIELDS: FormField[] = [

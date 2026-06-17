@@ -292,6 +292,21 @@ export function MandateFormDialog({
             </div>
           </div>
 
+          {/* Kundendaten – nur beim Anlegen; wandern in den Account, falls neu. */}
+          {!isEdit ? (
+            <div className="rounded-xl border border-border bg-elevated/40 p-3">
+              <p className="mb-2 text-xs font-medium text-muted">
+                Kundendaten <span className="text-faint">(optional – nur falls der Kunde neu ist)</span>
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <input name="acc_branche" placeholder="Branche" className={inputClass} />
+                <input name="acc_ort" placeholder="Ort" className={inputClass} />
+                <input name="acc_contact_name" placeholder="Ansprechpartner:in" className={inputClass} />
+                <input name="acc_contact_email" type="email" placeholder="Ansprechpartner-E-Mail" className={inputClass} />
+              </div>
+            </div>
+          ) : null}
+
           {state?.error ? (
             <p className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
               {state.error}
