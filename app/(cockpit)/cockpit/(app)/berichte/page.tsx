@@ -1,5 +1,6 @@
-import { getOpportunities, getMandates, getCandidates } from "@/lib/crm-data";
+import { getOpportunities, getMandates, getCandidates, getKiProjects } from "@/lib/crm-data";
 import { getPlacements } from "@/lib/placements-data";
+import { mandateRevenue } from "@/lib/crm-types";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
@@ -31,11 +32,12 @@ const RECRUIT_FUNNEL: { key: CandidateStage; label: string }[] = [
 ];
 
 export default async function BerichtePage() {
-  const [opps, mandates, candidates, placements] = await Promise.all([
+  const [opps, mandates, candidates, placements, kiProjects] = await Promise.all([
     getOpportunities(),
     getMandates(),
     getCandidates(),
     getPlacements(),
+    getKiProjects(),
   ]);
 
   const open = opps.filter((o) => o.stage !== "gewonnen" && o.stage !== "verloren");
@@ -115,6 +117,32 @@ export default async function BerichtePage() {
     sourceMap.set(key, row);
   }
   const sourceRows = Array.from(sourceMap.values()).sort((a, b) => b.placed - a.placed || b.candidates - a.candidates);
+
+  // ---- Pipeline / Forecast aus Angeboten ------------------------------
+  const recruitOffers = mandates.filter((m) => m.status === "angebot");
+  const kiOffers = kiProjects.filter((p) => p.status === "angebot");
+  const recruitForecast = recruitOffers.reduce((s, m) => s + mandateRevenue(m), 0);
+  const kiForecastMrr = kiOffers.reduce((s, p) => s + p.mrr, 0);
+  const kiForecastArr = kiForecastMrr * 12;
+  const gesamtPipeline = recruitForecast + kiForecastArr;
+
+  // Monats-Prognose: erwarteter Eingang je Monat (Recruiting-Honorar nach
+  // Deadline-Monat, KI Setup + 1. MRR nach Go-Live-Monat).
+  const fMonth = new Map<string, number>();
+  const addF = (iso: string | undefined, value: number) => {
+    if (value <= 0) return;
+    const d = iso ? new Date(iso) : new Date();
+    const key = Number.isNaN(d.getTime())
+      ? new Date().toISOString().slice(0, 7)
+      : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    fMonth.set(key, (fMonth.get(key) ?? 0) + value);
+  };
+  for (const m of recruitOffers) addF(m.deadline, mandateRevenue(m));
+  for (const p of kiOffers) addF(p.go_live, (p.setup_fee ?? 0) + p.mrr);
+  const forecastByMonth = Array.from(fMonth.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(0, 8)
+    .map(([key, value]) => ({ month: MONTHS[Number(key.slice(5, 7)) - 1], value: Math.round(value) }));
 
   return (
     <div className="space-y-6">
@@ -228,6 +256,29 @@ export default async function BerichtePage() {
           </CardBody>
         </Card>
       </div>
+
+      {/* Pipeline / Forecast aus Angeboten */}
+      <div className="pt-2">
+        <SectionHeader title="Pipeline & Forecast" hint="aus Angeboten beider Geschäftslinien" />
+      </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard label="Gesamt-Pipeline" value={formatEur(gesamtPipeline)} hint="Recruiting + KI (ARR)" accent="brand" icon={IconTrendingUp} />
+        <StatCard label="Recruiting-Angebote" value={formatEur(recruitForecast)} hint={`${formatNumber(recruitOffers.length)} Mandate`} accent="sky" icon={IconBriefcase} />
+        <StatCard label="KI-Angebote (MRR)" value={`${formatEur(kiForecastMrr)}/M`} hint={`${formatEur(kiForecastArr)} ARR`} accent="success" icon={IconEuro} />
+        <StatCard label="KI-Angebote (Anzahl)" value={formatNumber(kiOffers.length)} hint="in Planung/Angebot" accent="neutral" icon={IconTarget} />
+      </div>
+      <Card>
+        <CardBody>
+          <SectionHeader title="Monats-Prognose" hint="erwarteter Eingang je Monat (Honorar + Setup + 1. MRR)" />
+          {forecastByMonth.length > 0 ? (
+            <ForecastChart data={forecastByMonth} />
+          ) : (
+            <p className="py-12 text-center text-sm text-faint">
+              Noch keine Angebote mit Datum. Setze Mandate/KI-Projekte auf „Angebot / Planung“ und hinterlege Deadline bzw. Go-Live.
+            </p>
+          )}
+        </CardBody>
+      </Card>
     </div>
   );
 }
