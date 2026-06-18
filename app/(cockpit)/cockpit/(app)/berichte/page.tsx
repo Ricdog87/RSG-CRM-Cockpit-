@@ -293,6 +293,7 @@ export default async function BerichtePage() {
           hint={`${formatEur(weighted)} gewichtet`}
           accent="sky"
           icon={IconTarget}
+          href="/cockpit/sales"
         />
         <StatCard
           label="Ø Dealgröße"
@@ -392,6 +393,7 @@ export default async function BerichtePage() {
           hint={`${formatEur(placedFee)} Honorar`}
           accent="success"
           icon={IconUserCheck}
+          href="/cockpit/projekte/recruiting"
         />
         <StatCard
           label="Kandidat→Platzierung"
@@ -436,10 +438,10 @@ export default async function BerichtePage() {
         <SectionHeader title="Pipeline & Forecast" hint="aus Angeboten beider Geschäftslinien" />
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Gesamt-Pipeline" value={formatEur(gesamtPipeline)} hint="Recruiting + KI (ARR)" accent="brand" icon={IconTrendingUp} />
-        <StatCard label="Recruiting-Angebote" value={formatEur(recruitForecast)} hint={`${formatNumber(recruitOffers.length)} Mandate`} accent="sky" icon={IconBriefcase} />
-        <StatCard label="KI-Angebote (MRR)" value={`${formatEur(kiForecastMrr)}/M`} hint={`${formatEur(kiForecastArr)} ARR`} accent="success" icon={IconEuro} />
-        <StatCard label="KI-Angebote (Anzahl)" value={formatNumber(kiOffers.length)} hint="in Planung/Angebot" accent="neutral" icon={IconTarget} />
+        <StatCard label="Gesamt-Pipeline" value={formatEur(gesamtPipeline)} hint="Recruiting + KI (ARR)" accent="brand" icon={IconTrendingUp} href="/cockpit/sales" />
+        <StatCard label="Recruiting-Angebote" value={formatEur(recruitForecast)} hint={`${formatNumber(recruitOffers.length)} Mandate`} accent="sky" icon={IconBriefcase} href="/cockpit/projekte/recruiting" />
+        <StatCard label="KI-Angebote (MRR)" value={`${formatEur(kiForecastMrr)}/M`} hint={`${formatEur(kiForecastArr)} ARR`} accent="success" icon={IconEuro} href="/cockpit/projekte/ki" />
+        <StatCard label="KI-Angebote (Anzahl)" value={formatNumber(kiOffers.length)} hint="in Planung/Angebot" accent="neutral" icon={IconTarget} href="/cockpit/projekte/ki" />
       </div>
       <Card>
         <CardBody>
