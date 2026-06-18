@@ -18,8 +18,10 @@ import { AccountEnrich } from "@/components/cockpit/AccountEnrich";
 import { AccountContractCard } from "@/components/cockpit/AccountContractCard";
 import { PlacementContractDialog } from "@/components/cockpit/PlacementContractDialog";
 import { EditDialog } from "@/components/cockpit/EditDialog";
+import { EmailComposer } from "@/components/cockpit/EmailComposer";
 import { ACCOUNT_FIELDS } from "@/lib/crm-forms";
 import { updateAccount } from "@/lib/crm-actions";
+import { getPartnerIdentity } from "@/lib/data";
 import { AccountIntelCard } from "@/components/cockpit/AccountIntelCard";
 import { FollowupDrafter } from "@/components/cockpit/FollowupDrafter";
 import { AccountSequenceEnroll } from "@/components/cockpit/AccountSequenceEnroll";
@@ -81,11 +83,12 @@ export default async function AccountDetailPage({
   const detail = await getAccountDetail(params.id);
   if (!detail) notFound();
   const { account, opportunities, kiProjects, mandates, candidates } = detail;
-  const [emails, notes, tasks, contacts] = await Promise.all([
+  const [emails, notes, tasks, contacts, identity] = await Promise.all([
     getEmailActivitiesForAccount(account.id, account.name),
     getNotesForAccount(account.id),
     getTasksForRelated("customer", account.id),
     getContactsForAccount(account.id),
+    getPartnerIdentity(),
   ]);
 
   const intel = computeAccountIntel({
@@ -149,13 +152,15 @@ export default async function AccountDetailPage({
                 {[account.branche, account.ort].filter(Boolean).join(" · ") || "—"}
               </p>
             </div>
-            <div className="flex items-start gap-2">
+            <div className="flex flex-col items-end gap-2">
               <div className="text-right">
                 <p className="text-2xl font-bold text-ink">
                   {account.mrr > 0 ? `${formatEur(account.mrr)}/M` : "—"}
                 </p>
                 <p className="text-xs text-faint">wiederkehrender Umsatz</p>
               </div>
+              <div className="flex items-center gap-2">
+              <EmailComposer account={account} contacts={contacts} senderName={identity.display_name} />
               {!account.synthetic ? (
                 <EditDialog
                   id={account.id}
@@ -181,6 +186,7 @@ export default async function AccountDetailPage({
                   }}
                 />
               ) : null}
+              </div>
             </div>
           </div>
 

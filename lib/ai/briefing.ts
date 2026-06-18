@@ -206,6 +206,45 @@ export async function buildBriefing(pre?: BriefingInput): Promise<Briefing> {
     });
   }
 
+  // 4b) Fixpreis-Zahlungen: Anzahlung offen (Suche gated) / Restzahlung offen.
+  for (const m of mandates) {
+    if ((m.pricing_model ?? "fixed") === "percent") continue;
+    const positions = m.positions || 1;
+    const depositTotal = (m.deposit ?? 0) * positions;
+    const total = mandateFeePerPosition(m) * positions;
+    const restTotal = Math.max(0, total - depositTotal);
+    // Anzahlung offen bei aktivem Mandat → Suche startet erst nach Eingang.
+    if (m.status !== "besetzt" && m.status !== "angebot" && m.status !== "pausiert" && depositTotal > 0 && !m.deposit_paid) {
+      push({
+        id: `dep-${m.id}`,
+        severity: "wichtig",
+        category: "Zahlung",
+        title: `${m.account_name} – Anzahlung offen`,
+        detail: `${formatEurShort(depositTotal)} Anzahlung ausstehend · Suche startet nach Eingang`,
+        action: "Anzahlung nachhalten / anfordern, dann Suche starten",
+        href: `/cockpit/projekte/recruiting`,
+        line: "recruiting",
+        value: depositTotal,
+        urgency: 110,
+      });
+    }
+    // Restzahlung offen bei besetztem Mandat → Geld steht aus.
+    if (m.status === "besetzt" && restTotal > 0 && !m.final_paid) {
+      push({
+        id: `fin-${m.id}`,
+        severity: "kritisch",
+        category: "Zahlung",
+        title: `${m.account_name} – Restzahlung offen`,
+        detail: `${formatEurShort(restTotal)} Restzahlung nach Besetzung ausstehend`,
+        action: "Restzahlung anfordern / Rechnung nachhalten",
+        href: `/cockpit/projekte/recruiting`,
+        line: "recruiting",
+        value: restTotal,
+        urgency: 190,
+      });
+    }
+  }
+
   // 5) Überfällige Rechnungen.
   if (invoices.overdue > 0) {
     push({
