@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { InvitePartnerButton } from "@/components/cockpit/InvitePartnerButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconChevronRight } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
@@ -45,7 +45,7 @@ export function TeamDownline({
         {shown.length === 0 ? (
           <EmptyState
             title="Du hast noch keine Direktpartner:innen. Gewinne deine erste Empfehlung, um Override aufzubauen."
-            action={<Button variant="ghost">Partner:in einladen</Button>}
+            action={<InvitePartnerButton variant="ghost" />}
           />
         ) : (
           <ul className="space-y-2">

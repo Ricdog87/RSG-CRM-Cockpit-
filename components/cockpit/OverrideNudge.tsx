@@ -1,5 +1,5 @@
 import { Card, CardBody } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { InvitePartnerButton } from "@/components/cockpit/InvitePartnerButton";
 import { formatEur } from "@/lib/format";
 import type { OverrideEligibility, PartnerEarnings } from "@/lib/types";
 
@@ -62,9 +62,11 @@ export function OverrideNudge({
             </p>
           </div>
         </div>
-        <Button variant="primary" className="flex-none">
-          Direktpartner:in aktivieren
-        </Button>
+        <InvitePartnerButton
+          variant="primary"
+          className="flex-none"
+          label="Direktpartner:in einladen"
+        />
       </CardBody>
     </Card>
   );

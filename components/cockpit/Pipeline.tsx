@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconChevronRight } from "@/components/ui/icons";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
@@ -89,7 +88,14 @@ export function Pipeline({
         {shown.length === 0 ? (
           <EmptyState
             title="Noch keine offenen Deals. Leg deinen ersten Abschluss an, um ihn hier zu verfolgen."
-            action={<Button variant="ghost">Deal anlegen</Button>}
+            action={
+              <Link
+                href="/cockpit/sales?new=1"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-elevated"
+              >
+                Deal anlegen
+              </Link>
+            }
           />
         ) : (
           <ul className="divide-y divide-border">

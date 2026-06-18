@@ -3,14 +3,14 @@ import { PageHeader } from "@/components/cockpit/PageHeader";
 import { TeamDownline } from "@/components/cockpit/TeamDownline";
 import { OverrideNudge } from "@/components/cockpit/OverrideNudge";
 import { StatCard } from "@/components/cockpit/StatCard";
-import { Button } from "@/components/ui/Button";
-import { IconNetwork, IconUsers, IconEuro, IconPlus } from "@/components/ui/icons";
+import { InvitePartnerButton } from "@/components/cockpit/InvitePartnerButton";
+import { IconNetwork, IconUsers, IconEuro } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function TeamPage() {
-  const { downline, earnings, override } = await getCockpitData();
+  const { downline, earnings, override, partner } = await getCockpitData();
 
   const aktive = downline.filter((d) => d.is_active);
   const teamKunden = downline.reduce((s, d) => s + d.aktive_kunden, 0);
@@ -22,11 +22,7 @@ export default async function TeamPage() {
         eyebrow="Struktur"
         title="Team"
         description="Deine direkten Partner:innen und ihr Beitrag zu deinem Override."
-        action={
-          <Button>
-            <IconPlus size={16} /> Partner:in einladen
-          </Button>
-        }
+        action={<InvitePartnerButton inviterName={partner.display_name} withIcon />}
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

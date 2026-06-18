@@ -8,6 +8,7 @@ import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { FunnelChart, ForecastChart, StageValueChart, ActivityChart } from "@/components/cockpit/BerichteCharts";
 import { getActivityStats } from "@/lib/activity-data";
 import { SourceRoiTable, type SourceRoiRow } from "@/components/cockpit/SourceRoiTable";
+import { BerichteExport, type ReportKpi } from "@/components/cockpit/BerichteExport";
 import { IconTarget, IconEuro, IconTrendingUp, IconBriefcase, IconUserCheck, IconClock } from "@/components/ui/icons";
 import { formatEur, formatNumber, formatPercent } from "@/lib/format";
 import type { CandidateStage } from "@/lib/crm-types";
@@ -249,12 +250,38 @@ export default async function BerichtePage() {
     tone: "sky",
   });
 
+  // CSV-Export: alle Kennzahlen gruppiert (für Reporting an Geschäftsführung/Kunden).
+  const exportKpis: ReportKpi[] = [
+    { group: "Vertrieb", label: "Offene Chancen", value: String(open.length) },
+    { group: "Vertrieb", label: "Gewichtetes Volumen (EUR)", value: String(Math.round(weighted)) },
+    { group: "Vertrieb", label: "Ø Dealgröße (EUR)", value: String(Math.round(avgDeal)) },
+    { group: "Vertrieb", label: "Win-Rate %", value: String(Math.round(winRate)) },
+    { group: "Vertrieb", label: "Gewonnen", value: String(won) },
+    { group: "Vertrieb", label: "Verloren", value: String(lost) },
+    { group: "Recruiting", label: "Platzierungen", value: String(placedCount) },
+    { group: "Recruiting", label: "Platzierungs-Honorar (EUR)", value: String(Math.round(placedFee)) },
+    { group: "Recruiting", label: "Besetzungsquote %", value: String(Math.round(fillRate)) },
+    { group: "Recruiting", label: "Offene Stellen", value: String(openPositions) },
+    { group: "Recruiting", label: "Time-to-Fill (Tage)", value: String(timeToFill) },
+    { group: "Recruiting", label: "Kandidat→Platzierung %", value: String(Math.round(submittedToPlaced)) },
+    { group: "Pipeline", label: "Gesamt-Pipeline (EUR)", value: String(Math.round(gesamtPipeline)) },
+    { group: "Pipeline", label: "Recruiting-Angebote (EUR)", value: String(Math.round(recruitForecast)) },
+    { group: "Pipeline", label: "KI-Angebote MRR (EUR)", value: String(Math.round(kiForecastMrr)) },
+    { group: "Pipeline", label: "KI-Angebote ARR (EUR)", value: String(Math.round(kiForecastArr)) },
+    { group: "Umsatz", label: "Realisiert letzte 8 Monate (EUR)", value: String(Math.round(revenueTotal)) },
+    { group: "Kunden", label: "Aktive Kunden", value: String(activeCustomers) },
+    { group: "Kunden", label: "Leads", value: String(leads) },
+    { group: "KI", label: "MRR live (EUR)", value: String(Math.round(totalMrr)) },
+    { group: "KI", label: "MRR unter Beobachtung (EUR)", value: String(Math.round(atRiskMrr)) },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Analytics"
         title="Berichte"
         description="Pipeline-Funnel, Forecast und Vertriebskennzahlen auf einen Blick."
+        action={<BerichteExport kpis={exportKpis} sources={sourceRows} />}
       />
 
       <PortfolioInsights insights={insights} />

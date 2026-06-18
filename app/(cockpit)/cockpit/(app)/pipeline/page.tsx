@@ -1,9 +1,9 @@
+import Link from "next/link";
 import { getCockpitData } from "@/lib/data";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { PipelineBoard } from "@/components/cockpit/PipelineBoard";
 import { StatCard } from "@/components/cockpit/StatCard";
-import { Button } from "@/components/ui/Button";
-import { IconPlus, IconPipeline, IconEuro, IconTrendingUp } from "@/components/ui/icons";
+import { IconPipeline, IconEuro, IconTrendingUp } from "@/components/ui/icons";
 import { formatEur, formatNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -24,9 +24,12 @@ export default async function PipelinePage() {
         title="Meine Pipeline"
         description="Deine persönlichen Deals nach Phase – mit gewichtetem MRR-Potenzial."
         action={
-          <Button>
-            <IconPlus size={16} /> Deal anlegen
-          </Button>
+          <Link
+            href="/cockpit/sales?new=1"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-deep px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition-colors hover:bg-brand-ink"
+          >
+            Deal anlegen
+          </Link>
         }
       />
 
