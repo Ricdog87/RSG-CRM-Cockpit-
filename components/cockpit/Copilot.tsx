@@ -30,10 +30,12 @@ export function Copilot() {
   function ask(question: string) {
     const q = question.trim();
     if (!q || pending) return;
+    // Gesprächsverlauf (Memory innerhalb der Sitzung) mitgeben.
+    const history = messages.map((m) => ({ role: m.role, text: m.text }));
     setMessages((m) => [...m, { role: "user", text: q }]);
     if (inputRef.current) inputRef.current.value = "";
     start(async () => {
-      const res = await askCopilotAction(q);
+      const res = await askCopilotAction(q, history);
       setMessages((m) => [
         ...m,
         res.ok

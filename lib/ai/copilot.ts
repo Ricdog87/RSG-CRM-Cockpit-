@@ -79,9 +79,19 @@ async function buildContext(): Promise<string> {
   ].join("\n");
 }
 
-/** Beantwortet eine Frage zum eigenen CRM. Ohne API-Key → Kontext-Snapshot. */
+export interface CopilotTurn {
+  role: "user" | "assistant";
+  text: string;
+}
+
+/**
+ * Beantwortet eine Frage zum eigenen CRM. Ohne API-Key → Kontext-Snapshot.
+ * Mit `history` versteht der Co-Pilot Folgefragen im Gesprächsverlauf
+ * (Gedächtnis innerhalb der Sitzung).
+ */
 export async function askCopilot(
-  question: string
+  question: string,
+  history: CopilotTurn[] = []
 ): Promise<{ answer: string; mode: "live" | "demo" }> {
   const context = await buildContext();
 
@@ -95,9 +105,16 @@ export async function askCopilot(
     };
   }
 
+  // Nur die letzten Turns mitgeben (Token-Budget schonen).
+  const recent = history.slice(-6);
+  const verlauf = recent.length
+    ? "\n\nBisheriger Gesprächsverlauf:\n" +
+      recent.map((m) => `${m.role === "user" ? "Frage" : "Antwort"}: ${m.text}`).join("\n")
+    : "";
+
   const answer = await llmComplete(
     SYSTEM,
-    `Kontext (aktuelle Zahlen):\n${context}\n\nFrage der Partner:in: ${question}`
+    `Kontext (aktuelle Zahlen):\n${context}${verlauf}\n\nNeue Frage der Partner:in: ${question}\n(Beziehe dich bei Folgefragen auf den Gesprächsverlauf.)`
   );
   return { answer: answer.trim() || "Dazu finde ich im Kontext keine Antwort.", mode: "live" };
 }

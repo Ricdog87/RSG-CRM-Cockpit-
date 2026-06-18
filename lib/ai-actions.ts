@@ -55,12 +55,13 @@ export async function runLeadAnalysis(
 
 /** KI-Co-Pilot: beantwortet eine Frage zum eigenen CRM. */
 export async function askCopilotAction(
-  question: string
+  question: string,
+  history: { role: "user" | "assistant"; text: string }[] = []
 ): Promise<{ ok: boolean; answer?: string; mode?: "live" | "demo"; error?: string }> {
   const q = question.trim();
   if (!q) return { ok: false, error: "Bitte eine Frage eingeben." };
   try {
-    const { answer, mode } = await askCopilot(q);
+    const { answer, mode } = await askCopilot(q, history);
     return { ok: true, answer, mode };
   } catch (e) {
     return {
