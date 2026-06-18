@@ -118,6 +118,15 @@ export default async function KandidatDetailPage({
   const cvPath = c.cv_path;
   const isPdf = /\.pdf$/i.test(c.cv_filename ?? "");
   const canExtract = aiConfigured && Boolean(cvPath) && isPdf;
+  const age = c.birth_date ? Math.floor((Date.now() - new Date(c.birth_date).getTime()) / 31557600000) : null;
+  const quickFacts = [
+    age != null ? `${age} J.` : null,
+    c.location || null,
+    c.experience_years != null ? `${c.experience_years} J. Erfahrung` : null,
+    c.availability || null,
+    c.salary_expectation ? `${formatEur(c.salary_expectation)}/J` : null,
+    c.willing_to_relocate ? "umzugsbereit" : null,
+  ].filter(Boolean) as string[];
 
   return (
     <div className="space-y-5">
@@ -144,7 +153,7 @@ export default async function KandidatDetailPage({
               />
               <div className="min-w-0">
                 <h1 className="truncate text-lg font-bold text-ink">{[c.salutation, c.title, c.name].filter(Boolean).join(" ")}</h1>
-                <p className="truncate text-sm text-muted">{c.role || "Position offen"}</p>
+                <p className="truncate text-sm text-muted">{[c.role || "Position offen", c.current_employer].filter(Boolean).join(" · ")}</p>
                 {c.candidate_no != null ? (
                   <p className="mt-0.5 font-mono text-[0.7rem] font-medium text-faint">{candNo(c.candidate_no)}</p>
                 ) : null}
@@ -185,6 +194,19 @@ export default async function KandidatDetailPage({
               <IconPhone size={14} /> Anruf
             </a>
           </div>
+
+          {quickFacts.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {quickFacts.map((chip, i) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center rounded-lg bg-elevated/60 px-2 py-1 text-[0.7rem] font-medium text-muted ring-1 ring-border"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </CardBody>
       </Card>
 
@@ -194,50 +216,79 @@ export default async function KandidatDetailPage({
           {/* Wichtige Informationen */}
           <Card>
             <CardBody>
-              <SectionHeader title="Wichtige Informationen" />
-              <div className="divide-y divide-border">
-                <div className="py-2">
+              <SectionHeader title="Auf einen Blick" hint="Recruiter-Sicht" />
+              <div className="space-y-4">
+                <div className="py-1">
                   <span className="mb-1.5 block text-xs text-faint">Phase</span>
                   <CandidateStageControl id={c.id} stage={c.stage} />
                 </div>
-                <Prop
-                  label="Mandat / Account"
-                  value={
-                    c.mandate_account ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <IconBriefcase size={13} className="text-faint" /> {c.mandate_account}
-                      </span>
-                    ) : (
-                      "—"
-                    )
-                  }
-                />
-                <Prop label="Quelle" value={c.source} />
-                <Prop label="E-Mail" value={c.email} />
-                <Prop label="Telefon" value={c.phone} />
-                <Prop label="Ort / PLZ" value={[c.location, c.zip].filter(Boolean).join(" · ")} />
-                <Prop
-                  label="Gehaltsvorstellung"
-                  value={c.salary_expectation ? `${formatEur(c.salary_expectation)}/J` : "—"}
-                />
-                <Prop label="Verfügbarkeit" value={c.availability} />
-                <Prop
-                  label="Mobilität"
-                  value={[
-                    c.willing_to_relocate == null ? "" : c.willing_to_relocate ? "umzugsbereit" : "kein Umzug",
-                    c.travel_willingness ? `Reise: ${c.travel_willingness}` : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                />
-                <Prop
-                  label="CV hochgeladen"
-                  value={c.cv_uploaded_at ? formatDate(c.cv_uploaded_at) : "—"}
-                />
-                <Prop
-                  label="Zuletzt aktualisiert"
-                  value={c.updated_at ? formatDate(c.updated_at) : "—"}
-                />
+
+                <div>
+                  <p className="mb-1 text-[0.7rem] font-semibold uppercase tracking-wide text-faint">Person</p>
+                  <div className="divide-y divide-border">
+                    <Prop
+                      label="Alter"
+                      value={age != null ? `${age} Jahre${c.birth_date ? ` (${formatDate(c.birth_date)})` : ""}` : "—"}
+                    />
+                    <Prop label="Ort / PLZ" value={[c.location, c.zip].filter(Boolean).join(" · ")} />
+                    <Prop
+                      label="Mobilität"
+                      value={[
+                        c.willing_to_relocate == null ? "" : c.willing_to_relocate ? "umzugsbereit" : "kein Umzug",
+                        c.travel_willingness ? `Reise: ${c.travel_willingness}` : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    />
+                    <Prop label="Sprachen" value={c.languages} />
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-1 text-[0.7rem] font-semibold uppercase tracking-wide text-faint">Job &amp; Fit</p>
+                  <div className="divide-y divide-border">
+                    <Prop label="Aktuelle Position" value={c.role} />
+                    <Prop label="Arbeitgeber" value={c.current_employer} />
+                    <Prop
+                      label="Berufserfahrung"
+                      value={c.experience_years != null ? `${c.experience_years} Jahre` : "—"}
+                    />
+                    <Prop label="Verfügbarkeit" value={c.availability} />
+                    <Prop
+                      label="Gehaltsvorstellung"
+                      value={c.salary_expectation ? `${formatEur(c.salary_expectation)}/J` : "—"}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-1 text-[0.7rem] font-semibold uppercase tracking-wide text-faint">Prozess &amp; Kontakt</p>
+                  <div className="divide-y divide-border">
+                    <Prop
+                      label="Mandat / Account"
+                      value={
+                        mandateAccount ? (
+                          <Link href={`/cockpit/kunden/${mandateAccount.id}`} className="inline-flex items-center gap-1.5 hover:text-brand-deep">
+                            <IconBriefcase size={13} className="text-faint" /> {mandateAccount.name}
+                          </Link>
+                        ) : (
+                          c.mandate_account || "—"
+                        )
+                      }
+                    />
+                    <Prop label="Quelle" value={c.source} />
+                    <Prop label="E-Mail" value={c.email} />
+                    <Prop label="Telefon" value={c.phone} />
+                    <Prop
+                      label="CV hochgeladen"
+                      value={c.cv_uploaded_at ? formatDate(c.cv_uploaded_at) : "—"}
+                    />
+                    <Prop
+                      label="Zuletzt aktualisiert"
+                      value={c.updated_at ? formatDate(c.updated_at) : "—"}
+                    />
+                  </div>
+                </div>
               </div>
             </CardBody>
           </Card>
