@@ -15,6 +15,8 @@ import { KiProjectControls } from "@/components/cockpit/KiProjectControls";
 import { MilestonesCard, ReadinessChecklist } from "@/components/cockpit/KiProjectPlan";
 import { KiMetricsCard } from "@/components/cockpit/KiMetricsCard";
 import { KiContractCard } from "@/components/cockpit/KiContractCard";
+import { KiProjectIntelCard } from "@/components/cockpit/KiProjectIntelCard";
+import { computeKiProjectIntel } from "@/lib/ki-intel";
 import {
   IconChevronRight,
   IconPhone,
@@ -128,6 +130,8 @@ export default async function KiProjectDetailPage({ params }: { params: { id: st
         <StatCard label="Implementierung" value={formatEur(p.setup_fee ?? 0)} hint="einmalig" accent="sky" icon={IconBolt} />
         <StatCard label="Health" value={he.label} hint="Projektgesundheit" accent={p.health === "risiko" ? "warning" : "success"} icon={IconCheck} />
       </div>
+
+      <KiProjectIntelCard intel={computeKiProjectIntel(p)} accountId={account?.id} accountName={account?.name} />
 
       <Card>
         <CardBody>
