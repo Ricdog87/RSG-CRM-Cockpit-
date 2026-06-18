@@ -20,10 +20,13 @@ export function MandateFormDialog({
   accountNames = [],
   mandate,
   renderTrigger,
+  defaultAccountName,
 }: {
   accountNames?: string[];
   mandate?: RecruitingMandate;
   renderTrigger?: (open: () => void) => React.ReactNode;
+  /** Vorbelegung des Kunden beim Anlegen (z.B. aus der Kundenmaske). */
+  defaultAccountName?: string;
 }) {
   const isEdit = Boolean(mandate);
   const router = useRouter();
@@ -97,7 +100,7 @@ export function MandateFormDialog({
               <AccountCombobox
                 name="account_name"
                 options={accountNames}
-                defaultValue={mandate?.account_name ?? ""}
+                defaultValue={mandate?.account_name ?? defaultAccountName ?? ""}
                 placeholder="Muster GmbH"
                 required
               />

@@ -19,8 +19,10 @@ import { AccountContractCard } from "@/components/cockpit/AccountContractCard";
 import { PlacementContractDialog } from "@/components/cockpit/PlacementContractDialog";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { EmailComposer } from "@/components/cockpit/EmailComposer";
-import { ACCOUNT_FIELDS } from "@/lib/crm-forms";
-import { updateAccount } from "@/lib/crm-actions";
+import { ACCOUNT_FIELDS, OPPORTUNITY_FIELDS, KIPROJECT_FIELDS } from "@/lib/crm-forms";
+import { updateAccount, createOpportunity, createKiProject } from "@/lib/crm-actions";
+import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
+import { MandateFormDialog } from "@/components/cockpit/MandateFormDialog";
 import { getPartnerIdentity } from "@/lib/data";
 import { AccountIntelCard } from "@/components/cockpit/AccountIntelCard";
 import { FollowupDrafter } from "@/components/cockpit/FollowupDrafter";
@@ -314,7 +316,20 @@ export default async function AccountDetailPage({
         {/* Verkaufschancen */}
         <Card>
           <CardBody>
-            <SectionHeader title="Verkaufschancen" hint={`${opportunities.length} verknüpft`} />
+            <SectionHeader
+              title="Verkaufschancen"
+              hint={`${opportunities.length} verknüpft`}
+              action={
+                <EntityFormDialog
+                  triggerLabel="+ Chance"
+                  title="Neue Verkaufschance"
+                  description={`Für ${account.name}`}
+                  fields={OPPORTUNITY_FIELDS}
+                  action={createOpportunity}
+                  initial={{ account_name: account.name, line: account.line }}
+                />
+              }
+            />
             {opportunities.length === 0 ? (
               <EmptyState title="Keine offenen Chancen für diesen Account." />
             ) : (
@@ -338,7 +353,20 @@ export default async function AccountDetailPage({
         {/* KI-Projekte */}
         <Card>
           <CardBody>
-            <SectionHeader title="KI-Projekte" hint={`${kiProjects.length} aktiv`} />
+            <SectionHeader
+              title="KI-Projekte"
+              hint={`${kiProjects.length} aktiv`}
+              action={
+                <EntityFormDialog
+                  triggerLabel="+ KI-Projekt"
+                  title="Neues KI-Projekt"
+                  description={`Für ${account.name}`}
+                  fields={KIPROJECT_FIELDS}
+                  action={createKiProject}
+                  initial={{ account_name: account.name }}
+                />
+              }
+            />
             {kiProjects.length === 0 ? (
               <EmptyState title="Kein KI-Projekt für diesen Account." />
             ) : (
@@ -365,7 +393,13 @@ export default async function AccountDetailPage({
         {/* Mandate */}
         <Card>
           <CardBody>
-            <SectionHeader title="Recruiting-Mandate" hint={`${mandates.length} verknüpft`} />
+            <SectionHeader
+              title="Recruiting-Mandate"
+              hint={`${mandates.length} verknüpft`}
+              action={<MandateFormDialog defaultAccountName={account.name} renderTrigger={(open) => (
+                <button type="button" onClick={open} className="rounded-lg border border-border bg-elevated px-2.5 py-1 text-xs font-semibold text-ink hover:bg-elevated/70">+ Mandat</button>
+              )} />}
+            />
             {mandates.length === 0 ? (
               <EmptyState title="Kein Mandat für diesen Account." />
             ) : (
