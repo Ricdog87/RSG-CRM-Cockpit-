@@ -78,6 +78,11 @@ export function KiProjectsView({
                   setup_fee: p.setup_fee ? String(p.setup_fee) : "",
                   mrr: String(p.mrr ?? ""),
                   go_live: p.go_live,
+                  use_case: p.use_case ?? "",
+                  project_manager: p.project_manager ?? "",
+                  kickoff_date: p.kickoff_date ?? "",
+                  decision_maker: p.decision_maker ?? "",
+                  tech_contact: p.tech_contact ?? "",
                 }}
               />
             }
