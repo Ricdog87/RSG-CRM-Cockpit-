@@ -52,6 +52,10 @@ async function currentPartnerId(): Promise<{ id: string | null; error?: string }
   return { id: data.id as string };
 }
 
+function eurStr(v: number): string {
+  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v || 0);
+}
+
 function s(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
 }
@@ -1350,17 +1354,34 @@ export async function setMandateStatus(id: string, status: string): Promise<Acti
         const supabase = createClient();
         const { data: m } = await supabase
           .from("recruiting_mandates")
-          .select("account_name, role")
+          .select("account_name, role, pricing_model, fee, deposit, positions, fee_percent, target_salary")
           .eq("id", id)
           .maybeSingle();
-        const mand = m as { account_name?: string; role?: string } | null;
+        const mand = m as {
+          account_name?: string;
+          role?: string;
+          pricing_model?: string;
+          fee?: number;
+          deposit?: number;
+          positions?: number;
+          fee_percent?: number;
+          target_salary?: number;
+        } | null;
         const accName = mand?.account_name ?? "";
         const accId = accName ? await resolveAccountId(supabase, accName) : null;
+        const roleSuffix = mand?.role ? ` (${mand.role})` : "";
+        // Festpreis: konkrete Restzahlung anfordern (Honorar − Anzahlung).
+        let title = `Honorar-Rechnung stellen: ${accName}${roleSuffix}`;
+        if ((mand?.pricing_model ?? "fixed") !== "percent") {
+          const positions = mand?.positions || 1;
+          const rest = Math.max(0, (mand?.fee ?? 0) * positions - (mand?.deposit ?? 0) * positions);
+          if (rest > 0) title = `Restzahlung ${eurStr(rest)} anfordern: ${accName}${roleSuffix}`;
+        }
         await autoTask(supabase, pid, "placement_invoice", {
           related_type: accId ? "customer" : "none",
           related_id: accId,
           related_label: `${accName}${mand?.role ? ` – ${mand.role}` : ""}`,
-          title: `Honorar-Rechnung stellen: ${accName}${mand?.role ? ` (${mand.role})` : ""}`,
+          title,
           dueInDays: 1,
         });
       }
