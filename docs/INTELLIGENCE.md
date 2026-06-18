@@ -96,6 +96,11 @@ normalisierter Name / gleiche Firmen-Domain) read-only auf der Kundenliste.
 `components/cockpit/KiRoiCalculator.tsx` – übersetzt verpasste Anrufe in
 entgangenen Umsatz und zeigt den ROI der KI-Telefonassistenz (Leads-Seite).
 
+## 10b. Angebots-Generator (Quotes)
+Druckfertige Angebote (PDF) direkt aus den Stammdaten:
+- **Mandat** → `MandateProposalButton` (Festpreis/%-Modell, Zahlungsplan, AGB)
+- **KI-Projekt** → `KiProposalButton` (Setup + MRR, Laufzeit, Gesamtwert)
+
 ## 11. Recruiter-Matching (vorhanden, KI-gestützt)
 `lib/match.ts` – Kandidat:in ↔ Mandat-Scoring inkl. Distanz, Skills, Gehalt;
 Shortlist-Panels auf Mandats- und Kandidaten-Detailseiten.
