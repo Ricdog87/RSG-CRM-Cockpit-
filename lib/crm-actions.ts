@@ -1167,6 +1167,37 @@ export async function addContact(
   return { ok: true };
 }
 
+export async function updateContact(
+  id: string,
+  accountId: string,
+  contact: {
+    name: string;
+    salutation?: string;
+    title?: string;
+    role?: string;
+    email?: string;
+    phone?: string;
+  }
+): Promise<ActionResult> {
+  if (!contact.name?.trim()) return { ok: false, error: "Name erforderlich." };
+  if (useMockData) return DEMO;
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("account_contacts")
+    .update({
+      salutation: contact.salutation?.trim() || null,
+      title: contact.title?.trim() || null,
+      name: contact.name.trim(),
+      role: contact.role?.trim() || null,
+      email: contact.email?.trim() || null,
+      phone: contact.phone?.trim() || null,
+    })
+    .eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/cockpit/kunden/${accountId}`);
+  return { ok: true };
+}
+
 export async function deleteContact(
   id: string,
   accountId: string

@@ -1,16 +1,19 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { IconUsers, IconTrash } from "@/components/ui/icons";
-import { addContact, deleteContact } from "@/lib/crm-actions";
+import { IconUsers, IconTrash, IconPencil } from "@/components/ui/icons";
+import { addContact, updateContact, deleteContact } from "@/lib/crm-actions";
 import type { Contact } from "@/lib/contacts-data";
 
 const inputClass =
   "w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand";
+
+type Form = { salutation: string; title: string; name: string; role: string; email: string; phone: string };
+const EMPTY: Form = { salutation: "", title: "", name: "", role: "", email: "", phone: "" };
 
 export function AccountContacts({
   accountId,
@@ -23,48 +26,59 @@ export function AccountContacts({
   const [items, setItems] = useState<Contact[]>(contacts);
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
-  const salutation = useRef<HTMLSelectElement>(null);
-  const title = useRef<HTMLInputElement>(null);
-  const name = useRef<HTMLInputElement>(null);
-  const role = useRef<HTMLInputElement>(null);
-  const email = useRef<HTMLInputElement>(null);
-  const phone = useRef<HTMLInputElement>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState<Form>(EMPTY);
+  const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  function add() {
-    const n = name.current?.value.trim();
+  function openNew() {
+    setForm(EMPTY);
+    setEditId(null);
+    setOpen(true);
+  }
+  function openEdit(c: Contact) {
+    setForm({ salutation: c.salutation, title: c.title, name: c.name, role: c.role, email: c.email, phone: c.phone });
+    setEditId(c.id);
+    setOpen(true);
+  }
+
+  function save() {
+    const n = form.name.trim();
     if (!n) return;
-    const c: Contact = {
-      id: `tmp-${Date.now()}`,
-      salutation: salutation.current?.value ?? "",
-      title: title.current?.value.trim() ?? "",
-      name: n,
-      role: role.current?.value.trim() ?? "",
-      email: email.current?.value.trim() ?? "",
-      phone: phone.current?.value.trim() ?? "",
-    };
-    setItems((p) => [...p, c]);
+    const payload = { ...form, name: n };
+    const editing = editId;
+    if (editing) {
+      // optimistisch aktualisieren
+      setItems((p) => p.map((x) => (x.id === editing ? { ...x, ...payload } : x)));
+    } else {
+      const tmp: Contact = { id: `tmp-${Date.now()}`, ...payload };
+      setItems((p) => [...p, tmp]);
+    }
     setOpen(false);
-    [title, name, role, email, phone].forEach((r) => r.current && (r.current.value = ""));
-    if (salutation.current) salutation.current.value = "";
+    setForm(EMPTY);
+    setEditId(null);
     start(async () => {
-      const res = await addContact(accountId, {
-        name: c.name,
-        salutation: c.salutation,
-        title: c.title,
-        role: c.role,
-        email: c.email,
-        phone: c.phone,
-      });
+      const res = editing
+        ? await updateContact(editing, accountId, payload)
+        : await addContact(accountId, payload);
       if (res.ok && !res.demo) router.refresh();
-      else if (!res.ok) setItems((p) => p.filter((x) => x.id !== c.id));
+      else if (!res.ok) {
+        if (res.error) alert(res.error);
+        router.refresh();
+      }
     });
   }
 
   function remove(id: string) {
+    const prev = items;
     setItems((p) => p.filter((x) => x.id !== id));
     start(async () => {
       const res = await deleteContact(id, accountId);
       if (res.ok && !res.demo) router.refresh();
+      else if (!res.ok) {
+        setItems(prev);
+        if (res.error) alert(res.error);
+      }
     });
   }
 
@@ -76,7 +90,7 @@ export function AccountContacts({
           action={
             <button
               type="button"
-              onClick={() => setOpen((o) => !o)}
+              onClick={() => (open ? setOpen(false) : openNew())}
               className="text-xs font-semibold text-brand-deep hover:text-brand-ink"
             >
               {open ? "Schließen" : "+ Kontakt"}
@@ -86,20 +100,20 @@ export function AccountContacts({
 
         {open ? (
           <div className="mb-4 grid gap-2 rounded-xl border border-border bg-elevated/40 p-3 sm:grid-cols-2">
-            <select ref={salutation} defaultValue="" className={inputClass} aria-label="Anrede">
+            <select value={form.salutation} onChange={set("salutation")} className={inputClass} aria-label="Anrede">
               <option value="">Anrede —</option>
               <option value="Herr">Herr</option>
               <option value="Frau">Frau</option>
               <option value="Divers">Divers</option>
             </select>
-            <input ref={title} placeholder="Titel (z.B. Dr.)" className={inputClass} />
-            <input ref={name} placeholder="Name *" className={inputClass} />
-            <input ref={role} placeholder="Rolle (z.B. Inhaber)" className={inputClass} />
-            <input ref={email} type="email" placeholder="E-Mail" className={inputClass} />
-            <input ref={phone} placeholder="Telefon" className={inputClass} />
+            <input value={form.title} onChange={set("title")} placeholder="Titel (z.B. Dr.)" className={inputClass} />
+            <input value={form.name} onChange={set("name")} placeholder="Name *" className={inputClass} />
+            <input value={form.role} onChange={set("role")} placeholder="Rolle (z.B. Inhaber)" className={inputClass} />
+            <input value={form.email} onChange={set("email")} type="email" placeholder="E-Mail" className={inputClass} />
+            <input value={form.phone} onChange={set("phone")} placeholder="Telefon" className={inputClass} />
             <div className="flex justify-end sm:col-span-2">
-              <Button onClick={add} disabled={pending}>
-                Kontakt speichern
+              <Button onClick={save} disabled={pending}>
+                {editId ? "Änderungen speichern" : "Kontakt speichern"}
               </Button>
             </div>
           </div>
@@ -129,14 +143,24 @@ export function AccountContacts({
                     {[c.email, c.phone].filter(Boolean).join(" · ") || "—"}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  aria-label="Kontakt löschen"
-                  onClick={() => remove(c.id)}
-                  className="flex-none rounded-lg p-1.5 text-faint opacity-0 transition-opacity hover:bg-danger/10 hover:text-danger group-hover:opacity-100"
-                >
-                  <IconTrash size={15} />
-                </button>
+                <div className="flex flex-none items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button
+                    type="button"
+                    aria-label="Kontakt bearbeiten"
+                    onClick={() => openEdit(c)}
+                    className="rounded-lg p-1.5 text-faint hover:bg-elevated hover:text-ink"
+                  >
+                    <IconPencil size={15} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Kontakt löschen"
+                    onClick={() => remove(c.id)}
+                    className="rounded-lg p-1.5 text-faint hover:bg-danger/10 hover:text-danger"
+                  >
+                    <IconTrash size={15} />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
