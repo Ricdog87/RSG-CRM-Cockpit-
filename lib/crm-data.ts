@@ -286,6 +286,10 @@ export async function getMandates(): Promise<RecruitingMandate[]> {
         job_posting_anonymized: str(r.job_posting_anonymized) || undefined,
         share_token: str(r.share_token) || undefined,
         created_at: str(r.created_at) || undefined,
+        deposit_paid: r.deposit_paid == null ? undefined : Boolean(r.deposit_paid),
+        deposit_paid_at: str(r.deposit_paid_at) || undefined,
+        final_paid: r.final_paid == null ? undefined : Boolean(r.final_paid),
+        final_paid_at: str(r.final_paid_at) || undefined,
       })),
     { column: "deadline", ascending: true }
   );

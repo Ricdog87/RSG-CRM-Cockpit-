@@ -1371,6 +1371,98 @@ export async function setMandateStatus(id: string, status: string): Promise<Acti
   return res;
 }
 
+/**
+ * Festpreis-Zahlungs-Gate: Anzahlung als bezahlt markieren → Suche/Sourcing
+ * kann starten (legt direkt eine Sourcing-Aufgabe an).
+ */
+export async function setMandateDepositPaid(id: string, paid: boolean): Promise<ActionResult> {
+  const res = await updateGraceful(
+    "recruiting_mandates",
+    id,
+    {
+      deposit_paid: paid,
+      deposit_paid_at: paid ? new Date().toISOString().slice(0, 10) : null,
+    },
+    ["/cockpit/projekte/recruiting", `/cockpit/projekte/recruiting/${id}`]
+  );
+  if (res.ok && !res.demo && paid) {
+    try {
+      const { id: pid } = await currentPartnerId();
+      if (pid) {
+        const supabase = createClient();
+        const { data: m } = await supabase
+          .from("recruiting_mandates")
+          .select("account_name, role")
+          .eq("id", id)
+          .maybeSingle();
+        const mand = m as { account_name?: string; role?: string } | null;
+        const accName = mand?.account_name ?? "";
+        const accId = accName ? await resolveAccountId(supabase, accName) : null;
+        const role = mand?.role || "Position";
+        // Direkt (unabhängig von Automatisierungs-Schalter): Suche starten.
+        await supabase.from("crm_tasks").insert({
+          partner_id: pid,
+          related_type: accId ? "customer" : "none",
+          related_id: accId,
+          related_label: `${accName} – ${role}`,
+          title: `Suche starten – Sourcing: ${role} (Anzahlung erhalten)`,
+          due_date: new Date().toISOString().slice(0, 10),
+        });
+        revalidatePath("/cockpit/aufgaben");
+        revalidatePath("/cockpit/kalender");
+        if (accId) revalidatePath(`/cockpit/kunden/${accId}`);
+      }
+    } catch (e) {
+      logDataError("mandate:deposit_paid", e);
+    }
+  }
+  return res;
+}
+
+/** Festpreis-Zahlungs-Gate: Restzahlung (bei Besetzung) als bezahlt markieren. */
+export async function setMandateFinalPaid(id: string, paid: boolean): Promise<ActionResult> {
+  return updateGraceful(
+    "recruiting_mandates",
+    id,
+    {
+      final_paid: paid,
+      final_paid_at: paid ? new Date().toISOString().slice(0, 10) : null,
+    },
+    ["/cockpit/projekte/recruiting", `/cockpit/projekte/recruiting/${id}`]
+  );
+}
+
+/**
+ * Hält einen erstellten Vermittlungsvertrag beim Kunden fest: Korrespondenz-
+ * Notiz + Vertragsstatus „versendet“ + letzte Aktivität. Materialisiert
+ * virtuelle Accounts bei Bedarf.
+ */
+export async function recordContractCreated(
+  accountId: string,
+  summary: string
+): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const { id: pid, error } = await currentPartnerId();
+  if (!pid) return { ok: false, error };
+  const supabase = createClient();
+  const realId = (await materializeAccount(supabase, pid, accountId)) ?? accountId;
+
+  const { error: noteErr } = await supabase
+    .from("account_notes")
+    .insert({ partner_id: pid, account_id: realId, body: summary });
+  if (noteErr) return { ok: false, error: noteErr.message };
+
+  // Vertragsstatus „versendet“ + letzte Aktivität (graceful).
+  await supabase
+    .from("accounts")
+    .update({ contract_status: "versendet", last_activity_at: new Date().toISOString() })
+    .eq("id", realId);
+
+  revalidatePath(`/cockpit/kunden/${realId}`);
+  revalidatePath("/cockpit/kunden");
+  return { ok: true };
+}
+
 export async function updateMandate(
   _prev: ActionResult | null,
   fd: FormData

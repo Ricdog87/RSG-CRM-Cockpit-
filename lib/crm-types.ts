@@ -161,6 +161,12 @@ export interface RecruitingMandate {
   share_token?: string;
   /** Anlagedatum (für Time-to-Fill). */
   created_at?: string;
+  /** Festpreis-Zahlungs-Gate: Anzahlung bezahlt → Suche starten. */
+  deposit_paid?: boolean;
+  deposit_paid_at?: string;
+  /** Restzahlung bei Besetzung der Stelle bezahlt. */
+  final_paid?: boolean;
+  final_paid_at?: string;
 }
 
 /** Honorar je Stelle (Festpreis ODER % vom Zielgehalt). */

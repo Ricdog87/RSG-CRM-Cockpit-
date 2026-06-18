@@ -5,6 +5,10 @@ import { Dialog } from "@/components/ui/Dialog";
 import { IconBriefcase, IconCheck, IconAlertTriangle } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
 import { buildPlacementContractHtml, type ContractType } from "@/lib/contract-template";
+import { recordContractCreated } from "@/lib/crm-actions";
+import { formatEur } from "@/lib/format";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import type { Account } from "@/lib/crm-types";
 
 const inputCls =
@@ -40,7 +44,18 @@ export function PlacementContractDialog({
   const [percent, setPercent] = useState(prefill?.percent ?? 25);
   const [split, setSplit] = useState(prefill?.split ?? true);
 
+  const router = useRouter();
+  const [logging, startLog] = useTransition();
+  const [logged, setLogged] = useState(false);
   const hasAddress = Boolean((account.strasse || account.plz || account.ort)?.toString().trim());
+
+  function summaryText(): string {
+    if (type === "fixed") {
+      const rest = Math.max(0, fee - deposit);
+      return `Vermittlungsvertrag erstellt (Festpreis) – ${role.trim() || "Position"}: Honorar ${formatEur(fee)}, Anzahlung ${formatEur(deposit)}, Rest ${formatEur(rest)} bei Besetzung.`;
+    }
+    return `Vermittlungsvertrag erstellt (${percent}% vom Jahresbruttozielgehalt${split ? ", 50/50-Splittung" : ""}) – ${role.trim() || "Position"}.`;
+  }
 
   function generate() {
     const html = buildPlacementContractHtml({
@@ -57,10 +72,19 @@ export function PlacementContractDialog({
       split,
     });
     const w = window.open("", "_blank", "width=860,height=960");
-    if (!w) return;
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+    if (w) {
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    }
+    // Beim Kunden als Korrespondenz festhalten + Status „versendet“.
+    startLog(async () => {
+      const res = await recordContractCreated(account.id, summaryText());
+      if (res.ok) {
+        setLogged(true);
+        if (!res.demo) router.refresh();
+      }
+    });
   }
 
   return (
@@ -160,16 +184,23 @@ export function PlacementContractDialog({
             </div>
           )}
 
+          {logged ? (
+            <p className="rounded-lg border border-success/30 bg-success/[0.06] px-3 py-2 text-xs text-success">
+              ✓ Beim Kunden als Korrespondenz hinterlegt · Vertragsstatus „versendet“ gesetzt.
+            </p>
+          ) : null}
+
           <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
             <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-border bg-elevated px-3 py-1.5 text-sm text-muted hover:text-ink">
-              Abbrechen
+              {logged ? "Schließen" : "Abbrechen"}
             </button>
             <button
               type="button"
               onClick={generate}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand to-sky px-4 py-1.5 text-sm font-semibold text-white shadow-glow active:scale-95"
+              disabled={logging}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand to-sky px-4 py-1.5 text-sm font-semibold text-white shadow-glow active:scale-95 disabled:opacity-60"
             >
-              <IconBriefcase size={14} /> Vertrag erstellen
+              <IconBriefcase size={14} /> {logging ? "Erstelle …" : logged ? "Erneut erstellen" : "Vertrag erstellen"}
             </button>
           </div>
         </div>

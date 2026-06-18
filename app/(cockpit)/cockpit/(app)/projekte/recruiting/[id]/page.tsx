@@ -13,6 +13,7 @@ import { MandateMatchPanel } from "@/components/cockpit/MandateMatchPanel";
 import { MandateIntelCard } from "@/components/cockpit/MandateIntelCard";
 import { MandateProposalButton } from "@/components/cockpit/MandateProposalButton";
 import { PlacementContractDialog } from "@/components/cockpit/PlacementContractDialog";
+import { MandatePaymentGate } from "@/components/cockpit/MandatePaymentGate";
 import { computeMandateIntel } from "@/lib/mandate-intel";
 import { JobPostingCard } from "@/components/cockpit/JobPostingCard";
 import { PlacementsCard } from "@/components/cockpit/PlacementsCard";
@@ -130,6 +131,8 @@ export default async function MandateDetailPage({
       </div>
 
       <MandateIntelCard intel={computeMandateIntel(m, list.length)} accountId={account?.id} accountName={account?.name} />
+
+      {m.pricing_model !== "percent" ? <MandatePaymentGate mandate={m} /> : null}
 
       <Card>
         <CardBody>
