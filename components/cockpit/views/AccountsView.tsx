@@ -8,6 +8,7 @@ import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
 import { IconSearch } from "@/components/ui/icons";
 import { ACCOUNT_FIELDS } from "@/lib/crm-forms";
+import { downloadCsv } from "@/lib/csv-export";
 import { updateAccount, deleteAccount } from "@/lib/crm-actions";
 import type { Account, BusinessLine, Lifecycle } from "@/lib/crm-types";
 
@@ -114,6 +115,36 @@ export function AccountsView({
           <option value="name">Name A–Z</option>
           <option value="lifecycle">Lifecycle</option>
         </select>
+        <button
+          type="button"
+          onClick={() =>
+            downloadCsv(
+              `kunden-${new Date().toISOString().slice(0, 10)}`,
+              shown,
+              [
+                { key: "name", label: "Unternehmen" },
+                { key: "branche", label: "Branche" },
+                { key: "segment", label: "Segment" },
+                { key: "line", label: "Linie" },
+                { key: "lifecycle", label: "Lifecycle" },
+                { key: "contact_name", label: "Ansprechpartner" },
+                { key: "contact_email", label: "E-Mail" },
+                { key: "contact_phone", label: "Telefon" },
+                { key: "strasse", label: "Straße" },
+                { key: "plz", label: "PLZ" },
+                { key: "ort", label: "Ort" },
+                { key: "country", label: "Land" },
+                { key: "mrr", label: "MRR" },
+                { key: "owner", label: "Zuständig" },
+                { key: "id", label: "Health", get: (a) => healthById[a.id]?.score ?? "" },
+              ]
+            )
+          }
+          className="rounded-xl border border-border bg-surface px-3 py-2 text-sm font-medium text-ink hover:bg-elevated"
+          title="Gefilterte Liste als CSV exportieren"
+        >
+          Export
+        </button>
       </div>
 
       <FilterTabs<LineFilter>

@@ -14,6 +14,7 @@ import { CANDIDATE_FIELDS, withDatalist, withSelectOptions, candidateInitial } f
 import { updateCandidateStage, updateCandidate, deleteCandidate } from "@/lib/crm-actions";
 import { cvSignedUrl } from "@/lib/cv-actions";
 import { formatDate } from "@/lib/format";
+import { downloadCsv } from "@/lib/csv-export";
 import { cn } from "@/components/ui/cn";
 import type { FormField } from "@/components/cockpit/EntityFormDialog";
 import type { Candidate, CandidateStage } from "@/lib/crm-types";
@@ -356,6 +357,30 @@ export function CandidatesView({
           <option value="rating">Bewertung ↓</option>
           <option value="name">Name A–Z</option>
         </select>
+        <button
+          type="button"
+          onClick={() =>
+            downloadCsv(`kandidaten-${new Date().toISOString().slice(0, 10)}`, displayed, [
+              { key: "name", label: "Name" },
+              { key: "role", label: "Rolle" },
+              { key: "email", label: "E-Mail" },
+              { key: "phone", label: "Telefon" },
+              { key: "stage", label: "Phase" },
+              { key: "source", label: "Quelle" },
+              { key: "mandate_account", label: "Mandat/Account" },
+              { key: "location", label: "Ort" },
+              { key: "current_employer", label: "Arbeitgeber" },
+              { key: "experience_years", label: "Erfahrung (J.)" },
+              { key: "salary_expectation", label: "Gehaltswunsch" },
+              { key: "availability", label: "Verfügbarkeit" },
+              { key: "rating", label: "Bewertung" },
+            ])
+          }
+          className="rounded-xl border border-border bg-surface px-3 py-2 text-sm font-medium text-ink hover:bg-elevated"
+          title="Gefilterte Liste als CSV exportieren"
+        >
+          Export
+        </button>
         <div className="flex items-center gap-1 rounded-xl border border-border bg-elevated/60 p-1">
           {(["liste", "board"] as const).map((v) => (
             <button
