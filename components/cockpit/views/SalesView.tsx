@@ -135,9 +135,15 @@ export function SalesView({ opportunities }: { opportunities: Opportunity[] }) {
   }
 
   async function onDelete(id: string) {
-    setItems((prev) => prev.filter((o) => o.id !== id));
+    const prevItems = items;
+    setItems((p) => p.filter((o) => o.id !== id));
     const res = await deleteOpportunity(id);
-    if (res.ok && !res.demo) router.refresh();
+    if (res.ok && !res.demo) {
+      router.refresh();
+    } else if (!res.ok) {
+      setItems(prevItems);
+      if (res.error) alert(res.error);
+    }
   }
 
   const lost = items.filter((o) => o.stage === "verloren");

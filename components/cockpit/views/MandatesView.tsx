@@ -29,9 +29,15 @@ export function MandatesView({
   const [view, setView] = useState<View>("board");
 
   async function onDelete(id: string) {
-    setItems((prev) => prev.filter((m) => m.id !== id));
+    const prevItems = items;
+    setItems((p) => p.filter((m) => m.id !== id));
     const res = await deleteMandate(id);
-    if (res.ok && !res.demo) router.refresh();
+    if (res.ok && !res.demo) {
+      router.refresh();
+    } else if (!res.ok) {
+      setItems(prevItems);
+      if (res.error) alert(res.error);
+    }
   }
 
   const renderActions = (m: RecruitingMandate) => (

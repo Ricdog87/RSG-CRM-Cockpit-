@@ -263,9 +263,15 @@ export function CandidatesView({
   }
 
   async function onDelete(id: string) {
-    setItems((prev) => prev.filter((c) => c.id !== id));
+    const prevItems = items;
+    setItems((p) => p.filter((c) => c.id !== id));
     const res = await deleteCandidate(id);
-    if (res.ok && !res.demo) router.refresh();
+    if (res.ok && !res.demo) {
+      router.refresh();
+    } else if (!res.ok) {
+      setItems(prevItems);
+      if (res.error) alert(res.error);
+    }
   }
 
   const mandates = useMemo(

@@ -33,9 +33,15 @@ export function AccountsView({
   const [health, setHealth] = useState<"all" | "risk" | "watch" | "top">("all");
 
   async function onDelete(id: string) {
-    setItems((prev) => prev.filter((a) => a.id !== id));
+    const prev = items;
+    setItems((p) => p.filter((a) => a.id !== id));
     const res = await deleteAccount(id);
-    if (res.ok && !res.demo) router.refresh();
+    if (res.ok && !res.demo) {
+      router.refresh();
+    } else if (!res.ok) {
+      setItems(prev); // Fehlgeschlagen → wiederherstellen
+      if (res.error) alert(res.error);
+    }
   }
 
   const q = query.trim().toLowerCase();

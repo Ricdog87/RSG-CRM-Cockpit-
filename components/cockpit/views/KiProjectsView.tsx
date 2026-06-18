@@ -35,9 +35,15 @@ export function KiProjectsView({
   const editFields = withCombobox(KIPROJECT_FIELDS, "account_name", accountNames);
 
   async function onDelete(id: string) {
-    setItems((prev) => prev.filter((p) => p.id !== id));
+    const prevItems = items;
+    setItems((cur) => cur.filter((p) => p.id !== id));
     const res = await deleteKiProject(id);
-    if (res.ok && !res.demo) router.refresh();
+    if (res.ok && !res.demo) {
+      router.refresh();
+    } else if (!res.ok) {
+      setItems(prevItems);
+      if (res.error) alert(res.error);
+    }
   }
 
   const shown = filter === "all" ? items : items.filter((p) => p.status === filter);
