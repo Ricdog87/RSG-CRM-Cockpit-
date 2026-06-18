@@ -182,13 +182,20 @@ export async function buildBriefing(pre?: BriefingInput): Promise<Briefing> {
   }
 
   // 4) Recruiting-Mandate mit naher Deadline & offenen Stellen.
+  // Echte Kandidatenzahl je Mandat (candidate_count ist denormalisiert/0).
+  const mk = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  const candCount = (m: RecruitingMandate) =>
+    candidates.filter(
+      (c) => (c.mandate_id && c.mandate_id === m.id) || (c.mandate_account && mk(c.mandate_account) === mk(m.account_name))
+    ).length;
   for (const m of mandates) {
     if (m.status === "angebot" || m.status === "besetzt") continue;
     const offen = Math.max(0, m.positions - m.filled);
     if (offen <= 0) continue;
     const d = daysUntil(m.deadline);
     const dueSoon = d != null && d <= 21;
-    const fewCandidates = (m.candidate_count ?? 0) < 3;
+    const nCands = candCount(m);
+    const fewCandidates = nCands < 3;
     if (!dueSoon && !fewCandidates) continue;
     const volumen = offen * mandateFeePerPosition(m);
     const overdue = d != null && d < 0;
@@ -197,7 +204,7 @@ export async function buildBriefing(pre?: BriefingInput): Promise<Briefing> {
       severity: overdue ? "kritisch" : "wichtig",
       category: "Recruiting",
       title: `${m.account_name} – ${m.role}`,
-      detail: `${offen} offene Stelle(n)${d != null ? (overdue ? ` · ${Math.abs(d)} T überfällig` : ` · Deadline in ${d} T`) : ""} · ${m.candidate_count ?? 0} Kandidat:innen`,
+      detail: `${offen} offene Stelle(n)${d != null ? (overdue ? ` · ${Math.abs(d)} T überfällig` : ` · Deadline in ${d} T`) : ""} · ${nCands} Kandidat:innen`,
       action: fewCandidates ? "Pipeline füllen: aktiv sourcen & ansprechen" : "Kandidat:innen vorstellen, Interviews takten",
       href: "/cockpit/projekte/recruiting",
       line: "recruiting",
