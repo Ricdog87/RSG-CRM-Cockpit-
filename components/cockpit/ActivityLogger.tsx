@@ -20,15 +20,18 @@ export function ActivityLogger({
   accounts = [],
   lineLock,
   onLogged,
+  defaultAccount = "",
 }: {
   accounts?: string[];
   /** Wenn gesetzt: nur Call/E-Mail dieser Linie (KI- bzw. Recruiting-Maske). */
   lineLock?: "ki" | "recruiting";
   onLogged?: (kind: "call" | "email", line: "ki" | "recruiting") => void;
+  /** Vorbelegung des Kunden (z.B. auf der Kundenmaske). */
+  defaultAccount?: string;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const [account, setAccount] = useState("");
+  const [account, setAccount] = useState(defaultAccount);
   const [subject, setSubject] = useState("");
   const [contact, setContact] = useState("");
   const [phone, setPhone] = useState("");

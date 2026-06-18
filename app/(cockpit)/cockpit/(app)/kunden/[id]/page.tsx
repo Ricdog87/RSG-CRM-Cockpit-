@@ -19,6 +19,7 @@ import { AccountContractCard } from "@/components/cockpit/AccountContractCard";
 import { PlacementContractDialog } from "@/components/cockpit/PlacementContractDialog";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { EmailComposer } from "@/components/cockpit/EmailComposer";
+import { ActivityLogger } from "@/components/cockpit/ActivityLogger";
 import { ACCOUNT_FIELDS, OPPORTUNITY_FIELDS, KIPROJECT_FIELDS } from "@/lib/crm-forms";
 import { updateAccount, createOpportunity, createKiProject } from "@/lib/crm-actions";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
@@ -235,6 +236,13 @@ export default async function AccountDetailPage({
 
       {/* Account-Intelligenz: Health-Score + nächste beste Aktion */}
       <AccountIntelCard intel={intel} accountId={account.id} accountName={account.name} />
+
+      {/* Schnell protokollieren: Call/E-Mail bei diesem Kunden */}
+      <Card>
+        <CardBody>
+          <ActivityLogger accounts={[account.name]} defaultAccount={account.name} lineLock={account.line} />
+        </CardBody>
+      </Card>
 
       {notes.length > 0 || emails.length > 0 ? (
         <RelationshipSummary
