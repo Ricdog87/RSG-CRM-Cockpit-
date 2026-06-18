@@ -86,7 +86,7 @@ export function AccountContractCard({ account }: { account: Account }) {
           </button>
         </div>
 
-        {account.contract_status !== "unterzeichnet" && !account.synthetic ? (
+        {account.contract_status !== "unterzeichnet" ? (
           <button
             type="button"
             onClick={signNow}

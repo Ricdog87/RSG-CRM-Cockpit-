@@ -5,6 +5,9 @@ import { getPlacementsForMandate } from "@/lib/placements-data";
 import { getInvoicesForMandate } from "@/lib/invoices-data";
 import { getJobResponsesForMandate } from "@/lib/submissions-data";
 import { mandateRevenue } from "@/lib/crm-types";
+import { createCandidate } from "@/lib/crm-actions";
+import { CANDIDATE_FIELDS, withSelectOptions } from "@/lib/crm-forms";
+import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { Badge } from "@/components/ui/Badge";
@@ -208,7 +211,22 @@ export default async function MandateDetailPage({
 
       <Card>
         <CardBody>
-          <SectionHeader title="Kandidaten-Pipeline" hint="Status je Phase – per Auswahl verschieben" />
+          <SectionHeader
+            title="Kandidaten-Pipeline"
+            hint="Status je Phase – per Auswahl verschieben"
+            action={
+              <EntityFormDialog
+                triggerLabel="+ Kandidat:in"
+                title="Kandidat:in zu diesem Mandat"
+                description={`${m.account_name} · ${m.role}`}
+                fields={withSelectOptions(CANDIDATE_FIELDS, "mandate_id", [
+                  { value: m.id, label: `${m.account_name} · ${m.role || "Mandat"}` },
+                ])}
+                action={createCandidate}
+                initial={{ mandate_account: m.account_name, mandate_id: m.id }}
+              />
+            }
+          />
           <MandateCandidates candidates={list} />
         </CardBody>
       </Card>
