@@ -16,6 +16,7 @@ import { MilestonesCard, ReadinessChecklist } from "@/components/cockpit/KiProje
 import { KiMetricsCard } from "@/components/cockpit/KiMetricsCard";
 import { KiContractCard } from "@/components/cockpit/KiContractCard";
 import { KiProjectIntelCard } from "@/components/cockpit/KiProjectIntelCard";
+import { KiProposalButton } from "@/components/cockpit/KiProposalButton";
 import { computeKiProjectIntel } from "@/lib/ki-intel";
 import {
   IconChevronRight,
@@ -119,6 +120,7 @@ export default async function KiProjectDetailPage({ params }: { params: { id: st
                 }}
               />
               <KiProjectControls id={p.id} status={p.status} health={p.health} />
+              <KiProposalButton project={p} customer={p.account_name} contactName={account?.contact_name} />
             </div>
           </div>
         </CardBody>
