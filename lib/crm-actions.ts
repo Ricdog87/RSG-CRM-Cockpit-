@@ -575,6 +575,10 @@ export async function createCandidate(
       travel_willingness: s(fd, "travel_willingness") || null,
       salary_expectation: fd.get("salary_expectation") ? n(fd, "salary_expectation") : null,
       availability: s(fd, "availability") || null,
+      birth_date: s(fd, "birth_date") || null,
+      current_employer: s(fd, "current_employer") || null,
+      languages: s(fd, "languages") || null,
+      experience_years: fd.get("experience_years") ? n(fd, "experience_years") : null,
     },
     "/cockpit/kandidaten"
   );
@@ -1316,6 +1320,10 @@ export async function updateCandidate(
       travel_willingness: s(fd, "travel_willingness") || null,
       salary_expectation: fd.get("salary_expectation") ? n(fd, "salary_expectation") : null,
       availability: s(fd, "availability") || null,
+      birth_date: s(fd, "birth_date") || null,
+      current_employer: s(fd, "current_employer") || null,
+      languages: s(fd, "languages") || null,
+      experience_years: fd.get("experience_years") ? n(fd, "experience_years") : null,
       updated_at: new Date().toISOString(),
     },
     ["/cockpit/kandidaten", `/cockpit/kandidaten/${id}`]
