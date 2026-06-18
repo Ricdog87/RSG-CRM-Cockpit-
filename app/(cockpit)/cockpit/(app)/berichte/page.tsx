@@ -5,7 +5,8 @@ import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { PortfolioInsights, type Insight } from "@/components/cockpit/PortfolioInsights";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
-import { FunnelChart, ForecastChart, StageValueChart } from "@/components/cockpit/BerichteCharts";
+import { FunnelChart, ForecastChart, StageValueChart, ActivityChart } from "@/components/cockpit/BerichteCharts";
+import { getActivityStats } from "@/lib/activity-data";
 import { SourceRoiTable, type SourceRoiRow } from "@/components/cockpit/SourceRoiTable";
 import { IconTarget, IconEuro, IconTrendingUp, IconBriefcase, IconUserCheck, IconClock } from "@/components/ui/icons";
 import { formatEur, formatNumber, formatPercent } from "@/lib/format";
@@ -33,14 +34,42 @@ const RECRUIT_FUNNEL: { key: CandidateStage; label: string }[] = [
 ];
 
 export default async function BerichtePage() {
-  const [opps, mandates, candidates, placements, kiProjects, accounts] = await Promise.all([
+  const [opps, mandates, candidates, placements, kiProjects, accounts, activity] = await Promise.all([
     getOpportunities(),
     getMandates(),
     getCandidates(),
     getPlacements(),
     getKiProjects(),
     getAccounts(),
+    getActivityStats(),
   ]);
+
+  // Aktivitäts-Trend: Calls/E-Mails je Woche (letzte 6 Wochen, Mo-Start).
+  const mondayOf = (d: Date) => {
+    const x = new Date(d);
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
+  const weekBuckets = new Map<string, { calls: number; emails: number }>();
+  for (const [dateKey, v] of Object.entries(activity.daily ?? {})) {
+    const d = new Date(dateKey + "T00:00:00");
+    if (Number.isNaN(d.getTime())) continue;
+    const wk = mondayOf(d).toISOString().slice(0, 10);
+    const b = weekBuckets.get(wk) ?? { calls: 0, emails: 0 };
+    b.calls += v.call ?? 0;
+    b.emails += v.email ?? 0;
+    weekBuckets.set(wk, b);
+  }
+  const thisMonday = mondayOf(new Date());
+  const activityTrend = Array.from({ length: 6 }).map((_, i) => {
+    const ws = new Date(thisMonday);
+    ws.setDate(thisMonday.getDate() - (5 - i) * 7);
+    const key = ws.toISOString().slice(0, 10);
+    const b = weekBuckets.get(key) ?? { calls: 0, emails: 0 };
+    return { week: `${String(ws.getDate()).padStart(2, "0")}.${String(ws.getMonth() + 1).padStart(2, "0")}`, calls: b.calls, emails: b.emails };
+  });
+  const activityHasData = activityTrend.some((w) => w.calls > 0 || w.emails > 0);
 
   const open = opps.filter((o) => o.stage !== "gewonnen" && o.stage !== "verloren");
   const won = opps.filter((o) => o.stage === "gewonnen").length;
@@ -308,6 +337,22 @@ export default async function BerichtePage() {
           </CardBody>
         </Card>
       </div>
+
+      <Card>
+        <CardBody>
+          <SectionHeader
+            title="Aktivitäts-Trend"
+            hint="Calls (●) & E-Mails (●) je Woche – letzte 6 Wochen"
+          />
+          {activityHasData ? (
+            <ActivityChart data={activityTrend} />
+          ) : (
+            <p className="py-12 text-center text-sm text-faint">
+              Noch keine erfassten Aktivitäten. Protokolliere Calls/E-Mails im Dashboard oder beim Kunden.
+            </p>
+          )}
+        </CardBody>
+      </Card>
 
       {/* Recruiting-KPIs */}
       <div className="pt-2">

@@ -86,6 +86,31 @@ export function ForecastChart({
   );
 }
 
+/** Gruppierte Balken: Calls & E-Mails je Woche (Aktivitäts-Trend). */
+export function ActivityChart({
+  data,
+}: {
+  data: { week: string; calls: number; emails: number }[];
+}) {
+  return (
+    <div className="h-64 w-full" aria-hidden>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: 8 }} barGap={2}>
+          <XAxis dataKey="week" tick={axis} axisLine={false} tickLine={false} />
+          <YAxis hide allowDecimals={false} />
+          <Tooltip
+            cursor={{ fill: "rgba(37,99,235,0.06)" }}
+            contentStyle={tooltipStyle}
+            formatter={(v: number, n: string) => [formatNumber(v), n === "calls" ? "Calls" : "E-Mails"]}
+          />
+          <Bar dataKey="calls" fill="#2563eb" radius={[5, 5, 0, 0]} />
+          <Bar dataKey="emails" fill="#0ea5e9" radius={[5, 5, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 /** Horizontaler Balken: € je Sales-Phase (z.B. gewichteter Pipeline-Wert). */
 export function StageValueChart({
   data,
