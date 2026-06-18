@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { IconCheck, IconPencil } from "@/components/ui/icons";
 import { formatDate } from "@/lib/format";
-import { updateAccountContract } from "@/lib/crm-actions";
+import { updateAccountContract, markContractSigned } from "@/lib/crm-actions";
 import type { Account } from "@/lib/crm-types";
 
 const inputClass =
@@ -50,6 +50,22 @@ export function AccountContractCard({ account }: { account: Account }) {
   }
 
   const cm = contractMeta[account.contract_status ?? "kein"] ?? contractMeta.kein;
+  const [note, setNote] = useState<string | null>(null);
+
+  function signNow() {
+    setError(null);
+    setNote(null);
+    start(async () => {
+      const res = await markContractSigned(account.id);
+      if (!res.ok) return setError(res.error ?? "Fehlgeschlagen.");
+      setNote(
+        res.activated && res.activated > 0
+          ? `Vertrag unterschrieben · ${res.activated} Mandat(e) aktiviert.`
+          : "Vertrag als unterschrieben markiert."
+      );
+      if (!res.demo) router.refresh();
+    });
+  }
 
   if (!edit) {
     return (
@@ -69,6 +85,18 @@ export function AccountContractCard({ account }: { account: Account }) {
             <IconPencil size={15} />
           </button>
         </div>
+
+        {account.contract_status !== "unterzeichnet" && !account.synthetic ? (
+          <button
+            type="button"
+            onClick={signNow}
+            disabled={pending}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-success/40 bg-success/10 px-3 py-1.5 text-sm font-semibold text-success transition-colors hover:bg-success/15 disabled:opacity-60"
+          >
+            <IconCheck size={14} /> {pending ? "…" : "Vertrag unterschrieben"}
+          </button>
+        ) : null}
+        {note ? <p className="text-xs text-success">{note}</p> : null}
         {account.fee_agreement ? (
           <p className="whitespace-pre-line rounded-lg border border-border bg-elevated/40 px-3 py-2 text-xs text-ink">
             {account.fee_agreement}

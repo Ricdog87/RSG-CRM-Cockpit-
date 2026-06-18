@@ -1507,6 +1507,56 @@ export async function markContractSent(accountId: string): Promise<ActionResult>
   return { ok: true };
 }
 
+/**
+ * Vertrag unterschrieben: setzt Status „unterzeichnet“ + Datum, hält es als
+ * Korrespondenz fest und aktiviert offene Angebots-Mandate des Kunden
+ * (Status „angebot“ → „offen“). Materialisiert virtuelle Accounts.
+ */
+export async function markContractSigned(
+  accountId: string
+): Promise<ActionResult & { activated?: number }> {
+  if (useMockData) return { ...DEMO, activated: 0 };
+  const { id: pid, error } = await currentPartnerId();
+  if (!pid) return { ok: false, error };
+  const supabase = createClient();
+  const realId = (await materializeAccount(supabase, pid, accountId)) ?? accountId;
+
+  const { data: acc } = await supabase.from("accounts").select("name").eq("id", realId).maybeSingle();
+  const accName = (acc as { name?: string } | null)?.name ?? "";
+
+  await supabase
+    .from("accounts")
+    .update({
+      contract_status: "unterzeichnet",
+      contract_signed_at: new Date().toISOString().slice(0, 10),
+      last_activity_at: new Date().toISOString(),
+    })
+    .eq("id", realId);
+  await supabase
+    .from("account_notes")
+    .insert({ partner_id: pid, account_id: realId, body: "Vermittlungsvertrag unterschrieben." });
+
+  // Angebots-Mandate des Kunden aktivieren.
+  let activated = 0;
+  if (accName) {
+    const { data: ms } = await supabase
+      .from("recruiting_mandates")
+      .select("id")
+      .ilike("account_name", accName)
+      .eq("status", "angebot");
+    const ids = ((ms as Array<{ id?: string }> | null) ?? []).map((m) => m.id).filter(Boolean) as string[];
+    if (ids.length) {
+      const { error: upErr } = await supabase.from("recruiting_mandates").update({ status: "offen" }).in("id", ids);
+      if (!upErr) activated = ids.length;
+    }
+  }
+
+  revalidatePath(`/cockpit/kunden/${realId}`);
+  revalidatePath("/cockpit/projekte/recruiting");
+  revalidatePath("/cockpit/kunden");
+  return { ok: true, activated };
+}
+
 export async function updateMandate(
   _prev: ActionResult | null,
   fd: FormData
