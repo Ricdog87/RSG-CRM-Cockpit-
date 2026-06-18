@@ -24,6 +24,10 @@ export function candidateInitial(c: Candidate): Record<string, string> {
     travel_willingness: c.travel_willingness ?? "",
     salary_expectation: c.salary_expectation != null ? String(c.salary_expectation) : "",
     availability: c.availability ?? "",
+    birth_date: c.birth_date ?? "",
+    current_employer: c.current_employer ?? "",
+    languages: c.languages ?? "",
+    experience_years: c.experience_years != null ? String(c.experience_years) : "",
   };
 }
 
@@ -76,6 +80,8 @@ export const CANDIDATE_FIELDS: FormField[] = [
   { name: "title", label: "Titel", placeholder: "z.B. Dr." },
   { name: "name", label: "Name", required: true, placeholder: "Vor- und Nachname" },
   { name: "role", label: "Position", placeholder: "z.B. Pflegefachkraft" },
+  { name: "current_employer", label: "Aktueller Arbeitgeber", placeholder: "z.B. Siemens AG" },
+  { name: "birth_date", label: "Geburtsdatum", type: "date" },
   { name: "email", label: "E-Mail", type: "email", placeholder: "name@beispiel.de" },
   { name: "phone", label: "Telefon", placeholder: "+49 …" },
   { name: "mandate_account", label: "Mandat (Account)", full: true },
@@ -115,6 +121,8 @@ export const CANDIDATE_FIELDS: FormField[] = [
   { name: "travel_willingness", label: "Reisebereitschaft", placeholder: "z.B. bis 50 %" },
   { name: "salary_expectation", label: "Gehaltsvorstellung (€/Jahr)", type: "number", placeholder: "z.B. 65000" },
   { name: "availability", label: "Verfügbarkeit", placeholder: "z.B. ab sofort / in 3 Monaten" },
+  { name: "experience_years", label: "Berufserfahrung (Jahre)", type: "number", placeholder: "z.B. 8" },
+  { name: "languages", label: "Sprachen", full: true, placeholder: "z.B. DE muttersprachlich, EN fließend" },
 ];
 
 export const MANDATE_FIELDS: FormField[] = [
