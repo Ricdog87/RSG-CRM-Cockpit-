@@ -25,6 +25,9 @@ export interface ContractParams {
   split?: boolean;
   place?: string;
   date?: string;
+  /** Absolute URLs zu Logo & Unterschrift (aus /public/contract). */
+  logoUrl?: string;
+  signatureUrl?: string;
 }
 
 const RSG = {
@@ -113,10 +116,19 @@ function agbPercent(p: ContractParams): string {
   <p><strong>§ 16 Anwendbares Recht und Gerichtsstand.</strong> Es gilt deutsches Recht. Gerichtsstand ist – soweit zulässig – Wiesbaden.</p>`;
 }
 
-function signatureBlock(place: string, date: string): string {
+function signatureBlock(place: string, date: string, signatureUrl?: string): string {
+  const rsgSig = signatureUrl ? `<img src="${signatureUrl}" class="sig-img" alt="Unterschrift"/>` : "";
   return `<table class="sig"><tr>
-    <td><div class="sigline"></div>${esc(place)}, ${esc(date)}<br/>Ort, Datum, Unterschrift (Auftraggeber)</td>
-    <td><div class="sigline"></div>${esc(place)}, ${esc(date)}<br/>Ort, Datum, Unterschrift (RSG)</td>
+    <td>
+      <div class="sigbox"></div>
+      <div class="sigline"></div>
+      <span class="sigcap">Ort, Datum, Unterschrift (Auftraggeber)</span>
+    </td>
+    <td>
+      <div class="sigbox">${rsgSig}</div>
+      <div class="sigline"></div>
+      <span class="sigcap">${esc(place)}, ${esc(date)} · Ricardo Serrano (RSG)</span>
+    </td>
   </tr></table>`;
 }
 
@@ -129,22 +141,30 @@ export function buildPlacementContractHtml(p: ContractParams): string {
     .join("<br/>");
   const beauftragung = p.type === "fixed" ? beauftragungFixed(p) : beauftragungPercent(p);
   const agb = p.type === "fixed" ? agbFixed(p) : agbPercent(p);
+  const logo = p.logoUrl
+    ? `<img src="${p.logoUrl}" class="logo-img" alt="RSG recruiting."/>`
+    : `<div class="logo">RSG <span>recruiting.</span></div>`;
+  const legal =
+    "RSG Recruiting Solutions Group GmbH · HRB 35951 Amtsgericht Wiesbaden · Geschäftsführer: Ricardo Serrano · IBAN: DE43 5107 0021 0980 9567 00 · BIC: DEUTDEFF510";
 
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"/>
 <title>Personalvermittlungsvertrag – ${esc(p.customerName)}</title>
 <style>
   *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#15192a;max-width:780px;margin:36px auto;padding:0 30px;line-height:1.55;font-size:14px}
-  .brand{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #2b59ff;padding-bottom:14px;margin-bottom:22px}
-  .logo{font-weight:900;font-size:22px;letter-spacing:-.02em} .logo span{color:#2b59ff}
+  .brand{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:14px;margin-bottom:22px}
+  .logo{font-weight:900;font-size:22px;letter-spacing:-.02em} .logo span{font-weight:900}
+  .logo-img{height:38px;width:auto;display:block}
   h1{font-size:21px;margin:18px 0 16px;text-align:center} h2{font-size:15px;margin:26px 0 8px;border-top:1px solid #e5e7eb;padding-top:16px}
   .parties{display:flex;gap:24px;margin:14px 0 6px} .party{flex:1} .muted{color:#6b7280;font-size:12px}
   ol{margin:6px 0 6px 18px} p{margin:9px 0}
-  .sig{width:100%;border-collapse:collapse;margin-top:34px} .sig td{width:50%;vertical-align:top;font-size:12px;color:#6b7280;padding-right:18px}
-  .sigline{border-bottom:1px solid #15192a;height:40px;margin-bottom:6px}
-  .btn{margin:22px 0;display:flex;gap:10px} button{background:#2b59ff;color:#fff;border:0;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer}
+  .sig{width:100%;border-collapse:collapse;margin-top:30px} .sig td{width:50%;vertical-align:bottom;padding-right:22px}
+  .sigbox{height:54px;display:flex;align-items:flex-end} .sig-img{max-height:74px;max-width:230px;margin-bottom:-6px}
+  .sigline{border-bottom:1px solid #15192a;height:2px;margin-bottom:5px} .sigcap{font-size:11px;color:#6b7280}
+  .legal{margin-top:30px;padding-top:12px;border-top:1px solid #e5e7eb;text-align:center;font-size:10.5px;color:#8a90a2;line-height:1.5}
+  .btn{margin:22px 0;display:flex;gap:10px} button{background:#111;color:#fff;border:0;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer}
   button.sec{background:#eef1f6;color:#15192a} @media print{.btn{display:none} body{margin:0}}
 </style></head><body>
-  <div class="brand"><div class="logo">RSG <span>Recruiting</span></div><div class="muted">Personalvermittlungsvertrag · ${esc(date)}</div></div>
+  <div class="brand">${logo}<div class="muted">Personalvermittlungsvertrag · ${esc(date)}</div></div>
   <h1>Allgemeiner Personalvermittlungsvertrag</h1>
 
   <div class="parties">
@@ -156,9 +176,10 @@ export function buildPlacementContractHtml(p: ContractParams): string {
   ${beauftragung}
   <p><strong>§ 2 Vertragsbestandteil.</strong> Bestandteil dieses Vertrags sind die nachstehenden Allgemeinen Geschäftsbedingungen (AGB).</p>
 
-  ${signatureBlock(place, date)}
+  ${signatureBlock(place, date, p.signatureUrl)}
   ${agb}
-  ${signatureBlock(place, date)}
+  ${signatureBlock(place, date, p.signatureUrl)}
+  <p class="legal">${legal}</p>
 
   <div class="btn">
     <button onclick="window.print()">Drucken / als PDF speichern</button>

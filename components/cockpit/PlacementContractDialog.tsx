@@ -58,6 +58,7 @@ export function PlacementContractDialog({
   }
 
   function generate() {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
     const html = buildPlacementContractHtml({
       type,
       customerName: account.name,
@@ -70,6 +71,8 @@ export function PlacementContractDialog({
       deposit,
       percent,
       split,
+      logoUrl: `${origin}/contract/rsg-logo.png`,
+      signatureUrl: `${origin}/contract/rsg-signature.png`,
     });
     const w = window.open("", "_blank", "width=860,height=960");
     if (w) {
@@ -101,7 +104,7 @@ export function PlacementContractDialog({
         open={open}
         onClose={() => setOpen(false)}
         title="Personalvermittlungsvertrag"
-        description="Kontaktdaten kommen automatisch aus der Kundenmaske."
+        description="Daten aus der Kundenmaske · Logo + RSG-Unterschrift bereits enthalten."
       >
         <div className="space-y-4">
           {/* Kundendaten-Vorschau */}
