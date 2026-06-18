@@ -38,18 +38,29 @@ function Row({
   subtitle,
   right,
   badge,
+  href,
 }: {
   title: string;
   subtitle?: string;
   right?: string;
   badge?: React.ReactNode;
+  href?: string;
 }) {
+  const body = (
+    <div className="min-w-0">
+      <p className="truncate text-sm font-medium text-ink group-hover:text-brand-deep">{title}</p>
+      {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}
+    </div>
+  );
   return (
     <li className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-ink">{title}</p>
-        {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}
-      </div>
+      {href ? (
+        <Link href={href} className="group min-w-0 flex-1">
+          {body}
+        </Link>
+      ) : (
+        body
+      )}
       <div className="flex flex-none items-center gap-3">
         {right ? <span className="text-sm font-semibold text-ink">{right}</span> : null}
         {badge}
@@ -296,6 +307,7 @@ export default async function AccountDetailPage({
                 {kiProjects.map((p) => (
                   <Row
                     key={p.id}
+                    href={`/cockpit/projekte/ki/${p.id}`}
                     title={p.product || "KI-Projekt"}
                     subtitle={
                       p.setup_fee
@@ -322,6 +334,7 @@ export default async function AccountDetailPage({
                 {mandates.map((m) => (
                   <Row
                     key={m.id}
+                    href={`/cockpit/projekte/recruiting/${m.id}`}
                     title={m.role}
                     subtitle={`${m.filled}/${m.positions} besetzt · bis ${formatDate(m.deadline)}`}
                     right={formatEur(m.fee)}
@@ -344,6 +357,7 @@ export default async function AccountDetailPage({
                 {candidates.map((c) => (
                   <Row
                     key={c.id}
+                    href={`/cockpit/kandidaten/${c.id}`}
                     title={c.name}
                     subtitle={c.role}
                     badge={<Badge tone="sky">{c.stage}</Badge>}
