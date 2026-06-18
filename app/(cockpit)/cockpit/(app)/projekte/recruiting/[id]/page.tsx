@@ -10,6 +10,8 @@ import { StatCard } from "@/components/cockpit/StatCard";
 import { Badge } from "@/components/ui/Badge";
 import { MandateCandidates } from "@/components/cockpit/MandateCandidates";
 import { MandateMatchPanel } from "@/components/cockpit/MandateMatchPanel";
+import { MandateIntelCard } from "@/components/cockpit/MandateIntelCard";
+import { computeMandateIntel } from "@/lib/mandate-intel";
 import { JobPostingCard } from "@/components/cockpit/JobPostingCard";
 import { PlacementsCard } from "@/components/cockpit/PlacementsCard";
 import { InvoicesCard } from "@/components/cockpit/InvoicesCard";
@@ -102,6 +104,8 @@ export default async function MandateDetailPage({
         <StatCard label="Kandidat:innen" value={formatNumber(list.length)} hint="zugeordnet" accent="sky" icon={IconTarget} />
         <StatCard label="Erwarteter Umsatz" value={formatEur(mandateRevenue(m))} hint={`${formatEur(offen * perPos)} offen`} accent="warning" icon={IconEuro} />
       </div>
+
+      <MandateIntelCard intel={computeMandateIntel(m, list.length)} accountId={account?.id} accountName={account?.name} />
 
       <Card>
         <CardBody>
