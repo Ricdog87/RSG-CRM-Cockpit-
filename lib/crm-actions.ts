@@ -235,6 +235,31 @@ async function resolveAccountId(
 }
 
 /**
+ * Hält die Account-MRR konsistent: Summe der laufenden KI-Projekte des Kunden.
+ * Wird nach KI-Projekt-Änderungen aufgerufen (denormalisierte mrr aktuell halten).
+ */
+async function syncAccountMrr(
+  supabase: ReturnType<typeof createClient>,
+  accountName: string
+): Promise<void> {
+  const n = (accountName || "").trim();
+  if (!n) return;
+  try {
+    const accId = await resolveAccountId(supabase, n);
+    if (!accId) return;
+    const { data } = await supabase.from("ki_projects").select("mrr, status").ilike("account_name", n);
+    const sum = ((data as Array<{ mrr?: number; status?: string }> | null) ?? [])
+      .filter((p) => p.status !== "gekuendigt" && p.status !== "angebot")
+      .reduce((s, p) => s + Number(p.mrr ?? 0), 0);
+    await supabase.from("accounts").update({ mrr: sum }).eq("id", accId);
+    revalidatePath("/cockpit/kunden");
+    revalidatePath(`/cockpit/kunden/${accId}`);
+  } catch {
+    /* best effort */
+  }
+}
+
+/**
  * Macht aus einer abgeleiteten (virtuellen) Account-ID „ref:…“ einen echten
  * Datensatz – beim ersten Schreibzugriff (Notiz/Aufgabe/Kontakt). Gibt die
  * echte Account-ID zurück (oder null, falls nicht möglich).
@@ -670,6 +695,11 @@ export async function createKiProject(
     } catch (e) {
       logDataError("automation:ki_onboarding_kickoff", e);
     }
+    try {
+      await syncAccountMrr(createClient(), accountName);
+    } catch {
+      /* best effort */
+    }
   }
   return res;
 }
@@ -1043,7 +1073,25 @@ export async function deleteSegment(id: string): Promise<ActionResult> {
   return remove("segments", id, "/cockpit/segmente");
 }
 export async function deleteKiProject(id: string): Promise<ActionResult> {
-  return remove("ki_projects", id, "/cockpit/projekte/ki");
+  let accountName = "";
+  if (!useMockData) {
+    try {
+      const supabase = createClient();
+      const { data } = await supabase.from("ki_projects").select("account_name").eq("id", id).maybeSingle();
+      accountName = String((data as { account_name?: string } | null)?.account_name ?? "");
+    } catch {
+      /* ignore */
+    }
+  }
+  const res = await remove("ki_projects", id, "/cockpit/projekte/ki");
+  if (res.ok && !res.demo && accountName) {
+    try {
+      await syncAccountMrr(createClient(), accountName);
+    } catch {
+      /* best effort */
+    }
+  }
+  return res;
 }
 
 // ---------- Notizen je Account --------------------------------------
@@ -1327,7 +1375,16 @@ export async function updateKiProjectContract(
 
 export async function setKiProjectStatus(id: string, status: string): Promise<ActionResult> {
   const res = await update("ki_projects", id, { status }, "/cockpit/projekte/ki");
-  if (res.ok) revalidatePath(`/cockpit/projekte/ki/${id}`);
+  if (res.ok && !res.demo) {
+    revalidatePath(`/cockpit/projekte/ki/${id}`);
+    try {
+      const supabase = createClient();
+      const { data } = await supabase.from("ki_projects").select("account_name").eq("id", id).maybeSingle();
+      await syncAccountMrr(supabase, String((data as { account_name?: string } | null)?.account_name ?? ""));
+    } catch {
+      /* best effort */
+    }
+  }
   return res;
 }
 
@@ -1650,11 +1707,12 @@ export async function updateKiProject(
 ): Promise<ActionResult> {
   const id = s(fd, "id");
   if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
-  return updateGraceful(
+  const accountName = s(fd, "account_name");
+  const res = await updateGraceful(
     "ki_projects",
     id,
     {
-      account_name: s(fd, "account_name"),
+      account_name: accountName,
       product: s(fd, "product"),
       segment: s(fd, "segment"),
       status: s(fd, "status") || "onboarding",
@@ -1670,6 +1728,14 @@ export async function updateKiProject(
     },
     ["/cockpit/projekte/ki", `/cockpit/projekte/ki/${id}`]
   );
+  if (res.ok && !res.demo) {
+    try {
+      await syncAccountMrr(createClient(), accountName);
+    } catch {
+      /* best effort */
+    }
+  }
+  return res;
 }
 
 // ---------- Notizen je Kandidat:in ----------------------------------
