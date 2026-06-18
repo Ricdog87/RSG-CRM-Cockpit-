@@ -20,6 +20,7 @@ import { CvDownloadButton } from "@/components/cockpit/CvDownloadButton";
 import { CandidateCvUpload } from "@/components/cockpit/CandidateCvUpload";
 import { CandidatePhoto } from "@/components/cockpit/CandidatePhoto";
 import { AnonymizeButton } from "@/components/cockpit/AnonymizeButton";
+import { AiCallButton } from "@/components/cockpit/AiCallButton";
 import { CvPreview } from "@/components/cockpit/CvPreview";
 import { CandidateRatingTags } from "@/components/cockpit/CandidateRatingTags";
 import { CandidateMatch } from "@/components/cockpit/CandidateMatch";
@@ -196,6 +197,8 @@ export default async function KandidatDetailPage({
               <IconPhone size={14} /> Anruf
             </a>
           </div>
+
+          <AiCallButton candidateId={c.id} phone={c.phone} />
 
           {quickFacts.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
