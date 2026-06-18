@@ -30,6 +30,13 @@ Renewal-Fenster, offenen Chancen, Mandatsfortschritt, Platzierungen, Vertrag.
 - Kundenliste: Health-Pill + Sortierung „Risiko zuerst“ + Schnellfilter
   (Gefährdet / Beobachten / Top)
 
+### 2b. Intelligenz-Trilogie: Empfehlung je Entität
+Konsistente, deterministische Next-Best-Action mit **1-Klick-Aufgabe**:
+- **Account** → `lib/account-intel.ts` (Health-Score + Aktion)
+- **KI-Projekt** → `lib/ki-intel.ts` (Churn/Renewal/NPS/Upsell → Aktion)
+- **Mandat** → `lib/mandate-intel.ts` (Status/Fortschritt/Deadline/Pipeline → Aktion)
+- **Verkaufschance** → `lib/ai/scoring.ts` (KI-Score + nächste Aktion, je Karte)
+
 ## 3. KI-Follow-up-Writer (Kunden-Detail)
 `lib/ai/followup.ts` – entwirft kontextbezogene deutsche Follow-up-Mail
 (Betreff + Text, Tonalität wählbar), bearbeitbar, kopier-/mailbar.
