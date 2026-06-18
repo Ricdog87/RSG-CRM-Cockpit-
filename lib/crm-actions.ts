@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import { findDuplicate } from "@/lib/dedupe";
-import { nameFromSyntheticId } from "@/lib/crm-data";
+import { nameFromSyntheticId, isSyntheticAccountId } from "@/lib/crm-data";
 import { accounts as mockAccounts } from "@/lib/crm-mock";
 import { automationEnabled, AUTOMATIONS } from "@/lib/automations";
 import { logDataError } from "@/lib/log";
@@ -254,7 +254,7 @@ async function materializeAccount(
   pid: string,
   accountId: string
 ): Promise<string | null> {
-  if (!accountId.startsWith("ref:")) return accountId;
+  if (!isSyntheticAccountId(accountId)) return accountId;
   const name = nameFromSyntheticId(accountId);
   if (!name) return null;
   const existing = await resolveAccountId(supabase, name);
@@ -914,7 +914,7 @@ export async function updateAccount(
     owner: s(fd, "owner") || null,
   };
   // Abgeleiteter (virtueller) Account ohne echten Datensatz → jetzt anlegen.
-  if (id.startsWith("ref:")) {
+  if (isSyntheticAccountId(id)) {
     return insertGraceful("accounts", patch, ["/cockpit/kunden", "/cockpit/suche"]);
   }
   return updateGraceful("accounts", id, patch, ["/cockpit/kunden", `/cockpit/kunden/${id}`]);
@@ -964,7 +964,7 @@ async function remove(
 export async function deleteAccount(id: string): Promise<ActionResult> {
   // Abgeleiteter Kunde (nur aus Mandat/Projekt referenziert) – kann nicht direkt
   // gelöscht werden, ohne den referenzierenden Datensatz zu entfernen.
-  if (id.startsWith("ref:"))
+  if (isSyntheticAccountId(id))
     return { ok: false, error: "Abgeleiteter Kunde – bitte zuerst das zugehörige Mandat/Projekt entfernen oder umbenennen." };
   return remove("accounts", id, "/cockpit/kunden");
 }
@@ -1123,7 +1123,7 @@ export async function addTask(input: TaskInput): Promise<ActionResult> {
 
   // Virtuellen Kunden bei Bedarf materialisieren, damit der Bezug greift.
   let relatedId = input.related_id ?? null;
-  if (input.related_type === "customer" && relatedId?.startsWith("ref:")) {
+  if (input.related_type === "customer" && relatedId != null && isSyntheticAccountId(relatedId)) {
     relatedId = (await materializeAccount(supabase, id, relatedId)) ?? relatedId;
   }
 

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import type { ActionResult } from "@/lib/crm-actions";
+import { isSyntheticAccountId } from "@/lib/crm-data";
 import { getSequence, channelLabel } from "@/lib/sequences";
 
 function dueDate(days: number): string {
@@ -76,7 +77,7 @@ export async function enrollAccountInSequence(
   if (!pid) return { ok: false, error: "Kein Partner-Profil gefunden." };
 
   // Abgeleitete (virtuelle) Accounts haben keine echte ID → Bezug ohne related_id.
-  const realId = accountId.startsWith("ref:") ? null : accountId;
+  const realId = isSyntheticAccountId(accountId) ? null : accountId;
   const { data: acc } = realId
     ? await supabase.from("accounts").select("name").eq("id", realId).maybeSingle()
     : { data: null };

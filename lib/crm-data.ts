@@ -94,8 +94,13 @@ function mapAccountRow(r: Row): Account {
   };
 }
 
-/** Präfix für virtuell abgeleitete Accounts (noch ohne eigenen Datensatz). */
-const SYNTH_PREFIX = "ref:";
+/** Präfix für virtuell abgeleitete Accounts (URL-pfadsicher, ohne Doppelpunkt). */
+const SYNTH_PREFIX = "ref_";
+
+/** true ⇒ abgeleitete (virtuelle) Account-ID. Akzeptiert auch Alt-Präfix „ref:". */
+export function isSyntheticAccountId(id: string): boolean {
+  return id.startsWith("ref_") || id.startsWith("ref:");
+}
 
 /** Deterministische, umkehrbare ID für einen abgeleiteten Account. */
 export function syntheticAccountId(name: string): string {
@@ -104,9 +109,10 @@ export function syntheticAccountId(name: string): string {
 
 /** Liest den Namen aus einer abgeleiteten Account-ID zurück (oder null). */
 export function nameFromSyntheticId(id: string): string | null {
-  if (!id.startsWith(SYNTH_PREFIX)) return null;
+  if (!isSyntheticAccountId(id)) return null;
   try {
-    return Buffer.from(id.slice(SYNTH_PREFIX.length), "base64url").toString("utf8");
+    // Beide Präfixe („ref_" / „ref:") sind 4 Zeichen lang.
+    return Buffer.from(id.slice(4), "base64url").toString("utf8");
   } catch {
     return null;
   }
