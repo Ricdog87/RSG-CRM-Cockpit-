@@ -50,10 +50,17 @@ So fragst du unterwegs per WhatsApp: „Was steht heute an?", „Status Lagardè
 „Welche Anzahlungen sind offen?", „Entwirf ein Follow-up für SKET" – und bekommst
 die Antwort aus echten CRM-Daten.
 
-## Anbindung B — Telegram (schnellster Eigenkanal)
-1. Bot bei `@BotFather` erstellen → Token.
-2. n8n *Telegram Trigger* → *HTTP Request* an `/api/assistant` → *Telegram Send*
-   mit `{{ $json.reply }}`. (Oder Telegram-Webhook → kleine n8n-Bridge.)
+## Anbindung B — Telegram (schlüsselfertig, eigener Webhook, ohne n8n)
+Eigener Endpoint `/api/telegram/webhook` – sendet direkt über die Telegram-API.
+1. Bot bei `@BotFather` erstellen → **Token** kopieren.
+2. Vercel-Env setzen: `TELEGRAM_BOT_TOKEN`, optional `TELEGRAM_WEBHOOK_SECRET`,
+   und `TELEGRAM_ALLOWED_CHAT_IDS` (Allowlist – nur diese Chats bekommen Daten).
+3. Webhook registrieren (einmalig):
+   `https://api.telegram.org/bot<TOKEN>/setWebhook?url=<DOMAIN>/api/telegram/webhook&secret_token=<SECRET>`
+4. Dem Bot schreiben. Beim ersten Mal antwortet er mit deiner **Chat-ID** –
+   diese in `TELEGRAM_ALLOWED_CHAT_IDS` eintragen (Komma-getrennt), fertig.
+
+> Sicherheit: Ohne Allowlist gibt der Bot **keine** Daten heraus, nur die Chat-ID.
 
 ## Anbindung C — Hermes-Agent (NousResearch)
 Hermes ist ein **separater, dauerlaufender Python-Dienst** (eigenes Hosting). Er wird
