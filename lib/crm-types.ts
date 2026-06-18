@@ -378,6 +378,14 @@ export interface Candidate {
   travel_willingness?: string;
   salary_expectation?: number;
   availability?: string;
+  /** Geburtsdatum (fuer Alter; im Recruiting teils relevant) */
+  birth_date?: string;
+  /** Aktueller Arbeitgeber */
+  current_employer?: string;
+  /** Sprachen (frei, z.B. "DE muttersprachlich, EN fliessend") */
+  languages?: string;
+  /** Berufserfahrung in Jahren */
+  experience_years?: number;
 }
 
 /** KI-Kundensegment (für Zielgruppen-/Use-Case-Steuerung). */
