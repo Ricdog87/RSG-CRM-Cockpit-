@@ -52,14 +52,17 @@ function SearchField({ defaultValue }: { defaultValue?: string }) {
   );
 }
 
+const MAX_HITS = 50;
+
 function ResultGroup({ label, hits }: { label: string; hits: Hit[] }) {
   if (hits.length === 0) return null;
+  const shown = hits.slice(0, MAX_HITS);
   return (
     <Card>
       <CardBody>
         <SectionHeader title={label} hint={`${hits.length} Treffer`} />
         <ul className="divide-y divide-border">
-          {hits.map((h, i) => (
+          {shown.map((h, i) => (
             <li key={i}>
               <Link
                 href={h.href}
@@ -74,6 +77,11 @@ function ResultGroup({ label, hits }: { label: string; hits: Hit[] }) {
             </li>
           ))}
         </ul>
+        {hits.length > MAX_HITS ? (
+          <p className="pt-3 text-center text-xs text-faint">
+            … und {hits.length - MAX_HITS} weitere – Suchbegriff verfeinern.
+          </p>
+        ) : null}
       </CardBody>
     </Card>
   );
