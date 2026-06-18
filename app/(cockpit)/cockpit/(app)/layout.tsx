@@ -1,4 +1,5 @@
 import { getPartnerIdentity } from "@/lib/data";
+import { getOpenTasks } from "@/lib/tasks-data";
 import { useMockData } from "@/lib/env";
 import { Sidebar } from "@/components/cockpit/Sidebar";
 import { Topbar } from "@/components/cockpit/Topbar";
@@ -15,14 +16,23 @@ export default async function AppShellLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const identity = await getPartnerIdentity();
+  const [identity, openTasks] = await Promise.all([getPartnerIdentity(), getOpenTasks()]);
+
+  // Echte Badge-Zahlen für die Topbar-Glocke (offen + heute/überfällig).
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const openTaskCount = openTasks.length;
+  const dueTaskCount = openTasks.filter((t) => t.due_date && t.due_date <= todayKey).length;
 
   return (
     <div className="flex min-h-screen">
       <Sidebar partnerName={identity.display_name} />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar partnerName={identity.display_name} />
+        <Topbar
+          partnerName={identity.display_name}
+          openTaskCount={openTaskCount}
+          dueTaskCount={dueTaskCount}
+        />
 
         {useMockData ? (
           <div className="border-b border-warning/20 bg-warning/10 px-4 py-1.5 text-center text-xs text-warning sm:px-6">

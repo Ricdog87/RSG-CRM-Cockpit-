@@ -8,7 +8,15 @@ import { OPEN_PALETTE_EVENT } from "@/components/cockpit/CommandPalette";
 import { IconBell, IconSearch } from "@/components/ui/icons";
 
 /** Obere Leiste: aktueller Bereich + Suche + Mobile-Logo. */
-export function Topbar({ partnerName }: { partnerName: string }) {
+export function Topbar({
+  partnerName,
+  openTaskCount = 0,
+  dueTaskCount = 0,
+}: {
+  partnerName: string;
+  openTaskCount?: number;
+  dueTaskCount?: number;
+}) {
   const pathname = usePathname();
   const item = activeNavItem(pathname);
   const firstName = partnerName.split(" ")[0] || partnerName;
@@ -58,11 +66,19 @@ export function Topbar({ partnerName }: { partnerName: string }) {
 
         <Link
           href="/cockpit/aufgaben"
-          aria-label="Aufgaben & Benachrichtigungen"
+          aria-label={`Aufgaben & Benachrichtigungen${openTaskCount > 0 ? ` (${openTaskCount} offen)` : ""}`}
           className="relative rounded-xl border border-border bg-elevated/60 p-2 text-muted transition-colors hover:text-ink"
         >
           <IconBell size={18} />
-          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-sky" />
+          {openTaskCount > 0 ? (
+            <span
+              className={`absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[0.6rem] font-bold text-white ${
+                dueTaskCount > 0 ? "bg-warning" : "bg-sky"
+              }`}
+            >
+              {openTaskCount > 9 ? "9+" : openTaskCount}
+            </span>
+          ) : null}
         </Link>
       </div>
     </header>
