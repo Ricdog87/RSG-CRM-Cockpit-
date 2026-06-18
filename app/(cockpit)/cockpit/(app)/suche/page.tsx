@@ -4,6 +4,7 @@ import {
   getOpportunities,
   getCandidates,
   getMandates,
+  getKiProjects,
 } from "@/lib/crm-data";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
@@ -95,11 +96,12 @@ export default async function SuchePage({
     );
   }
 
-  const [accounts, opportunities, candidates, mandates] = await Promise.all([
+  const [accounts, opportunities, candidates, mandates, kiProjects] = await Promise.all([
     getAccounts(),
     getOpportunities(),
     getCandidates(),
     getMandates(),
+    getKiProjects(),
   ]);
 
   const accountHits: Hit[] = accounts
@@ -131,13 +133,21 @@ export default async function SuchePage({
   const mandateHits: Hit[] = mandates
     .filter((m) => match(q, m.account_name, m.role))
     .map((m) => ({
-      href: "/cockpit/projekte/recruiting",
+      href: `/cockpit/projekte/recruiting/${m.id}`,
       title: m.role,
       subtitle: `${m.account_name} · ${m.status}`,
     }));
 
+  const kiHits: Hit[] = kiProjects
+    .filter((p) => match(q, p.account_name, p.product, p.segment))
+    .map((p) => ({
+      href: `/cockpit/projekte/ki/${p.id}`,
+      title: `${p.product || "KI-Projekt"} · ${p.account_name}`,
+      subtitle: `${p.status}${p.mrr ? ` · ${p.mrr} €/M` : ""}`,
+    }));
+
   const total =
-    accountHits.length + oppHits.length + candHits.length + mandateHits.length;
+    accountHits.length + oppHits.length + candHits.length + mandateHits.length + kiHits.length;
 
   return (
     <div className="space-y-6">
@@ -158,6 +168,7 @@ export default async function SuchePage({
           <ResultGroup label="Verkaufschancen" hits={oppHits} />
           <ResultGroup label="Kandidaten" hits={candHits} />
           <ResultGroup label="Mandate" hits={mandateHits} />
+          <ResultGroup label="KI-Projekte" hits={kiHits} />
         </div>
       )}
     </div>
