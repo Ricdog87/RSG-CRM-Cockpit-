@@ -511,6 +511,36 @@ export async function createOpportunity(
   );
 }
 
+/** Vollständiges Bearbeiten einer Verkaufschance (nicht nur Phasenwechsel). */
+export async function updateOpportunity(
+  _prev: ActionResult | null,
+  fd: FormData
+): Promise<ActionResult> {
+  const id = s(fd, "id");
+  if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
+  if (!s(fd, "account_name")) return { ok: false, error: "Account ist erforderlich." };
+  return updateGraceful(
+    "opportunities",
+    id,
+    {
+      account_name: s(fd, "account_name"),
+      line: s(fd, "line") || "ki",
+      title: s(fd, "title"),
+      value: n(fd, "value"),
+      value_type: s(fd, "value_type") || "mrr",
+      stage: s(fd, "stage") || "neu",
+      probability: n(fd, "probability"),
+      owner: s(fd, "owner"),
+      expected_close: s(fd, "expected_close") || null,
+    },
+    "/cockpit/sales"
+  );
+}
+
+export async function deleteOpportunity(id: string): Promise<ActionResult> {
+  return remove("opportunities", id, "/cockpit/sales");
+}
+
 /** Normalisiert einen Personennamen für den Dubletten-Abgleich. */
 function normPerson(v: string): string {
   return v.toLowerCase().normalize("NFKD").replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();

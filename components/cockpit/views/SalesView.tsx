@@ -6,9 +6,12 @@ import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard"
 import { LineBadge } from "@/components/cockpit/LineBadge";
 import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { OppScore } from "@/components/cockpit/OppScore";
+import { RowActions } from "@/components/cockpit/RowActions";
+import { EditDialog } from "@/components/cockpit/EditDialog";
+import { OPPORTUNITY_FIELDS } from "@/lib/crm-forms";
 import { FilterTabs } from "@/components/ui/FilterTabs";
 import { cn } from "@/components/ui/cn";
-import { updateOpportunityStage } from "@/lib/crm-actions";
+import { updateOpportunityStage, updateOpportunity, deleteOpportunity } from "@/lib/crm-actions";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 import type { BusinessLine, Opportunity, SalesStage } from "@/lib/crm-types";
 
@@ -44,9 +47,11 @@ function overdueDays(o: Opportunity): number | null {
 function OppCard({
   o,
   onMove,
+  onDelete,
 }: {
   o: Opportunity;
   onMove: (id: string, stage: SalesStage) => void;
+  onDelete: (id: string) => void;
 }) {
   const rotting = overdueDays(o);
   return (
@@ -57,8 +62,32 @@ function OppCard({
       )}
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <p className="truncate text-sm font-medium text-ink">{o.account_name}</p>
+        <p className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{o.account_name}</p>
         <LineBadge line={o.line} />
+        <RowActions
+          confirmText={`Verkaufschance „${o.title || o.account_name}" wirklich löschen?`}
+          onDelete={() => onDelete(o.id)}
+          editNode={
+            <EditDialog
+              id={o.id}
+              title="Verkaufschance bearbeiten"
+              description="Titel, Wert, Wahrscheinlichkeit, Phase & Abschluss aktualisieren."
+              fields={OPPORTUNITY_FIELDS}
+              action={updateOpportunity}
+              initial={{
+                account_name: o.account_name,
+                title: o.title,
+                line: o.line,
+                value_type: o.value_type,
+                value: String(o.value ?? ""),
+                probability: String(o.probability ?? ""),
+                stage: o.stage,
+                owner: o.owner,
+                expected_close: o.expected_close || "",
+              }}
+            />
+          }
+        />
       </div>
       <p className="truncate text-xs text-muted">{o.title}</p>
       {rotting != null ? (
@@ -102,6 +131,12 @@ export function SalesView({ opportunities }: { opportunities: Opportunity[] }) {
   async function move(id: string, stage: SalesStage) {
     setItems((prev) => prev.map((o) => (o.id === id ? { ...o, stage } : o)));
     const res = await updateOpportunityStage(id, stage);
+    if (res.ok && !res.demo) router.refresh();
+  }
+
+  async function onDelete(id: string) {
+    setItems((prev) => prev.filter((o) => o.id !== id));
+    const res = await deleteOpportunity(id);
     if (res.ok && !res.demo) router.refresh();
   }
 
@@ -156,7 +191,7 @@ export function SalesView({ opportunities }: { opportunities: Opportunity[] }) {
           columns={COLUMNS}
           items={shown}
           getStage={(o) => o.stage}
-          renderCard={(o) => <OppCard o={o} onMove={move} />}
+          renderCard={(o) => <OppCard o={o} onMove={move} onDelete={onDelete} />}
           columnFooter={(its) => <>{formatEur(its.reduce((s, o) => s + o.value, 0))}</>}
           emptyText="Keine Verkaufschancen in diesem Filter."
         />
