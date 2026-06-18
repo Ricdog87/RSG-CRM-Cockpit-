@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCandidate, getAccounts, getMandates } from "@/lib/crm-data";
+import { getCandidate, getAccounts, getMandates, accountKey } from "@/lib/crm-data";
 import { getNotesForCandidate } from "@/lib/notes-data";
 import { getConsentForCandidate } from "@/lib/consent-data";
 import { getSubmissionsForCandidate } from "@/lib/submissions-data";
@@ -106,8 +106,12 @@ export default async function KandidatDetailPage({
   ]);
 
   // Mandat/Account klickbar verknüpfen (Abgleich über den Namen).
-  const mandateAccount = c.mandate_account
-    ? accounts.find((a) => a.name === c.mandate_account)
+  const assignedMandate = c.mandate_id
+    ? mandates.find((mm) => mm.id === c.mandate_id)
+    : undefined;
+  const mandateAccountName = assignedMandate?.account_name || c.mandate_account;
+  const mandateAccount = mandateAccountName
+    ? accounts.find((a) => accountKey(a.name) === accountKey(mandateAccountName))
     : undefined;
 
   const stage = STAGE[c.stage] ?? STAGE.neu;
@@ -276,32 +280,51 @@ export default async function KandidatDetailPage({
           <Card>
             <CardBody>
               <SectionHeader title="Mandat / Account" hint="verknüpftes Unternehmen" />
-              {c.mandate_account ? (
-                mandateAccount ? (
-                  <Link
-                    href={`/cockpit/kunden/${mandateAccount.id}`}
-                    className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5 hover:border-brand/40"
-                  >
-                    <span className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-sky/10 text-sky-deep">
-                        <IconBriefcase size={16} />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-deep">
-                          {mandateAccount.name}
+              {mandateAccount || assignedMandate ? (
+                <div className="space-y-2">
+                  {mandateAccount ? (
+                    <Link
+                      href={`/cockpit/kunden/${mandateAccount.id}`}
+                      className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5 hover:border-brand/40"
+                    >
+                      <span className="flex min-w-0 items-center gap-2.5">
+                        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-sky/10 text-sky-deep">
+                          <IconBriefcase size={16} />
                         </span>
-                        <span className="block truncate text-xs text-faint">
-                          {mandateAccount.branche || "Account öffnen"}
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-deep">
+                            {mandateAccount.name}
+                          </span>
+                          <span className="block truncate text-xs text-faint">
+                            {mandateAccount.branche || "Account öffnen"}
+                          </span>
                         </span>
                       </span>
-                    </span>
-                    <IconChevronRight size={16} className="flex-none text-faint" />
-                  </Link>
-                ) : (
-                  <p className="flex items-center gap-2.5 text-sm text-ink">
-                    <IconBriefcase size={15} className="text-faint" /> {c.mandate_account}
-                  </p>
-                )
+                      <IconChevronRight size={16} className="flex-none text-faint" />
+                    </Link>
+                  ) : null}
+                  {assignedMandate ? (
+                    <Link
+                      href={`/cockpit/projekte/recruiting/${assignedMandate.id}`}
+                      className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5 hover:border-brand/40"
+                    >
+                      <span className="flex min-w-0 items-center gap-2.5">
+                        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand/10 text-brand-deep">
+                          <IconBriefcase size={16} />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-deep">
+                            {assignedMandate.role || "Suchprojekt"}
+                          </span>
+                          <span className="block truncate text-xs text-faint">
+                            Suchprojekt öffnen
+                          </span>
+                        </span>
+                      </span>
+                      <IconChevronRight size={16} className="flex-none text-faint" />
+                    </Link>
+                  ) : null}
+                </div>
               ) : (
                 <EmptyState title="Noch keinem Mandat zugeordnet." />
               )}
