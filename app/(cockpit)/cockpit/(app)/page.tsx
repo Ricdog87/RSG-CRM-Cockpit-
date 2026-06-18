@@ -290,10 +290,10 @@ export default async function CockpitPage() {
       <LineHeader eyebrow="Geschäftslinie · Personalvermittlung" title="RSG Recruiting" accent="bg-brand" />
       <section className="animate-fade-up" aria-label="Recruiting-Kennzahlen">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-          <StatCard label="Offene Mandate" value={formatNumber(offeneMandate)} hint={`${formatNumber(offeneStellen)} offene Stellen`} accent="brand" icon={IconBriefcase} />
+          <StatCard label="Offene Mandate" value={formatNumber(offeneMandate)} hint={`${formatNumber(offeneStellen)} offene Stellen`} accent="brand" icon={IconBriefcase} href="/cockpit/projekte/recruiting" />
           <StatCard label="Offenes Honorar" value={formatEur(offenesHonorar)} hint="noch zu besetzen" accent="warning" icon={IconEuro} />
           <StatCard label="Forecast (Angebot)" value={formatEur(recruitingForecast)} hint="in Planung/Angebot" accent="neutral" icon={IconTrendingUp} />
-          <StatCard label="Aktive Kandidat:innen" value={formatNumber(aktiveKandidaten)} hint="in Prozess" accent="sky" icon={IconUserCheck} />
+          <StatCard label="Aktive Kandidat:innen" value={formatNumber(aktiveKandidaten)} hint="in Prozess" accent="sky" icon={IconUserCheck} href="/cockpit/kandidaten" />
           <StatCard label="Offene Rechnungen" value={formatEur(invoiceSummary.outstanding)} hint={invoiceSummary.overdue > 0 ? `${formatEur(invoiceSummary.overdue)} überfällig` : "gestellt"} accent={invoiceSummary.overdue > 0 ? "warning" : "success"} icon={IconEuro} />
         </div>
       </section>
@@ -316,10 +316,10 @@ export default async function CockpitPage() {
       <LineHeader eyebrow="Geschäftslinie · KI & Telefonassistenz" title="RSG AI" accent="bg-sky" />
       <section className="animate-fade-up" aria-label="KI-Kennzahlen">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-          <StatCard label="MRR aktiv" value={`${formatEur(kiMrr)}/M`} hint="wiederkehrend" accent="brand" icon={IconEuro} />
+          <StatCard label="MRR aktiv" value={`${formatEur(kiMrr)}/M`} hint="wiederkehrend" accent="brand" icon={IconEuro} href="/cockpit/projekte/ki" />
           <StatCard label="ARR" value={formatEur(kiArr)} hint="Jahresumsatz (MRR×12)" accent="sky" icon={IconTrendingUp} />
           <StatCard label="Forecast (Angebot)" value={`${formatEur(kiForecast)}/M`} hint="in Planung/Angebot" accent="neutral" icon={IconTrendingUp} />
-          <StatCard label="Live-Projekte" value={formatNumber(kiLive)} hint={`${formatNumber(kiOnboarding)} im Onboarding`} accent="success" icon={IconPhone} />
+          <StatCard label="Live-Projekte" value={formatNumber(kiLive)} hint={`${formatNumber(kiOnboarding)} im Onboarding`} accent="success" icon={IconPhone} href="/cockpit/projekte/ki" />
           <StatCard label="Implementierung" value={formatEur(kiSetup)} hint="einmalig (aktiv)" accent="warning" icon={IconBolt} />
         </div>
       </section>
