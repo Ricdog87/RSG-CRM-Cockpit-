@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getMandates, getCandidates } from "@/lib/crm-data";
+import { getMandates, getCandidates, getAccounts, accountKey } from "@/lib/crm-data";
 import { getPlacementsForMandate } from "@/lib/placements-data";
 import { getInvoicesForMandate } from "@/lib/invoices-data";
 import { getJobResponsesForMandate } from "@/lib/submissions-data";
@@ -33,15 +33,17 @@ export default async function MandateDetailPage({
 }: {
   params: { id: string };
 }) {
-  const [mandates, candidates, placements, invoices, jobResponses] = await Promise.all([
+  const [mandates, candidates, accounts, placements, invoices, jobResponses] = await Promise.all([
     getMandates(),
     getCandidates(),
+    getAccounts(),
     getPlacementsForMandate(params.id),
     getInvoicesForMandate(params.id),
     getJobResponsesForMandate(params.id),
   ]);
   const m = mandates.find((x) => x.id === params.id);
   if (!m) notFound();
+  const account = accounts.find((a) => accountKey(a.name) === accountKey(m.account_name));
 
   const list = candidates.filter((c) => c.mandate_id === m.id);
   // Platzierungen ohne erzeugte Rechnungen → „aus Plan erzeugen".
@@ -76,7 +78,13 @@ export default async function MandateDetailPage({
               </span>
               <div className="min-w-0">
                 <h1 className="text-xl font-bold text-ink">{m.role || "Mandat"}</h1>
-                <p className="text-sm text-muted">{m.account_name}</p>
+                {account ? (
+                  <Link href={`/cockpit/kunden/${account.id}`} className="text-sm text-muted hover:text-brand-deep">
+                    {m.account_name}
+                  </Link>
+                ) : (
+                  <p className="text-sm text-muted">{m.account_name}</p>
+                )}
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <Badge tone={st.tone}>{st.label}</Badge>
                   <Badge tone="neutral">{pricingLabel}</Badge>
