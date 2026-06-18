@@ -10,10 +10,12 @@ export function NextActionButton({
   accountId,
   accountName,
   action,
+  relatedType = "customer",
 }: {
   accountId: string;
   accountName: string;
   action: string;
+  relatedType?: "customer" | "candidate" | "project";
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -25,7 +27,7 @@ export function NextActionButton({
     start(async () => {
       const due = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
       const res = await addTask({
-        related_type: "customer",
+        related_type: relatedType,
         related_id: accountId,
         related_label: accountName,
         title: action,

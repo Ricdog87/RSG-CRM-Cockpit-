@@ -24,6 +24,8 @@ import { CvPreview } from "@/components/cockpit/CvPreview";
 import { CandidateRatingTags } from "@/components/cockpit/CandidateRatingTags";
 import { CandidateMatch } from "@/components/cockpit/CandidateMatch";
 import { CandidateMandateMatch } from "@/components/cockpit/CandidateMandateMatch";
+import { CandidateIntelHint } from "@/components/cockpit/CandidateIntelHint";
+import { computeCandidateIntel } from "@/lib/candidate-intel";
 import { InterviewsCard, OffersCard } from "@/components/cockpit/HiringCards";
 import { SequenceEnroll } from "@/components/cockpit/SequenceEnroll";
 import { ReferencesCard } from "@/components/cockpit/ReferencesCard";
@@ -209,6 +211,8 @@ export default async function KandidatDetailPage({
           ) : null}
         </CardBody>
       </Card>
+
+      <CandidateIntelHint intel={computeCandidateIntel(c)} candidateId={c.id} candidateName={c.name} />
 
       <div className="grid gap-5 lg:grid-cols-12">
         {/* Eigenschaften – mobil NACH dem Aktivitäts-Center */}
