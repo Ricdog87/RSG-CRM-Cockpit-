@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getKiProject, getAccounts } from "@/lib/crm-data";
+import { getKiProject, getAccounts, accountKey } from "@/lib/crm-data";
 import { getTasksForRelated } from "@/lib/tasks-data";
 import { getMilestonesForProject, getReadinessForProject } from "@/lib/ki-plan-data";
 import { getMetricsForProject } from "@/lib/ki-metrics-data";
@@ -62,7 +62,7 @@ export default async function KiProjectDetailPage({ params }: { params: { id: st
   ]);
   if (!p) notFound();
 
-  const account = accounts.find((a) => a.name === p.account_name);
+  const account = accounts.find((a) => accountKey(a.name) === accountKey(p.account_name));
   const st = statusMeta[p.status] ?? statusMeta.onboarding;
   const he = healthMeta[p.health] ?? healthMeta.neutral;
   const arr = p.mrr * 12;
