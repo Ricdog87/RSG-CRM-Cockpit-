@@ -49,6 +49,7 @@ export default async function KandidatenPage() {
               description="Person der Recruiting-Pipeline hinzufügen."
               fields={createFields}
               action={createCandidate}
+              autoOpenParam="new"
             />
           </div>
         }

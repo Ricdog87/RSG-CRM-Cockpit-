@@ -21,6 +21,16 @@ const NAV_ITEMS: FlatItem[] = NAV_GROUPS.flatMap((g) =>
   }))
 );
 
+/** Schnell-Aktionen: öffnen direkt den jeweiligen Anlegen-Dialog (?new=1). */
+const ACTION_ITEMS: FlatItem[] = [
+  { href: "/cockpit/kunden?new=1", title: "Neuer Kunde", subtitle: "Account anlegen", group: "Aktionen" },
+  { href: "/cockpit/sales?new=1", title: "Neue Verkaufschance", subtitle: "Opportunity erfassen", group: "Aktionen" },
+  { href: "/cockpit/projekte/recruiting?new=1", title: "Neues Mandat", subtitle: "Recruiting-Auftrag anlegen", group: "Aktionen" },
+  { href: "/cockpit/kandidaten?new=1", title: "Neue:r Kandidat:in", subtitle: "Person zur Pipeline", group: "Aktionen" },
+  { href: "/cockpit/projekte/ki?new=1", title: "Neues KI-Projekt", subtitle: "KI-Mandat anlegen", group: "Aktionen" },
+  { href: "/cockpit/kalender?new=1", title: "Neuer Termin", subtitle: "Kalender-Eintrag", group: "Aktionen" },
+];
+
 /** Event-Name, mit dem andere Komponenten (z. B. Topbar) die Palette öffnen. */
 export const OPEN_PALETTE_EVENT = "rsg:open-command-palette";
 
@@ -101,16 +111,17 @@ export function CommandPalette() {
   // Flache, navigierbare Liste: gefilterte Navigation + CRM-Treffer.
   const flat = useMemo<FlatItem[]>(() => {
     const q = query.trim().toLowerCase();
-    const nav = q
-      ? NAV_ITEMS.filter(
-          (n) => n.title.toLowerCase().includes(q) || n.subtitle.toLowerCase().includes(q)
-        )
-      : NAV_ITEMS;
+    const filt = (items: FlatItem[]) =>
+      items.filter(
+        (n) => n.title.toLowerCase().includes(q) || n.subtitle.toLowerCase().includes(q)
+      );
+    const actions = q ? filt(ACTION_ITEMS) : ACTION_ITEMS;
+    const nav = q ? filt(NAV_ITEMS) : NAV_ITEMS;
     const hits: FlatItem[] = groups.flatMap((g) =>
       g.hits.map((h) => ({ href: h.href, title: h.title, subtitle: h.subtitle, group: g.label }))
     );
-    // Bei leerer Suche nur Navigation, sonst Navigation (max 4) + Treffer.
-    return q ? [...nav.slice(0, 4), ...hits] : nav;
+    // Leere Suche: Aktionen + Navigation. Mit Suche: Aktionen, Nav (max 4), Treffer.
+    return q ? [...actions, ...nav.slice(0, 4), ...hits] : [...actions, ...nav];
   }, [query, groups]);
 
   useEffect(() => setActive(0), [flat.length]);
