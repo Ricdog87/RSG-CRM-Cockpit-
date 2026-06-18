@@ -1,11 +1,5 @@
 import Link from "next/link";
-import {
-  getAccounts,
-  getOpportunities,
-  getCandidates,
-  getMandates,
-  getKiProjects,
-} from "@/lib/crm-data";
+import { runCrmSearch, type SearchHit } from "@/lib/crm-search";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -13,20 +7,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { IconChevronRight, IconSearch } from "@/components/ui/icons";
 
 export const dynamic = "force-dynamic";
-
-interface Hit {
-  href: string;
-  title: string;
-  subtitle: string;
-}
-
-function candNo(n?: number): string {
-  return n != null ? `RSG-${String(n).padStart(5, "0")}` : "";
-}
-
-function match(q: string, ...fields: (string | undefined)[]) {
-  return fields.some((f) => (f ?? "").toLowerCase().includes(q));
-}
 
 /** Suchfeld direkt auf der Suchseite – funktioniert auf allen Geräten (auch Mobile). */
 function SearchField({ defaultValue }: { defaultValue?: string }) {
@@ -54,7 +34,7 @@ function SearchField({ defaultValue }: { defaultValue?: string }) {
 
 const MAX_HITS = 50;
 
-function ResultGroup({ label, hits }: { label: string; hits: Hit[] }) {
+function ResultGroup({ label, hits }: { label: string; hits: SearchHit[] }) {
   if (hits.length === 0) return null;
   const shown = hits.slice(0, MAX_HITS);
   return (
@@ -92,7 +72,7 @@ export default async function SuchePage({
 }: {
   searchParams: { q?: string };
 }) {
-  const q = (searchParams.q ?? "").trim().toLowerCase();
+  const q = (searchParams.q ?? "").trim();
 
   if (!q) {
     return (
@@ -104,79 +84,27 @@ export default async function SuchePage({
     );
   }
 
-  const [accounts, opportunities, candidates, mandates, kiProjects] = await Promise.all([
-    getAccounts(),
-    getOpportunities(),
-    getCandidates(),
-    getMandates(),
-    getKiProjects(),
-  ]);
-
-  const accountHits: Hit[] = accounts
-    .filter((a) => match(q, a.name, a.branche, a.contact_name, a.segment, a.ort))
-    .map((a) => ({
-      href: `/cockpit/kunden/${a.id}`,
-      title: a.name,
-      subtitle: [a.branche, a.contact_name].filter(Boolean).join(" · ") || a.line,
-    }));
-
-  const oppHits: Hit[] = opportunities
-    .filter((o) => match(q, o.account_name, o.title, o.owner))
-    .map((o) => ({
-      href: "/cockpit/sales",
-      title: o.title || o.account_name,
-      subtitle: `${o.account_name} · ${o.stage}`,
-    }));
-
-  const candHits: Hit[] = candidates
-    .filter((c) =>
-      match(q, c.name, c.role, c.mandate_account, c.source, candNo(c.candidate_no), String(c.candidate_no ?? ""))
-    )
-    .map((c) => ({
-      href: `/cockpit/kandidaten/${c.id}`,
-      title: [c.title, c.name].filter(Boolean).join(" "),
-      subtitle: [candNo(c.candidate_no), c.role, c.mandate_account].filter(Boolean).join(" · "),
-    }));
-
-  const mandateHits: Hit[] = mandates
-    .filter((m) => match(q, m.account_name, m.role))
-    .map((m) => ({
-      href: `/cockpit/projekte/recruiting/${m.id}`,
-      title: m.role,
-      subtitle: `${m.account_name} · ${m.status}`,
-    }));
-
-  const kiHits: Hit[] = kiProjects
-    .filter((p) => match(q, p.account_name, p.product, p.segment))
-    .map((p) => ({
-      href: `/cockpit/projekte/ki/${p.id}`,
-      title: `${p.product || "KI-Projekt"} · ${p.account_name}`,
-      subtitle: `${p.status}${p.mrr ? ` · ${p.mrr} €/M` : ""}`,
-    }));
-
-  const total =
-    accountHits.length + oppHits.length + candHits.length + mandateHits.length + kiHits.length;
+  // Großzügiges Limit – die Seite zeigt selbst „und N weitere".
+  const { groups, total } = await runCrmSearch(q, 9999);
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Suche"
-        title={`Ergebnisse für „${searchParams.q}"`}
+        title={`Ergebnisse für „${q}"`}
         description={`${total} Treffer über Kunden, Chancen, Kandidaten und Mandate.`}
         action={<Badge tone="neutral">{total}</Badge>}
       />
 
-      <SearchField defaultValue={searchParams.q} />
+      <SearchField defaultValue={q} />
 
       {total === 0 ? (
         <EmptyState title="Keine Treffer. Versuche einen anderen Begriff – z.B. einen Firmen- oder Personennamen." />
       ) : (
         <div className="space-y-6">
-          <ResultGroup label="Kunden" hits={accountHits} />
-          <ResultGroup label="Verkaufschancen" hits={oppHits} />
-          <ResultGroup label="Kandidaten" hits={candHits} />
-          <ResultGroup label="Mandate" hits={mandateHits} />
-          <ResultGroup label="KI-Projekte" hits={kiHits} />
+          {groups.map((g) => (
+            <ResultGroup key={g.kind} label={g.label} hits={g.hits} />
+          ))}
         </div>
       )}
     </div>

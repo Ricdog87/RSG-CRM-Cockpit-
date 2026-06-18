@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { activeNavItem } from "@/lib/nav";
 import { Copilot } from "@/components/cockpit/Copilot";
+import { OPEN_PALETTE_EVENT } from "@/components/cockpit/CommandPalette";
 import { IconBell, IconSearch } from "@/components/ui/icons";
 
 /** Obere Leiste: aktueller Bereich + Suche + Mobile-Logo. */
@@ -30,17 +31,19 @@ export function Topbar({ partnerName }: { partnerName: string }) {
           </h1>
         </div>
 
-        {/* CRM-weite Suche (Desktop/Tablet) */}
-        <form action="/cockpit/suche" className="relative hidden items-center sm:flex">
+        {/* CRM-weite Suche (Desktop/Tablet) → öffnet die Befehls-Palette (⌘K) */}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE_EVENT))}
+          aria-label="Suche öffnen (⌘K)"
+          className="relative hidden w-44 items-center gap-2 rounded-xl border border-border bg-elevated/60 py-2 pl-9 pr-3 text-sm text-faint transition-colors hover:text-muted sm:flex lg:w-64"
+        >
           <IconSearch size={16} className="absolute left-3 text-faint" />
-          <input
-            type="search"
-            name="q"
-            placeholder="Kunden, Chancen, Kandidaten…"
-            aria-label="Suche"
-            className="w-44 rounded-xl border border-border bg-elevated/60 py-2 pl-9 pr-3 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-sky lg:w-64"
-          />
-        </form>
+          <span className="flex-1 text-left">Suche…</span>
+          <kbd className="rounded border border-border bg-surface px-1.5 py-0.5 text-[0.6rem] font-medium text-faint">
+            ⌘K
+          </kbd>
+        </button>
 
         {/* Suche als Icon-Button (Mobile) */}
         <Link
