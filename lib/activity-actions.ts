@@ -64,8 +64,8 @@ export async function logActivity(input: ActivityInput): Promise<ActionResult> {
   let warning: string | undefined;
 
   if (acc) {
-    const { data: a } = await supabase.from("accounts").select("id").ilike("name", acc).maybeSingle();
-    accId = (a as { id?: string } | null)?.id;
+    const { data: a } = await supabase.from("accounts").select("id").ilike("name", acc).limit(1);
+    accId = (a as Array<{ id?: string }> | null)?.[0]?.id;
 
     if (!accId) {
       const row: Record<string, unknown> = {

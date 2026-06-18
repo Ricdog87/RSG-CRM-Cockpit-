@@ -83,23 +83,12 @@ async function insert(
 const MISSING_COL = /column "?([a-z_]+)"? .*does not exist/i;
 
 /** Hinweis, der angezeigt wird, wenn Felder mangels DB-Spalte verworfen wurden. */
-function strippedWarning(table: string, stripped: string[]): string | undefined {
-  if (stripped.length === 0) return undefined;
+function strippedWarning(_table: string, stripped: string[]): string | undefined {
   const fields = stripped.filter((c) => c !== "partner_id");
   if (fields.length === 0) return undefined;
-  const mig =
-    table === "candidates"
-      ? "08_candidate_matching.sql"
-      : table === "accounts"
-        ? "07_account_phone.sql"
-        : table === "recruiting_mandates"
-          ? "09_mandate_pricing.sql"
-          : table === "ki_projects"
-            ? "10_ki_setup_fee.sql"
-            : "die passende Migration";
-  return `Gespeichert – aber diese Felder konnten nicht abgelegt werden, weil die Spalten in der Datenbank fehlen: ${fields.join(
+  return `Achtung: Diese Felder konnten NICHT gespeichert werden, weil die Spalten in der Datenbank fehlen: ${fields.join(
     ", "
-  )}. Bitte ${mig} im Supabase SQL-Editor ausführen und erneut speichern.`;
+  )}. Bitte einmalig die Migration „supabase/27_persistence_fix.sql" im Supabase SQL-Editor ausführen – danach bleiben alle Eingaben dauerhaft erhalten.`;
 }
 
 /** Insert, das fehlende (noch nicht migrierte) Spalten automatisch weglässt. */
@@ -196,8 +185,8 @@ async function ensureAccount(
       .from("accounts")
       .select("id")
       .ilike("name", n)
-      .maybeSingle();
-    if ((existing as { id?: string } | null)?.id) return;
+      .limit(1);
+    if ((existing as Array<{ id?: string }> | null)?.[0]?.id) return;
 
     const row: Record<string, unknown> = {
       partner_id: pid,
@@ -240,8 +229,9 @@ async function resolveAccountId(
 ): Promise<string | null> {
   const n = (name || "").trim();
   if (!n) return null;
-  const { data } = await supabase.from("accounts").select("id").ilike("name", n).maybeSingle();
-  return (data as { id?: string } | null)?.id ?? null;
+  // limit(1) statt maybeSingle: robust gegen bereits vorhandene Dubletten.
+  const { data } = await supabase.from("accounts").select("id").ilike("name", n).limit(1);
+  return (data as Array<{ id?: string }> | null)?.[0]?.id ?? null;
 }
 
 /**
@@ -913,8 +903,26 @@ export async function updateAccount(
     country: s(fd, "country") || null,
     owner: s(fd, "owner") || null,
   };
-  // Abgeleiteter (virtueller) Account ohne echten Datensatz → jetzt anlegen.
+  // Abgeleiteter (virtueller) Account ODER bereits (leer) materialisierter Kunde:
+  // Upsert über den Namen – existiert schon ein echter Datensatz, wird DIESER
+  // aktualisiert (verhindert Dubletten/Datenverlust); sonst neu anlegen.
   if (isSyntheticAccountId(id)) {
+    if (useMockData) return DEMO;
+    const { id: pid, error } = await currentPartnerId();
+    if (!pid) return { ok: false, error };
+    const supabase = createClient();
+    const { data: rows } = await supabase
+      .from("accounts")
+      .select("id")
+      .ilike("name", patch.name)
+      .limit(1);
+    const existingId = (rows as Array<{ id?: string }> | null)?.[0]?.id;
+    if (existingId) {
+      return updateGraceful("accounts", existingId, patch, [
+        "/cockpit/kunden",
+        `/cockpit/kunden/${existingId}`,
+      ]);
+    }
     return insertGraceful("accounts", patch, ["/cockpit/kunden", "/cockpit/suche"]);
   }
   return updateGraceful("accounts", id, patch, ["/cockpit/kunden", `/cockpit/kunden/${id}`]);
