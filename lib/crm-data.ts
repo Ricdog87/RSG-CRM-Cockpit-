@@ -323,6 +323,10 @@ function mapCandidate(r: Row): Candidate {
     travel_willingness: str(r.travel_willingness) || undefined,
     salary_expectation: r.salary_expectation != null ? Number(r.salary_expectation) : undefined,
     availability: str(r.availability) || undefined,
+    birth_date: str(r.birth_date) || undefined,
+    current_employer: str(r.current_employer) || undefined,
+    languages: str(r.languages) || undefined,
+    experience_years: r.experience_years != null ? Number(r.experience_years) : undefined,
   };
 }
 
