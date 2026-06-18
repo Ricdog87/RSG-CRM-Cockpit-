@@ -142,6 +142,13 @@ export function MandatesList({
                   </div>
                 </div>
                 <div className="relative z-20 flex flex-none items-center gap-1">
+                  {(m.pricing_model ?? "fixed") !== "percent" && m.status !== "angebot" ? (
+                    m.status === "besetzt" && !m.final_paid ? (
+                      <Badge tone="danger">Restzahlung offen</Badge>
+                    ) : m.status !== "besetzt" && (m.deposit ?? 0) > 0 && !m.deposit_paid ? (
+                      <Badge tone="warning">Anzahlung offen</Badge>
+                    ) : null
+                  ) : null}
                   <Badge tone={st.tone}>{st.label}</Badge>
                   {renderActions ? renderActions(m) : null}
                 </div>
