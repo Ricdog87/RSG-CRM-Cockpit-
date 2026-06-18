@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
@@ -327,6 +327,12 @@ export function CandidatesView({
     return arr;
   }, [filtered, sort]);
 
+  // Paginierung der Listenansicht (Performance bei vielen Kandidat:innen).
+  const PAGE = 50;
+  const [visible, setVisible] = useState(PAGE);
+  useEffect(() => setVisible(PAGE), [filter, query, sort, activeTags, view]);
+  const pageList = displayed.slice(0, visible);
+
   return (
     <div className="space-y-4">
       {/* Toolbar: Suche + Ansicht-Umschalter */}
@@ -443,13 +449,25 @@ export function CandidatesView({
             </p>
           ) : (
             <ul className="divide-y divide-border/70">
-              {displayed.map((c) => (
+              {pageList.map((c) => (
                 <li key={c.id}>
                   <CandidateRow c={c} />
                 </li>
               ))}
             </ul>
           )}
+          {displayed.length > visible ? (
+            <div className="flex items-center justify-center gap-3 border-t border-border px-3 py-3">
+              <span className="text-xs text-faint">{visible} von {displayed.length} angezeigt</span>
+              <button
+                type="button"
+                onClick={() => setVisible((v) => v + PAGE)}
+                className="rounded-lg border border-border bg-elevated px-3 py-1.5 text-xs font-semibold text-ink hover:bg-elevated/70"
+              >
+                Mehr anzeigen
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

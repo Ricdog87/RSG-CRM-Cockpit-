@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AccountsTable } from "@/components/cockpit/AccountsTable";
 import { EditDialog } from "@/components/cockpit/EditDialog";
@@ -81,6 +81,12 @@ export function AccountsView({
     return arr;
   }, [afterLineFilter, lifecycle, q, sort, health, healthById]);
 
+  // Paginierung: nur die ersten N rendern (Performance bei vielen Accounts).
+  const PAGE = 60;
+  const [visible, setVisible] = useState(PAGE);
+  useEffect(() => setVisible(PAGE), [filter, lifecycle, q, sort, health]);
+  const page = shown.slice(0, visible);
+
   const hasHealth = Object.keys(healthById).length > 0;
   const healthCount = (tone: "danger" | "warning" | "success") =>
     afterLineFilter.filter((a) => healthById[a.id]?.tone === tone).length;
@@ -150,7 +156,7 @@ export function AccountsView({
       ) : null}
 
       <AccountsTable
-        accounts={shown}
+        accounts={page}
         healthById={healthById}
         renderActions={(a) => (
           <RowActions
@@ -184,6 +190,19 @@ export function AccountsView({
           />
         )}
       />
+
+      {shown.length > visible ? (
+        <div className="flex items-center justify-center gap-3 pt-1">
+          <span className="text-xs text-faint">{visible} von {shown.length} angezeigt</span>
+          <button
+            type="button"
+            onClick={() => setVisible((v) => v + PAGE)}
+            className="rounded-lg border border-border bg-elevated px-3 py-1.5 text-xs font-semibold text-ink hover:bg-elevated/70"
+          >
+            Mehr anzeigen
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
