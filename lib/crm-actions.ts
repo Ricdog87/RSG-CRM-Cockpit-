@@ -1484,6 +1484,29 @@ export async function recordContractCreated(
   return { ok: true };
 }
 
+/**
+ * Setzt den Vertragsstatus auf „versendet“ (z. B. nach Versand der Vertrags-
+ * Mail). Überschreibt einen bereits „unterzeichnet“-Status nicht. Aktualisiert
+ * die letzte Aktivität. Materialisiert virtuelle Accounts bei Bedarf.
+ */
+export async function markContractSent(accountId: string): Promise<ActionResult> {
+  if (useMockData) return DEMO;
+  const { id: pid, error } = await currentPartnerId();
+  if (!pid) return { ok: false, error };
+  const supabase = createClient();
+  const realId = (await materializeAccount(supabase, pid, accountId)) ?? accountId;
+
+  const { data } = await supabase.from("accounts").select("contract_status").eq("id", realId).maybeSingle();
+  const cur = (data as { contract_status?: string } | null)?.contract_status;
+  const patch: Record<string, unknown> = { last_activity_at: new Date().toISOString() };
+  if (cur !== "unterzeichnet") patch.contract_status = "versendet";
+  await supabase.from("accounts").update(patch).eq("id", realId);
+
+  revalidatePath(`/cockpit/kunden/${realId}`);
+  revalidatePath("/cockpit/kunden");
+  return { ok: true };
+}
+
 export async function updateMandate(
   _prev: ActionResult | null,
   fd: FormData

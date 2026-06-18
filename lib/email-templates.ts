@@ -13,6 +13,8 @@ export interface EmailTemplate {
   key: string;
   label: string;
   line?: "ki" | "recruiting";
+  /** true ⇒ setzt nach Versand den Vertragsstatus auf „versendet“. */
+  marksContractSent?: boolean;
   build: (c: EmailContext) => { subject: string; body: string };
 }
 
@@ -25,6 +27,7 @@ export const EMAIL_TEMPLATES: EmailTemplate[] = [
     key: "vertrag",
     label: "Vertrag zur Unterschrift senden",
     line: "recruiting",
+    marksContractSent: true,
     build: (c) => ({
       subject: `Personalvermittlungsvertrag – ${c.company}`,
       body:

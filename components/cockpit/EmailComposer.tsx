@@ -7,6 +7,7 @@ import { IconMail, IconCopy, IconCheck } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
 import { EMAIL_TEMPLATES, buildGreeting } from "@/lib/email-templates";
 import { logActivity } from "@/lib/activity-actions";
+import { markContractSent } from "@/lib/crm-actions";
 import type { Account } from "@/lib/crm-types";
 
 const inputCls =
@@ -38,6 +39,7 @@ export function EmailComposer({
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const [sent, setSent] = useState(false);
+  const [sentContract, setSentContract] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const recipients = useMemo<Recipient[]>(() => {
@@ -98,6 +100,7 @@ export function EmailComposer({
     // E-Mail-Programm öffnen …
     window.location.href = mailto;
     // … und als Korrespondenz protokollieren (zählt auch aufs Tagesziel).
+    const tpl = EMAIL_TEMPLATES.find((t) => t.key === templateKey);
     start(async () => {
       const res = await logActivity({
         kind: "email",
@@ -105,8 +108,13 @@ export function EmailComposer({
         account_name: account.name,
         subject: subject || "E-Mail",
       });
+      // Logischer Workflow: Vertrags-Mail → Vertragsstatus „versendet“.
+      if (tpl?.marksContractSent) {
+        await markContractSent(account.id);
+      }
       if (res.ok) {
         setSent(true);
+        setSentContract(Boolean(tpl?.marksContractSent));
         if (!res.demo) router.refresh();
       }
     });
@@ -189,6 +197,7 @@ export function EmailComposer({
           {sent ? (
             <p className="rounded-lg border border-success/30 bg-success/[0.06] px-3 py-2 text-xs text-success">
               ✓ E-Mail-Programm geöffnet · beim Kunden als Korrespondenz protokolliert.
+              {sentContract ? " Vertragsstatus → „versendet“ gesetzt." : ""}
             </p>
           ) : null}
 
