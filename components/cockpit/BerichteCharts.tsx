@@ -61,8 +61,12 @@ export function FunnelChart({
 
 export function ForecastChart({
   data,
+  label = "gewichtet",
+  color = "#2563eb",
 }: {
   data: { month: string; value: number }[];
+  label?: string;
+  color?: string;
 }) {
   return (
     <div className="h-64 w-full" aria-hidden>
@@ -73,9 +77,33 @@ export function ForecastChart({
           <Tooltip
             cursor={{ fill: "rgba(37,99,235,0.06)" }}
             contentStyle={tooltipStyle}
-            formatter={(v: number) => [formatEur(v), "gewichtet"]}
+            formatter={(v: number) => [formatEur(v), label]}
           />
-          <Bar dataKey="value" fill="#2563eb" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="value" fill={color} radius={[6, 6, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+/** Horizontaler Balken: € je Sales-Phase (z.B. gewichteter Pipeline-Wert). */
+export function StageValueChart({
+  data,
+}: {
+  data: { stage: string; value: number }[];
+}) {
+  return (
+    <div className="h-64 w-full" aria-hidden>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
+          <XAxis type="number" tick={axis} axisLine={false} tickLine={false} tickFormatter={(v: number) => formatEur(v)} />
+          <YAxis type="category" dataKey="stage" tick={axis} axisLine={false} tickLine={false} width={92} />
+          <Tooltip cursor={{ fill: "rgba(37,99,235,0.06)" }} contentStyle={tooltipStyle} formatter={(v: number) => [formatEur(v), "gewichtet"]} />
+          <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+            {data.map((_, i) => (
+              <Cell key={i} fill={i % 2 === 0 ? "#2563eb" : "#0ea5e9"} />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>

@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { PortfolioInsights, type Insight } from "@/components/cockpit/PortfolioInsights";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
-import { FunnelChart, ForecastChart } from "@/components/cockpit/BerichteCharts";
+import { FunnelChart, ForecastChart, StageValueChart } from "@/components/cockpit/BerichteCharts";
 import { SourceRoiTable, type SourceRoiRow } from "@/components/cockpit/SourceRoiTable";
 import { IconTarget, IconEuro, IconTrendingUp, IconBriefcase, IconUserCheck, IconClock } from "@/components/ui/icons";
 import { formatEur, formatNumber, formatPercent } from "@/lib/format";
@@ -71,6 +71,38 @@ export default async function BerichtePage() {
       month: MONTHS[Number(key.slice(5, 7)) - 1],
       value: Math.round(value),
     }));
+
+  // Gewichteter Pipeline-Wert je Phase (offene Chancen, Wert × Wahrscheinlichkeit).
+  const weightedByStage = STAGES.filter((s) => s.key !== "gewonnen").map(({ key, label }) => ({
+    stage: label,
+    value: Math.round(
+      opps.filter((o) => o.stage === key).reduce((s, o) => s + (o.value * o.probability) / 100, 0)
+    ),
+  }));
+
+  // Realisierter Umsatz-Trend (letzte 8 Monate): Platzierungs-Honorar (Eintritt)
+  // + KI-Setup (Go-Live) + gewonnene Chancen (erwarteter Abschluss).
+  const monthKey = (iso?: string) => {
+    if (!iso) return null;
+    const d = new Date(iso.length <= 10 ? iso + "T00:00:00" : iso);
+    return Number.isNaN(d.getTime()) ? null : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  };
+  const revMonth = new Map<string, number>();
+  const addRev = (iso: string | undefined, v: number) => {
+    const k = monthKey(iso);
+    if (k && v > 0) revMonth.set(k, (revMonth.get(k) ?? 0) + v);
+  };
+  for (const p of placements) addRev(p.start_date, p.agreed_fee ?? 0);
+  for (const p of kiProjects) if (p.status !== "gekuendigt" && p.status !== "angebot") addRev(p.go_live, p.setup_fee ?? 0);
+  for (const o of opps) if (o.stage === "gewonnen") addRev(o.expected_close, o.value);
+  // Letzte 8 Monate (chronologisch, inkl. Lücken als 0).
+  const nowM = new Date();
+  const revenueTrend = Array.from({ length: 8 }).map((_, i) => {
+    const d = new Date(nowM.getFullYear(), nowM.getMonth() - (7 - i), 1);
+    const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return { month: MONTHS[d.getMonth()], value: Math.round(revMonth.get(k) ?? 0) };
+  });
+  const revenueTotal = revenueTrend.reduce((s, m) => s + m.value, 0);
 
   const openPositions = mandates.reduce((s, m) => s + Math.max(0, m.positions - m.filled), 0);
   const filled = mandates.reduce((s, m) => s + m.filled, 0);
@@ -247,6 +279,30 @@ export default async function BerichtePage() {
             ) : (
               <p className="py-12 text-center text-sm text-faint">
                 Noch keine datierten Abschlüsse für einen Forecast.
+              </p>
+            )}
+          </CardBody>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardBody>
+            <SectionHeader title="Gewichteter Pipeline-Wert je Phase" hint="Wert × Wahrscheinlichkeit (offene Chancen)" />
+            <StageValueChart data={weightedByStage} />
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody>
+            <SectionHeader
+              title="Umsatz-Trend (realisiert)"
+              hint={`letzte 8 Monate · ${formatEur(revenueTotal)} gesamt`}
+            />
+            {revenueTotal > 0 ? (
+              <ForecastChart data={revenueTrend} label="Umsatz" color="#16a34a" />
+            ) : (
+              <p className="py-12 text-center text-sm text-faint">
+                Noch kein realisierter Umsatz (Platzierungen / Go-Lives / gewonnene Chancen).
               </p>
             )}
           </CardBody>
