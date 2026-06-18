@@ -161,31 +161,29 @@ export default async function AccountDetailPage({
               </div>
               <div className="flex items-center gap-2">
               <EmailComposer account={account} contacts={contacts} senderName={identity.display_name} />
-              {!account.synthetic ? (
-                <EditDialog
-                  id={account.id}
-                  title="Kunde bearbeiten"
-                  description="Stammdaten, Adresse & Kontakt – Basis für Vertrag/Angebot."
-                  fields={ACCOUNT_FIELDS}
-                  action={updateAccount}
-                  initial={{
-                    name: account.name,
-                    line: account.line,
-                    lifecycle: account.lifecycle,
-                    branche: account.branche,
-                    segment: account.segment,
-                    strasse: account.strasse ?? "",
-                    plz: account.plz ?? "",
-                    ort: account.ort,
-                    country: account.country ?? "",
-                    contact_name: account.contact_name,
-                    contact_email: account.contact_email,
-                    contact_phone: account.contact_phone ?? "",
-                    owner: account.owner ?? "",
-                    mrr: String(account.mrr ?? ""),
-                  }}
-                />
-              ) : null}
+              <EditDialog
+                id={account.id}
+                title="Kunde bearbeiten"
+                description="Stammdaten, Adresse & Kontakt – Basis für Vertrag/Angebot."
+                fields={ACCOUNT_FIELDS}
+                action={updateAccount}
+                initial={{
+                  name: account.name,
+                  line: account.line,
+                  lifecycle: account.lifecycle,
+                  branche: account.branche,
+                  segment: account.segment,
+                  strasse: account.strasse ?? "",
+                  plz: account.plz ?? "",
+                  ort: account.ort,
+                  country: account.country ?? "",
+                  contact_name: account.contact_name,
+                  contact_email: account.contact_email,
+                  contact_phone: account.contact_phone ?? "",
+                  owner: account.owner ?? "",
+                  mrr: String(account.mrr ?? ""),
+                }}
+              />
               </div>
             </div>
           </div>
