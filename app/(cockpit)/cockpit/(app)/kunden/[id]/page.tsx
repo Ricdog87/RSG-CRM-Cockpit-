@@ -16,6 +16,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { IconChevronRight } from "@/components/ui/icons";
 import { AccountEnrich } from "@/components/cockpit/AccountEnrich";
 import { AccountContractCard } from "@/components/cockpit/AccountContractCard";
+import { PlacementContractDialog } from "@/components/cockpit/PlacementContractDialog";
+import { EditDialog } from "@/components/cockpit/EditDialog";
+import { ACCOUNT_FIELDS } from "@/lib/crm-forms";
+import { updateAccount } from "@/lib/crm-actions";
 import { AccountIntelCard } from "@/components/cockpit/AccountIntelCard";
 import { FollowupDrafter } from "@/components/cockpit/FollowupDrafter";
 import { AccountSequenceEnroll } from "@/components/cockpit/AccountSequenceEnroll";
@@ -145,11 +149,38 @@ export default async function AccountDetailPage({
                 {[account.branche, account.ort].filter(Boolean).join(" · ") || "—"}
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-ink">
-                {account.mrr > 0 ? `${formatEur(account.mrr)}/M` : "—"}
-              </p>
-              <p className="text-xs text-faint">wiederkehrender Umsatz</p>
+            <div className="flex items-start gap-2">
+              <div className="text-right">
+                <p className="text-2xl font-bold text-ink">
+                  {account.mrr > 0 ? `${formatEur(account.mrr)}/M` : "—"}
+                </p>
+                <p className="text-xs text-faint">wiederkehrender Umsatz</p>
+              </div>
+              {!account.synthetic ? (
+                <EditDialog
+                  id={account.id}
+                  title="Kunde bearbeiten"
+                  description="Stammdaten, Adresse & Kontakt – Basis für Vertrag/Angebot."
+                  fields={ACCOUNT_FIELDS}
+                  action={updateAccount}
+                  initial={{
+                    name: account.name,
+                    line: account.line,
+                    lifecycle: account.lifecycle,
+                    branche: account.branche,
+                    segment: account.segment,
+                    strasse: account.strasse ?? "",
+                    plz: account.plz ?? "",
+                    ort: account.ort,
+                    country: account.country ?? "",
+                    contact_name: account.contact_name,
+                    contact_email: account.contact_email,
+                    contact_phone: account.contact_phone ?? "",
+                    owner: account.owner ?? "",
+                    mrr: String(account.mrr ?? ""),
+                  }}
+                />
+              ) : null}
             </div>
           </div>
 
@@ -266,7 +297,11 @@ export default async function AccountDetailPage({
 
       <Card>
         <CardBody>
-          <SectionHeader title="Vermittlungsvertrag" hint="Mandatsart, Status & Honorarvereinbarung" />
+          <SectionHeader
+            title="Vermittlungsvertrag"
+            hint="Mandatsart, Status & Honorarvereinbarung"
+            action={<PlacementContractDialog account={account} />}
+          />
           <AccountContractCard account={account} />
         </CardBody>
       </Card>

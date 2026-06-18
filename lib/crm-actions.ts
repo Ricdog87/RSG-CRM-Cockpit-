@@ -451,6 +451,8 @@ export async function createAccount(
     contact_phone: s(fd, "contact_phone") || null,
     mrr: n(fd, "mrr"),
     ort: s(fd, "ort"),
+    strasse: s(fd, "strasse") || null,
+    plz: s(fd, "plz") || null,
     country: s(fd, "country") || null,
     owner: s(fd, "owner") || null,
   };
@@ -902,6 +904,8 @@ export async function updateAccount(
     contact_phone: s(fd, "contact_phone") || null,
     mrr: n(fd, "mrr"),
     ort: s(fd, "ort"),
+    strasse: s(fd, "strasse") || null,
+    plz: s(fd, "plz") || null,
     country: s(fd, "country") || null,
     owner: s(fd, "owner") || null,
   };

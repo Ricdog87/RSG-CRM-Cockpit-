@@ -56,6 +56,8 @@ export const ACCOUNT_FIELDS: FormField[] = [
   },
   { name: "branche", label: "Branche", placeholder: "z.B. Gesundheit" },
   { name: "segment", label: "Segment", placeholder: "z.B. Praxen" },
+  { name: "strasse", label: "Straße & Nr.", placeholder: "Musterstraße 1" },
+  { name: "plz", label: "PLZ", placeholder: "12345" },
   { name: "ort", label: "Ort" },
   { name: "country", label: "Land/Region", placeholder: "Germany" },
   { name: "contact_name", label: "Ansprechpartner:in" },

@@ -163,10 +163,14 @@ export function AccountsView({
                   lifecycle: a.lifecycle,
                   branche: a.branche,
                   segment: a.segment,
+                  strasse: a.strasse ?? "",
+                  plz: a.plz ?? "",
                   ort: a.ort,
+                  country: a.country ?? "",
                   contact_name: a.contact_name,
                   contact_email: a.contact_email,
                   contact_phone: a.contact_phone ?? "",
+                  owner: a.owner ?? "",
                   mrr: String(a.mrr ?? ""),
                 }}
               />

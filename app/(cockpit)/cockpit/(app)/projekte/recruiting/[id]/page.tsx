@@ -12,6 +12,7 @@ import { MandateCandidates } from "@/components/cockpit/MandateCandidates";
 import { MandateMatchPanel } from "@/components/cockpit/MandateMatchPanel";
 import { MandateIntelCard } from "@/components/cockpit/MandateIntelCard";
 import { MandateProposalButton } from "@/components/cockpit/MandateProposalButton";
+import { PlacementContractDialog } from "@/components/cockpit/PlacementContractDialog";
 import { computeMandateIntel } from "@/lib/mandate-intel";
 import { JobPostingCard } from "@/components/cockpit/JobPostingCard";
 import { PlacementsCard } from "@/components/cockpit/PlacementsCard";
@@ -95,12 +96,28 @@ export default async function MandateDetailPage({
                 </div>
               </div>
             </div>
-            <MandateProposalButton
-              mandate={m}
-              customer={m.account_name}
-              contactName={account?.contact_name}
-              senderName={account?.owner}
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              {account ? (
+                <PlacementContractDialog
+                  account={account}
+                  label="Vertrag"
+                  prefill={{
+                    type: m.pricing_model === "percent" ? "percent" : "fixed",
+                    role: m.role,
+                    fee: m.fee,
+                    deposit: m.deposit,
+                    percent: m.fee_percent,
+                    split: m.split_payment,
+                  }}
+                />
+              ) : null}
+              <MandateProposalButton
+                mandate={m}
+                customer={m.account_name}
+                contactName={account?.contact_name}
+                senderName={account?.owner}
+              />
+            </div>
           </div>
         </CardBody>
       </Card>
