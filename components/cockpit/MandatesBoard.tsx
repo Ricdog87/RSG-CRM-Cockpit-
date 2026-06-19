@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/lib/toast";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -49,9 +50,14 @@ export function MandatesBoard({
   async function move(id: string, status: MandateStatus) {
     const cur = items.find((m) => m.id === id);
     if (!cur || cur.status === status) return;
+    const prevItems = items;
     setItems((prev) => prev.map((m) => (m.id === id ? { ...m, status } : m)));
     const res = await setMandateStatus(id, status);
     if (res.ok && !res.demo) router.refresh();
+    else if (!res.ok) {
+      setItems(prevItems); // fehlgeschlagen → Status zurücksetzen
+      if (res.error) toast.error(res.error);
+    }
   }
 
   function onHandleDown(e: React.PointerEvent, m: RecruitingMandate) {

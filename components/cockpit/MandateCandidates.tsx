@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/lib/toast";
 import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
 import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { updateCandidateStage } from "@/lib/crm-actions";
@@ -28,9 +29,14 @@ export function MandateCandidates({ candidates }: { candidates: Candidate[] }) {
   const [items, setItems] = useState(candidates);
 
   async function move(id: string, stage: CandidateStage) {
+    const prevItems = items;
     setItems((p) => p.map((c) => (c.id === id ? { ...c, stage } : c)));
     const res = await updateCandidateStage(id, stage);
     if (res.ok && !res.demo) router.refresh();
+    else if (!res.ok) {
+      setItems(prevItems); // fehlgeschlagen → Phase zurücksetzen
+      if (res.error) toast.error(res.error);
+    }
   }
 
   return (
