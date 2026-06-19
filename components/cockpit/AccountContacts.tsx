@@ -81,6 +81,7 @@ export function AccountContacts({
         ? await updateContact(editing, accountId, payload)
         : await addContact(accountId, payload);
       if (res.ok && !res.demo) {
+        toast.success(editing ? "Kontakt aktualisiert." : "Kontakt hinzugefügt.");
         if (res.redirect) router.replace(res.redirect);
         else router.refresh();
       } else if (!res.ok) {
