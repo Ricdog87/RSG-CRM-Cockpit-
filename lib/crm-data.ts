@@ -39,13 +39,15 @@ async function load<T>(
   table: string,
   mock: T[],
   map: (rows: Row[]) => T[],
-  order?: { column: string; ascending?: boolean }
+  order?: { column: string; ascending?: boolean },
+  limit?: number
 ): Promise<T[]> {
   if (useMockData) return mock;
   try {
     const supabase = createClient();
     let query = supabase.from(table).select("*");
     if (order) query = query.order(order.column, { ascending: order.ascending ?? true });
+    if (limit) query = query.limit(limit);
     const { data, error } = await query;
     if (error) {
       if (isMissingTable(error)) return mock;
@@ -184,7 +186,8 @@ export async function getAccounts(): Promise<Account[]> {
     "accounts",
     mockAccounts,
     (rows) => rows.map(mapAccountRow),
-    { column: "mrr", ascending: false }
+    { column: "mrr", ascending: false },
+    20000 // Bypasses Supabase PostgREST default row limit of ~1000
   );
   if (useMockData) return real;
 
