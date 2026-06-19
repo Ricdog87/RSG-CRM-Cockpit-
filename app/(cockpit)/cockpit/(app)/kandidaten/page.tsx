@@ -5,6 +5,8 @@ import { StatCard } from "@/components/cockpit/StatCard";
 import { CandidatesView } from "@/components/cockpit/views/CandidatesView";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { CvUploadDialog } from "@/components/cockpit/CvUploadDialog";
+import { CandidateDuplicates } from "@/components/cockpit/CandidateDuplicates";
+import { findCandidateDuplicates } from "@/lib/candidate-dedupe";
 import { CANDIDATE_FIELDS, withDatalist, withSelectOptions } from "@/lib/crm-forms";
 import { IconUsers, IconCalendar, IconTrophy } from "@/components/ui/icons";
 import { formatNumber } from "@/lib/format";
@@ -33,6 +35,7 @@ export default async function KandidatenPage() {
     (c) => c.stage !== "platziert" && c.stage !== "abgelehnt"
   ).length;
   const interviews = candidates.filter((c) => c.stage === "interview").length;
+  const duplicateGroups = findCandidateDuplicates(candidates);
 
   return (
     <div className="space-y-6">
@@ -78,6 +81,8 @@ export default async function KandidatenPage() {
           icon={IconTrophy}
         />
       </div>
+
+      <CandidateDuplicates groups={duplicateGroups} />
 
       <CandidatesView
         candidates={candidates}
