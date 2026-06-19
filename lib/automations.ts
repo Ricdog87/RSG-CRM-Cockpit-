@@ -66,6 +66,15 @@ export const AUTOMATIONS: AutomationDef[] = [
     action: "Aufgabe erstellen",
   },
   {
+    key: "candidate_offer_followup",
+    title: "Kandidat:in → Angebot → Nachfass-Aufgabe",
+    description:
+      "Wechselt eine:r Kandidat:in in die Angebots-Phase, entsteht automatisch eine Aufgabe „Angebot nachfassen“ (in 3 Tagen) – damit kein Abschluss liegen bleibt.",
+    trigger: "Kandidat:in → Angebot",
+    action: "Aufgabe erstellen",
+    category: "Recruiting",
+  },
+  {
     key: "placement_aftercare",
     title: "Platzierung → Aftercare/NPS-Aufgabe",
     description:

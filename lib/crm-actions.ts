@@ -901,8 +901,8 @@ export async function updateCandidateStage(
     { stage, updated_at: new Date().toISOString() },
     "/cockpit/kandidaten"
   );
-  // Workflows: Interview → Feedback-Aufgabe, Platziert → Aftercare/NPS.
-  if (res.ok && !res.demo && (stage === "interview" || stage === "platziert")) {
+  // Workflows: Interview → Feedback, Angebot → Nachfassen, Platziert → Aftercare/NPS.
+  if (res.ok && !res.demo && (stage === "interview" || stage === "angebot" || stage === "platziert")) {
     try {
       const { id: pid } = await currentPartnerId();
       if (pid) {
@@ -921,6 +921,15 @@ export async function updateCandidateStage(
             related_label: label,
             title: `Interview-Feedback einholen: ${label}`,
             dueInDays: 2,
+          });
+        } else if (stage === "angebot") {
+          await autoTask(supabase, pid, "candidate_offer_followup", {
+            related_type: "candidate",
+            related_id: id,
+            related_label: label,
+            title: `Angebot nachfassen: ${label}${c?.role ? ` (${c.role})` : ""}`,
+            dueInDays: 3,
+            notes: "Rückmeldung zum Angebot einholen, offene Punkte klären.",
           });
         } else {
           await autoTask(supabase, pid, "placement_aftercare", {
