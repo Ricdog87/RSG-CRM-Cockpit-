@@ -182,32 +182,56 @@ async function referencedAccountNames(): Promise<Map<string, { name: string; lin
 }
 
 export async function getAccounts(): Promise<Account[]> {
-  const real = await load(
-    "accounts",
-    mockAccounts,
-    (rows) => rows.map(mapAccountRow),
-    { column: "mrr", ascending: false },
-    20000 // Bypasses Supabase PostgREST default row limit of ~1000
-  );
-  if (useMockData) return real;
+  if (useMockData) return mockAccounts;
 
-  // Self-Healing: Jeder Account-Name, der von einem Mandat, KI-Projekt, einer
-  // Chance oder einem Kandidaten referenziert wird, MUSS als Kunde auffindbar
-  // sein – auch wenn (noch) kein eigener accounts-Datensatz existiert (z.B.
-  // Altbestand/Import). Solche Namen werden als virtuelle Accounts ergänzt und
-  // beim ersten Schreibzugriff (Aktivität/Notiz/Backfill) materialisiert.
-  const refs = await referencedAccountNames();
-  if (refs.size === 0) return real;
-  const have = new Set(real.map((a) => accountKey(a.name)));
-  const synthetic: Account[] = [];
-  for (const { name, line } of refs.values()) {
-    const key = accountKey(name);
-    if (!key || have.has(key)) continue;
-    have.add(key);
-    synthetic.push(syntheticAccount(name, line));
+  // Paginated fetch to bypass Supabase PostgREST max-rows limit (default: 1,000/request).
+  // .limit() is capped by max-rows; .range() fetches explicit pages and bypasses it.
+  try {
+    const supabase = createClient();
+    const PAGE = 1000;
+    const allRows: Row[] = [];
+
+    for (let page = 0; page < 20; page++) {
+      const { data, error } = await supabase
+        .from("accounts")
+        .select("*")
+        .order("mrr", { ascending: false })
+        .range(page * PAGE, (page + 1) * PAGE - 1);
+
+      if (error) {
+        if (isMissingTable(error)) return mockAccounts;
+        logDataError("crm-data:accounts", error);
+        return allRows.map(mapAccountRow);
+      }
+
+      const rows = (data as Row[] | null) ?? [];
+      allRows.push(...rows);
+      if (rows.length < PAGE) break; // last page reached
+    }
+
+    const real = allRows.map(mapAccountRow);
+
+    // Self-Healing: Jeder Account-Name, der von einem Mandat, KI-Projekt, einer
+    // Chance oder einem Kandidaten referenziert wird, MUSS als Kunde auffindbar
+    // sein – auch wenn (noch) kein eigener accounts-Datensatz existiert (z.B.
+    // Altbestand/Import). Solche Namen werden als virtuelle Accounts ergänzt und
+    // beim ersten Schreibzugriff (Aktivität/Notiz/Backfill) materialisiert.
+    const refs = await referencedAccountNames();
+    if (refs.size === 0) return real;
+    const have = new Set(real.map((a) => accountKey(a.name)));
+    const synthetic: Account[] = [];
+    for (const { name, line } of refs.values()) {
+      const key = accountKey(name);
+      if (!key || have.has(key)) continue;
+      have.add(key);
+      synthetic.push(syntheticAccount(name, line));
+    }
+    synthetic.sort((a, b) => a.name.localeCompare(b.name, "de"));
+    return [...real, ...synthetic];
+  } catch (e) {
+    logDataError("crm-data:accounts", e);
+    return [];
   }
-  synthetic.sort((a, b) => a.name.localeCompare(b.name, "de"));
-  return [...real, ...synthetic];
 }
 
 export async function getOpportunities(): Promise<Opportunity[]> {
