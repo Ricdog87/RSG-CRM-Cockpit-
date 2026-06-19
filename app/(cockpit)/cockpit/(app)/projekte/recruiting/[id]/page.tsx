@@ -256,6 +256,12 @@ export default async function MandateDetailPage({
             accountName={m.account_name}
             invoices={invoices}
             placements={placementsToInvoice}
+            customer={{
+              street: account?.strasse,
+              zip: account?.plz,
+              city: account?.ort,
+              contactName: account?.contact_name,
+            }}
           />
         </CardBody>
       </Card>

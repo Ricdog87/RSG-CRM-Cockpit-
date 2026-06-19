@@ -2,6 +2,11 @@
 
 import { IconCopy } from "@/components/ui/icons";
 import {
+  rsgBrandHeaderHtml,
+  rsgLegalFooterHtml,
+  BRAND_HEADER_CSS,
+} from "@/lib/brand-document";
+import {
   mandateRevenue,
   mandateFeePerPosition,
   mandatePaymentSchedule,
@@ -50,9 +55,8 @@ export function MandateProposalButton({
 <title>Angebot – ${esc(customer)}</title>
 <style>
   *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1f2e;max-width:760px;margin:40px auto;padding:0 28px;line-height:1.5}
-  .brand{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #2b59ff;padding-bottom:16px;margin-bottom:24px}
-  .logo{font-weight:900;font-size:22px;letter-spacing:-.02em} .logo span{color:#2b59ff}
-  h1{font-size:20px;margin:24px 0 4px} .muted{color:#6b7280;font-size:13px}
+  ${BRAND_HEADER_CSS}
+  h1{font-size:20px;margin:24px 0 4px}
   table{width:100%;border-collapse:collapse;margin:14px 0} td,th{padding:9px 8px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left}
   .total{font-weight:800;font-size:16px} .box{background:#f6f8ff;border:1px solid #dbe3ff;border-radius:12px;padding:16px;margin:18px 0}
   .terms{font-size:12px;color:#6b7280;margin-top:28px} .btn{margin:24px 0;display:flex;gap:10px}
@@ -60,7 +64,7 @@ export function MandateProposalButton({
   button.sec{background:#eef1f6;color:#1a1f2e}
   @media print{.btn{display:none}}
 </style></head><body>
-  <div class="brand"><div class="logo">RSG <span>Recruiting</span></div><div class="muted">Angebot · ${today}</div></div>
+  ${rsgBrandHeaderHtml(`Angebot · ${today}`)}
   <p class="muted">Für: <strong>${esc(customer)}</strong>${contactName ? ` · z.Hd. ${esc(contactName)}` : ""}</p>
   <h1>Angebot Personalvermittlung</h1>
   <p class="muted">Position: <strong>${esc(mandate.role || "—")}</strong> · ${mandate.positions} Stelle(n)</p>
@@ -85,6 +89,8 @@ export function MandateProposalButton({
     Es gelten unsere Vermittlungs-AGB. Angebot freibleibend, gültig bis ${validUntil}.
     ${senderName ? `<br/>Ihr Ansprechpartner: ${esc(senderName)}, RSG Recruiting.` : ""}
   </p>
+
+  ${rsgLegalFooterHtml()}
 
   <div class="btn">
     <button onclick="window.print()">Drucken / als PDF speichern</button>

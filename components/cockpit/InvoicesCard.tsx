@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
-import { IconPlus, IconTrash, IconCheck, IconBolt } from "@/components/ui/icons";
+import { IconPlus, IconTrash, IconCheck, IconBolt, IconCopy } from "@/components/ui/icons";
 import { formatDate, formatEur } from "@/lib/format";
 import {
   createInvoice,
@@ -11,7 +11,16 @@ import {
   setInvoiceStatus,
   deleteInvoice,
 } from "@/lib/invoices-actions";
+import { buildInvoiceHtml } from "@/lib/invoice-template";
 import { invoiceOverdue, type Invoice, type InvoiceStatus } from "@/lib/crm-types";
+
+/** Adress-/Kontaktdaten des Kunden für das Rechnungsdokument. */
+export interface InvoiceCustomer {
+  street?: string;
+  zip?: string;
+  city?: string;
+  contactName?: string;
+}
 
 const input =
   "w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand";
@@ -27,12 +36,15 @@ export function InvoicesCard({
   accountName,
   invoices,
   placements,
+  customer,
 }: {
   mandateId: string;
   accountName: string;
   invoices: Invoice[];
   /** Platzierungen ohne erzeugte Rechnungen → „aus Plan erzeugen". */
   placements: { id: string; label: string }[];
+  /** Kunden-Adresse für das gebrandete Rechnungsdokument. */
+  customer?: InvoiceCustomer;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -82,6 +94,26 @@ export function InvoicesCard({
       if (res.ok && !res.demo) router.refresh();
     });
   }
+  function printInvoice(inv: Invoice) {
+    const html = buildInvoiceHtml({
+      invoiceNo: inv.invoice_no,
+      issueDate: inv.issue_date,
+      dueDate: inv.due_date,
+      customerName: accountName,
+      customerStreet: customer?.street,
+      customerZip: customer?.zip,
+      customerCity: customer?.city,
+      contactName: customer?.contactName,
+      role: inv.role,
+      label: inv.label,
+      amount: inv.amount,
+    });
+    const w = window.open("", "_blank", "width=820,height=900");
+    if (!w) return;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
 
   return (
     <div className="space-y-3">
@@ -119,10 +151,17 @@ export function InvoicesCard({
                       <option key={s} value={s}>{statusMeta[s].label}</option>
                     ))}
                   </select>
-                  <button type="button" aria-label="löschen" onClick={() => remove(inv.id)} disabled={pending}
-                    className="rounded-lg p-1.5 text-faint hover:bg-danger/10 hover:text-danger">
-                    <IconTrash size={13} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button type="button" onClick={() => printInvoice(inv)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2 py-1 text-xs font-medium text-ink hover:border-brand/40"
+                      title="Rechnung als PDF (mit RSG-Logo)">
+                      <IconCopy size={12} /> PDF
+                    </button>
+                    <button type="button" aria-label="löschen" onClick={() => remove(inv.id)} disabled={pending}
+                      className="rounded-lg p-1.5 text-faint hover:bg-danger/10 hover:text-danger">
+                      <IconTrash size={13} />
+                    </button>
+                  </div>
                 </div>
               </li>
             );
