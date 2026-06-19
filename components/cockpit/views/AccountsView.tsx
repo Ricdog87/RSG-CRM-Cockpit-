@@ -27,6 +27,7 @@ export function AccountsView({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(accounts);
+  useEffect(() => setItems(accounts), [accounts]);
   const [filter, setFilter] = useState<LineFilter>("all");
   const [lifecycle, setLifecycle] = useState<Lifecycle | "all">("all");
   const [query, setQuery] = useState("");

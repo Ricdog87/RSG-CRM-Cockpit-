@@ -96,8 +96,13 @@ export async function importRows(input: {
     let missingRequired: string | null = null;
     for (const f of obj.fields) {
       const col = input.mapping[f.key];
-      const raw = col != null && col >= 0 ? String(row[col] ?? "").trim() : "";
+      const isMapped = col != null && col >= 0;
+      const raw = isMapped ? String(row[col] ?? "").trim() : "";
       if (f.required && !raw) missingRequired = f.label;
+      // Nicht zugeordnete optionale Felder bewusst auslassen:
+      // Beim Update sollen bestehende CRM-Werte nicht versehentlich geleert
+      // werden, nur weil eine HubSpot/CSV-Spalte im Import nicht vorhanden ist.
+      if (!isMapped) continue;
       if (!raw) {
         rec[f.key] = null;
         continue;

@@ -1122,6 +1122,7 @@ export async function addNote(
   const { id, error } = await currentPartnerId();
   if (!id) return { ok: false, error };
   const supabase = createClient();
+  const originalAccountId = accountId;
   accountId = (await materializeAccount(supabase, id, accountId)) ?? accountId;
   const { error: insErr } = await supabase.from("account_notes").insert({
     partner_id: id,
@@ -1135,7 +1136,11 @@ export async function addNote(
     .update({ last_activity_at: new Date().toISOString() })
     .eq("id", accountId);
   revalidatePath(`/cockpit/kunden/${accountId}`);
-  return { ok: true };
+  return {
+    ok: true,
+    redirect:
+      accountId !== originalAccountId ? `/cockpit/kunden/${accountId}` : undefined,
+  };
 }
 
 export async function deleteNote(
@@ -1168,6 +1173,7 @@ export async function addContact(
   const { id, error } = await currentPartnerId();
   if (!id) return { ok: false, error };
   const supabase = createClient();
+  const originalAccountId = accountId;
   accountId = (await materializeAccount(supabase, id, accountId)) ?? accountId;
   const { error: insErr } = await supabase.from("account_contacts").insert({
     partner_id: id,
@@ -1181,7 +1187,11 @@ export async function addContact(
   });
   if (insErr) return { ok: false, error: insErr.message };
   revalidatePath(`/cockpit/kunden/${accountId}`);
-  return { ok: true };
+  return {
+    ok: true,
+    redirect:
+      accountId !== originalAccountId ? `/cockpit/kunden/${accountId}` : undefined,
+  };
 }
 
 export async function updateContact(
@@ -1257,6 +1267,7 @@ export async function addTask(input: TaskInput): Promise<ActionResult> {
 
   // Virtuellen Kunden bei Bedarf materialisieren, damit der Bezug greift.
   let relatedId = input.related_id ?? null;
+  const originalRelatedId = relatedId;
   if (input.related_type === "customer" && relatedId != null && isSyntheticAccountId(relatedId)) {
     relatedId = (await materializeAccount(supabase, id, relatedId)) ?? relatedId;
   }
@@ -1310,9 +1321,19 @@ export async function addTask(input: TaskInput): Promise<ActionResult> {
   }
   // ─────────────────────────────────────────────────────────────────────
 
-  revalidateTasks(input.related_type, input.related_id);
-  return { ok: true };
+  revalidateTasks(input.related_type, relatedId);
+  return {
+    ok: true,
+    redirect:
+      input.related_type === "customer" &&
+      relatedId &&
+      originalRelatedId &&
+      relatedId !== originalRelatedId
+        ? `/cockpit/kunden/${relatedId}`
+        : undefined,
+  };
 }
+
 export async function setTaskDone(
   id: string,
   done: boolean
