@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { KiProjectsTable } from "@/components/cockpit/KiProjectsTable";
 import { EditDialog } from "@/components/cockpit/EditDialog";
@@ -31,6 +31,7 @@ export function KiProjectsView({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(projects);
+  useEffect(() => setItems(projects), [projects]);
   const [filter, setFilter] = useState<Filter>("all");
   const editFields = withCombobox(KIPROJECT_FIELDS, "account_name", accountNames);
 

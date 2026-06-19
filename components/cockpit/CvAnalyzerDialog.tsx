@@ -157,7 +157,27 @@ export function CvAnalyzerDialog() {
               </div>
 
               {/* Recruiter-Zusammenfassung */}
-              {p?.summary ? (
+              {result.rsgIq ? (
+                <div className="rounded-xl border border-brand/30 bg-brand/[0.05] p-3">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-ink">RSG IQ</p>
+                    <Badge tone={result.rsgIq.score >= 78 ? "success" : result.rsgIq.score >= 60 ? "sky" : "warning"}>
+                      {result.rsgIq.score}/100 · {result.rsgIq.label}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-ink">{result.rsgIq.summary}</p>
+                  {result.rsgIq.recruiterView.length > 0 ? (
+                    <ul className="mt-2 space-y-1 text-xs text-muted">
+                      {result.rsgIq.recruiterView.map((line) => (
+                        <li key={line}>• {line}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <p className="mt-2 rounded-lg bg-surface px-2.5 py-2 text-xs font-medium text-ink">
+                    Empfehlung: {result.rsgIq.recommendation}
+                  </p>
+                </div>
+              ) : p?.summary ? (
                 <div className="rounded-xl border border-border bg-surface p-3">
                   <p className="mb-1 text-[0.7rem] font-semibold uppercase tracking-wide text-faint">Einschätzung</p>
                   <p className="text-sm text-ink">{p.summary}</p>

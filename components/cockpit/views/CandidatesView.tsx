@@ -246,6 +246,7 @@ export function CandidatesView({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(candidates);
+  useEffect(() => setItems(candidates), [candidates]);
   const [filter, setFilter] = useState<string>("all");
   const [view, setView] = useState<"board" | "liste">("liste");
   const [query, setQuery] = useState("");
