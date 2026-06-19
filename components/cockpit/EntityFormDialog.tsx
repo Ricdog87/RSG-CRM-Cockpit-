@@ -105,6 +105,17 @@ export function EntityFormDialog({
     }
   }, [state, router, successToast]);
 
+  // Erstes Feld beim Öffnen fokussieren (schnelle Dateneingabe).
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setTimeout(() => {
+      formRef.current
+        ?.querySelector<HTMLElement>("input:not([type=hidden]), select, textarea")
+        ?.focus();
+    }, 60);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
   // Deeplink vom Mobile-FAB: ?new=1 öffnet den Dialog und säubert die URL.
   useEffect(() => {
     if (!autoOpenParam) return;
