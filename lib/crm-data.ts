@@ -1,4 +1,6 @@
 import "server-only";
+// v2: paginated fetch — bypasses Supabase max-rows (loads all accounts)
+// Loaded with pagination: fetches all accounts in chunks of 1000 (v2)
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import { logDataError, isMissingTable } from "@/lib/log";
