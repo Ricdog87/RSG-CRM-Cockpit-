@@ -132,7 +132,7 @@ export function AccountContacts({
                 className="group flex items-center gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5"
               >
                 <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gradient-to-br from-brand/25 to-sky/25 text-sm font-bold text-ink">
-                  {c.name.charAt(0).toUpperCase()}
+                  {(c.name || "?").charAt(0).toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">
