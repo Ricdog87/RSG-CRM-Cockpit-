@@ -188,8 +188,8 @@ export function PlacementContractDialog({
           )}
 
           {logged ? (
-            <p className="rounded-lg border border-success/30 bg-success/[0.06] px-3 py-2 text-xs text-success">
-              ✓ Beim Kunden als Korrespondenz hinterlegt · Vertragsstatus „versendet“ gesetzt.
+            <p className="flex items-center gap-1.5 rounded-lg border border-success/30 bg-success/[0.06] px-3 py-2 text-xs text-success">
+              <IconCheck size={13} className="flex-none" /> Beim Kunden als Korrespondenz hinterlegt · Vertragsstatus „versendet“ gesetzt.
             </p>
           ) : null}
 

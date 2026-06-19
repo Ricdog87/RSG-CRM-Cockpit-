@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 const QUOTES = [
-  "Jeder Anruf bringt dich näher zum nächsten Abschluss. 🚀",
+  "Jeder Anruf bringt dich näher zum nächsten Abschluss.",
   "Champions machen die Calls, die andere aufschieben.",
   "Pipeline schlägt Talent – fülle sie, jeden Tag.",
   "Du verkaufst keine Produkte, du verkaufst Ergebnisse.",
@@ -50,14 +50,14 @@ export function DashboardHero({
   // Performance-gekoppelte Ansage – schlägt den rotierenden Spruch.
   function perfMessage(): string | null {
     if (dayMode === "off") return `Wochenende – Energie tanken, ${firstName}. Montag wird stark. 🌟`;
-    if (dayMode === "review") return "Review-Tag: Bilanz ziehen, Forecast schärfen, Woche krönen. 📊";
+    if (dayMode === "review") return "Review-Tag: Bilanz ziehen, Forecast schärfen, Woche krönen.";
     if (goalsDone >= 4)
       return streak >= 3
         ? `🔥 Unstoppable! ${streak} Tage in Folge alle Ziele – du bist on fire!`
         : "🔥 4/4 – du bist heute on fire!";
     if (streak >= 3) return `🔥 ${streak}-Tage-Streak läuft – heute dranbleiben, ${firstName}!`;
     if (goalsDone === 3) return "3/4 – nur noch ein Ziel. Finish strong! 💪";
-    if (goalsDone === 2) return `Halbzeit erreicht – Tempo halten, ${firstName}! 🚀`;
+    if (goalsDone === 2) return `Halbzeit erreicht – Tempo halten, ${firstName}!`;
     if (goalsDone === 1) return "Erster Punkt steht. Jetzt nachlegen! 👊";
     return null; // 0/4 am Arbeitstag → rotierender Motivationsspruch
   }

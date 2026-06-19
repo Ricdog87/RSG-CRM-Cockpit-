@@ -181,9 +181,9 @@ export function AccountsView({
           onChange={setHealth}
           options={[
             { value: "all", label: "Health: alle", count: afterLineFilter.length },
-            { value: "risk", label: "🔴 Gefährdet", count: healthCount("danger") },
-            { value: "watch", label: "🟠 Beobachten", count: healthCount("warning") + healthCount("danger") },
-            { value: "top", label: "🟢 Top", count: healthCount("success") },
+            { value: "risk", label: <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 flex-none rounded-full bg-danger" />Gefährdet</span>, count: healthCount("danger") },
+            { value: "watch", label: <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 flex-none rounded-full bg-warning" />Beobachten</span>, count: healthCount("warning") + healthCount("danger") },
+            { value: "top", label: <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 flex-none rounded-full bg-success" />Top</span>, count: healthCount("success") },
           ]}
         />
       ) : null}

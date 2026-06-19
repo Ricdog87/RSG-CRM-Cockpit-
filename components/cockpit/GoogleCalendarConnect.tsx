@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { IconCheck } from "@/components/ui/icons";
 
 // Kleines Google-G-Icon (inline SVG, kein externesImage-Dependency).
 function GoogleIcon({ size = 16 }: { size?: number }) {
@@ -129,7 +130,7 @@ export function GoogleCalendarConnect({
       {/* Erfolgs-Meldung nach OAuth-Redirect */}
       {justConnected && (
         <div className="flex items-center gap-2 rounded-xl border border-success/30 bg-success/[0.08] px-3 py-2 text-sm text-success">
-          <span>✓</span>
+          <IconCheck size={16} className="flex-none" />
           <span>Google Kalender erfolgreich verbunden. Deine CRM-Aufgaben werden ab jetzt automatisch synchronisiert.</span>
         </div>
       )}

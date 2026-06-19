@@ -4,7 +4,7 @@ import { cn } from "@/components/ui/cn";
 
 export interface FilterOption<T extends string> {
   value: T;
-  label: string;
+  label: React.ReactNode;
   count?: number;
 }
 

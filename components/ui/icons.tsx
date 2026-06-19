@@ -210,6 +210,12 @@ export const IconBolt = (p: IconProps) => (
   </Base>
 );
 
+export const IconFlame = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 2c1 3-1 4.5-2.5 6.5C8 10.5 7 12 7 14a5 5 0 0 0 10 0c0-2.5-1.5-4-3-6 0 1.5-.8 2.5-2 3 0-2.5.5-6-0-9Z" />
+  </Base>
+);
+
 export const IconSettings = (p: IconProps) => (
   <Base {...p}>
     <circle cx="12" cy="12" r="3" />

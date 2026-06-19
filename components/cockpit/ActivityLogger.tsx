@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { IconPhone, IconMail } from "@/components/ui/icons";
+import { IconPhone, IconMail, IconCheck, IconSpark } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
 import { AccountCombobox } from "@/components/cockpit/AccountCombobox";
 import { logActivity } from "@/lib/activity-actions";
@@ -91,10 +91,10 @@ export function ActivityLogger({
             <input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Ansprechpartner:in (optional)" className={inputCls} />
             <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" placeholder="Telefon (optional)" className={inputCls} />
           </div>
-          <p className="text-[0.7rem] text-brand-deep">✦ Neukunde „{accTrim}“ wird als Lead angelegt + Korrespondenz hinterlegt.</p>
+          <p className="flex items-center gap-1.5 text-[0.7rem] text-brand-deep"><IconSpark size={12} className="flex-none" /> Neukunde „{accTrim}“ wird als Lead angelegt + Korrespondenz hinterlegt.</p>
         </>
       ) : isExisting ? (
-        <p className="text-[0.7rem] text-success">✓ Wird beim Kunden „{accTrim}“ als Korrespondenz hinterlegt.</p>
+        <p className="flex items-center gap-1.5 text-[0.7rem] text-success"><IconCheck size={12} className="flex-none" /> Wird beim Kunden „{accTrim}“ als Korrespondenz hinterlegt.</p>
       ) : null}
 
       {/* Wiedervorlage */}

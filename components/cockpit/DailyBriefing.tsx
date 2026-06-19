@@ -149,7 +149,7 @@ export function DailyBriefing({
         {/* Signal-Liste */}
         {allClear ? (
           <div className="rounded-xl border border-success/30 bg-success/[0.05] px-4 py-6 text-center">
-            <p className="text-sm font-medium text-ink">Alles im grünen Bereich 🎯</p>
+            <p className="text-sm font-medium text-ink">Alles im grünen Bereich</p>
             <p className="mt-1 text-xs text-muted">Keine überfälligen Aufgaben, Renewals oder gefährdeten Abschlüsse.</p>
           </div>
         ) : (

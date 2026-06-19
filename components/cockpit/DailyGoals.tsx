@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
-import { IconPhone, IconMail, IconCheck, IconBriefcase, IconBolt } from "@/components/ui/icons";
+import { IconPhone, IconMail, IconCheck, IconBriefcase, IconBolt, IconFlame } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
 import { ActivityLogger } from "@/components/cockpit/ActivityLogger";
 import type { ActivityStats } from "@/lib/activity-data";
@@ -86,7 +86,7 @@ export function DailyGoals({
           action={
             <span className="inline-flex items-center gap-2">
               {streak > 0 ? (
-                <span className="rounded-full bg-warning/15 px-2.5 py-1 text-xs font-bold text-warning">🔥 {streak}</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2.5 py-1 text-xs font-bold text-warning"><IconFlame size={12} className="flex-none" /> {streak}</span>
               ) : null}
               {dayMode === "work" ? (
                 <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", allDone ? "bg-success/15 text-success" : "bg-brand/10 text-brand-deep")}>
@@ -98,8 +98,9 @@ export function DailyGoals({
         />
 
         {streak > 0 ? (
-          <p className="-mt-2 text-xs text-muted">
-            🔥 <span className="font-semibold text-ink">{streak} Tag{streak === 1 ? "" : "e"} in Folge</span> alle Tagesziele erreicht.
+          <p className="-mt-2 flex items-center gap-1.5 text-xs text-muted">
+            <IconFlame size={13} className="flex-none text-warning" />
+            <span><span className="font-semibold text-ink">{streak} Tag{streak === 1 ? "" : "e"} in Folge</span> alle Tagesziele erreicht.</span>
           </p>
         ) : null}
 
