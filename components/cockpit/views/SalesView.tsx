@@ -92,8 +92,8 @@ function OppCard({
       </div>
       <p className="truncate text-xs text-muted">{o.title}</p>
       {rotting != null ? (
-        <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-danger/10 px-2 py-0.5 text-[0.65rem] font-semibold text-danger">
-          ● Abschluss {rotting} T überfällig
+        <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-danger/10 px-2 py-0.5 text-[0.65rem] font-semibold text-danger">
+          <span className="h-1.5 w-1.5 flex-none rounded-full bg-danger" /> Abschluss {rotting} T überfällig
         </p>
       ) : null}
       <div className="mt-3 flex items-center justify-between">
