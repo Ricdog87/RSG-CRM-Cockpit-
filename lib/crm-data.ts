@@ -62,9 +62,18 @@ async function load<T>(
 const str = (v: unknown, fallback = "") => (v == null ? fallback : String(v));
 const num = (v: unknown) => Number(v ?? 0);
 
-/** Normalisierter Schlüssel für den namensbasierten Account-Abgleich. */
+/** Normalisierter Schlüssel für den namensbasierten Account-Abgleich.
+ *  Akzent-/ß-tolerant, damit z.B. „Lagardère" (komponiert/dekomponiert) und
+ *  Schreibvarianten denselben Kunden treffen – sonst entstehen Phantom-Dubletten
+ *  (abgeleiteter Kunde bleibt trotz echtem Datensatz bestehen). */
 export function accountKey(name: string): string {
-  return name.trim().toLowerCase().replace(/\s+/g, " ");
+  return (name ?? "")
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/ß/g, "ss")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 }
 
 function mapAccountRow(r: Row): Account {
@@ -403,14 +412,20 @@ export async function getAccountDetail(id: string): Promise<AccountDetail | null
       getCandidates(),
     ]);
 
-  let account = accounts.find((a) => a.id === id);
-  // Fallback: abgeleitete (virtuelle) Account-ID → über den Namen auflösen.
-  if (!account) {
+  // Abgeleitete (virtuelle) ID: bevorzugt einen ECHTEN Datensatz mit gleichem
+  // Namen (falls der Kunde inzwischen materialisiert wurde) – sonst die
+  // synthetische Karte. Verhindert, dass nach dem Speichern weiter die leere
+  // abgeleitete Version statt der echten (mit Daten) angezeigt wird.
+  let account: Account | undefined;
+  if (isSyntheticAccountId(id)) {
     const refName = nameFromSyntheticId(id);
-    if (refName) {
-      const key = accountKey(refName);
-      account = accounts.find((a) => accountKey(a.name) === key);
-    }
+    const key = refName ? accountKey(refName) : "";
+    account =
+      (key ? accounts.find((a) => !a.synthetic && accountKey(a.name) === key) : undefined) ??
+      accounts.find((a) => a.id === id) ??
+      (key ? accounts.find((a) => accountKey(a.name) === key) : undefined);
+  } else {
+    account = accounts.find((a) => a.id === id);
   }
   if (!account) return null;
   const key = accountKey(account.name);
