@@ -7,6 +7,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { AccountCombobox } from "@/components/cockpit/AccountCombobox";
 import { IconPlus, IconSpark } from "@/components/ui/icons";
+import { toast } from "@/lib/toast";
 import type { ActionResult } from "@/lib/crm-actions";
 
 export type AutofillFn = (
@@ -54,6 +55,7 @@ export function EntityFormDialog({
   autofill,
   autofillFrom = ["name"],
   autoOpenParam,
+  successToast = "Gespeichert.",
 }: {
   triggerLabel?: string;
   title: string;
@@ -72,6 +74,8 @@ export function EntityFormDialog({
   autofillFrom?: string[];
   /** Öffnet den Dialog automatisch, wenn ?<param>=1 in der URL steht (Mobile-FAB-Deeplink). */
   autoOpenParam?: string;
+  /** Bestätigungs-Toast nach erfolgreichem Speichern (false = aus). */
+  successToast?: string | false;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -86,6 +90,7 @@ export function EntityFormDialog({
       // Abgeleiteter Kunde → echte ID: auf die echte Detailseite wechseln
       // (verhindert „Seite nicht gefunden" nach dem Speichern).
       if (state.redirect && state.redirect !== window.location.pathname) {
+        if (successToast) toast.success(successToast);
         setOpen(false);
         router.replace(state.redirect);
         return;
@@ -93,9 +98,12 @@ export function EntityFormDialog({
       // Bei Warnung (verworfene Felder) Dialog offen lassen, aber gespeicherte
       // Felder im Hintergrund aktualisieren.
       router.refresh();
-      if (!state.warning) setOpen(false);
+      if (!state.warning) {
+        if (successToast) toast.success(successToast);
+        setOpen(false);
+      }
     }
-  }, [state, router]);
+  }, [state, router, successToast]);
 
   // Deeplink vom Mobile-FAB: ?new=1 öffnet den Dialog und säubert die URL.
   useEffect(() => {

@@ -9,6 +9,7 @@ import { IconPlus } from "@/components/ui/icons";
 import { createMandate, updateMandate, type ActionResult } from "@/lib/crm-actions";
 import { AccountCombobox } from "@/components/cockpit/AccountCombobox";
 import { formatEur } from "@/lib/format";
+import { toast } from "@/lib/toast";
 import { mandatePaymentSchedule, type RecruitingMandate } from "@/lib/crm-types";
 
 const inputClass =
@@ -49,10 +50,11 @@ export function MandateFormDialog({
 
   useEffect(() => {
     if (state?.ok && !state.demo) {
+      toast.success(isEdit ? "Mandat aktualisiert." : "Mandat angelegt.");
       setOpen(false);
       router.refresh();
     }
-  }, [state, router]);
+  }, [state, router, isEdit]);
 
   // Deeplink vom Mobile-FAB: ?new=1 öffnet den Anlegen-Dialog und säubert die URL.
   useEffect(() => {
