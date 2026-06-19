@@ -177,8 +177,8 @@ export const MOBILE_NAV_HREFS = [
   "/cockpit",
   "/cockpit/kunden",
   "/cockpit/kandidaten",
-  "/cockpit/sales",
-  "/cockpit/aufgaben",
+  "/cockpit/projekte/ki",
+  "/cockpit/projekte/recruiting",
 ];
 
 /** Findet den aktiven Nav-Eintrag zum aktuellen Pfad (längster Präfix-Match). */
