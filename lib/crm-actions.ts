@@ -1032,7 +1032,8 @@ async function remove(
   const { id: pid, error } = await currentPartnerId();
   if (!pid) return { ok: false, error };
   const supabase = createClient();
-  const { error: delErr } = await supabase.from(table).delete().eq("id", id);
+  // partner_id-Filter: Defense-in-Depth unabhaengig von RLS-Config.
+  const { error: delErr } = await supabase.from(table).delete().eq("id", id).eq("partner_id", pid);
   if (delErr) return { ok: false, error: delErr.message };
   revalidatePath(revalidate);
   return { ok: true };
@@ -1349,37 +1350,41 @@ export async function setTaskDone(
 }
 export async function deleteTask(id: string): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
 
-  // ── Google-Event zuerst löschen (vor DB-Delete, damit ID noch da ist)
-  void (async () => {
-    try {
-      const auth = await getValidAccessToken();
-      if (!auth) return;
-      const { data: task } = await supabase
-        .from("crm_tasks")
-        .select("google_event_id")
-        .eq("id", id)
-        .maybeSingle();
-      const gid = (task as { google_event_id?: string | null } | null)
-        ?.google_event_id;
-      if (gid) {
-        await deleteGoogleEvent(auth.token, gid, auth.calendarId);
-      }
-    } catch (e) {
-      console.error("[deleteTask] google sync", e);
-    }
-  })();
-  // ─────────────────────────────────────────────────────────────────────
+  // Google-Event-ID VOR dem DB-Delete lesen (keine Race-Condition)
+  const { data: taskRow } = await supabase
+    .from("crm_tasks")
+    .select("google_event_id")
+    .eq("id", id)
+    .eq("partner_id", pid)
+    .maybeSingle();
+  const gid = (taskRow as { google_event_id?: string | null } | null)?.google_event_id;
 
-  const { error } = await supabase.from("crm_tasks").delete().eq("id", id);
+  const { error } = await supabase
+    .from("crm_tasks")
+    .delete()
+    .eq("id", id)
+    .eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
+
+  if (gid) {
+    void (async () => {
+      try {
+        const auth = await getValidAccessToken();
+        if (!auth) return;
+        await deleteGoogleEvent(auth.token, gid, auth.calendarId);
+      } catch (e) {
+        console.error("[deleteTask] google sync", e);
+      }
+    })();
+  }
+
   revalidateTasks();
   return { ok: true };
 }
-
-// ---------- KI-Projekt Schnellaktionen (Cockpit) --------------------
-
 export async function updateKiProjectContract(
   id: string,
   patch: {
