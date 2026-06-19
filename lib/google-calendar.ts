@@ -287,7 +287,7 @@ export async function upsertGoogleEvent(
     end,
     source: {
       title: "RSG CRM",
-      url: "https://rsg-crm-cockpit.vercel.app/cockpit/kalender",
+      url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://rsg-crm-cockpit.vercel.app"}/cockpit/kalender`,
     },
   };
   if (description) body.description = description;
