@@ -37,15 +37,27 @@ function HealthPill({ info }: { info?: { score: number; tone: string; label: str
   );
 }
 
+// Feste Sortier-Richtung je Schlüssel (entspricht der Logik in AccountsView).
+const SORT_DIR: Record<string, "asc" | "desc"> = {
+  mrr: "desc",
+  name: "asc",
+  lifecycle: "asc",
+  health: "asc",
+};
+
 /** Account-/Kundenliste (Customer Management). */
 export function AccountsTable({
   accounts,
   renderActions,
   healthById = {},
+  sort,
+  onSort,
 }: {
   accounts: Account[];
   renderActions?: (a: Account) => React.ReactNode;
   healthById?: Record<string, { score: number; tone: string; label: string }>;
+  sort?: string;
+  onSort?: (key: string) => void;
 }) {
   if (accounts.length === 0) {
     return (
@@ -60,12 +72,15 @@ export function AccountsTable({
   return (
     <TableCard>
       <TableHead
+        sort={sort}
+        sortDir={sort ? SORT_DIR[sort] : undefined}
+        onSort={onSort}
         columns={[
-          { label: "Unternehmen", span: 3 },
+          { label: "Unternehmen", span: 3, sortKey: "name" },
           { label: "Kontakt", span: 3 },
           { label: "Segment", span: 2 },
-          { label: "Phase", span: 2 },
-          { label: "MRR", span: 2, align: "right" },
+          { label: "Phase", span: 2, sortKey: "lifecycle" },
+          { label: "MRR", span: 2, align: "right", sortKey: "mrr" },
         ]}
       />
       <TableBody>

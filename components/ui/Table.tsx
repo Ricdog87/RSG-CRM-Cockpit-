@@ -44,11 +44,14 @@ export function TableCard({ children }: { children: React.ReactNode }) {
 export function TableHead({
   columns,
   sort,
+  sortDir,
   onSort,
 }: {
   columns: TableColumn[];
   /** Aktueller Sortier-Schlüssel (für die Pfeil-Anzeige). */
   sort?: string;
+  /** Richtung des aktiven Sort-Schlüssels (für ↑/↓). */
+  sortDir?: "asc" | "desc";
   /** Callback beim Klick auf einen sortierbaren Kopf. */
   onSort?: (key: string) => void;
 }) {
@@ -56,7 +59,7 @@ export function TableHead({
     <div className="hidden grid-cols-12 gap-3 border-b border-border px-5 py-3 text-xs font-medium uppercase tracking-wider text-faint lg:grid">
       {columns.map((c, i) => {
         const sortable = Boolean(c.sortKey && onSort);
-        const active = c.sortKey && sort === c.sortKey;
+        const active = Boolean(c.sortKey && sort === c.sortKey);
         return (
           <span
             key={i}
@@ -66,6 +69,7 @@ export function TableHead({
               <button
                 type="button"
                 onClick={() => onSort!(c.sortKey!)}
+                aria-label={`Nach ${typeof c.label === "string" ? c.label : "Spalte"} sortieren`}
                 className={cn(
                   "inline-flex items-center gap-1 uppercase tracking-wider transition-colors hover:text-ink",
                   c.align === "right" && "flex-row-reverse",
@@ -74,7 +78,7 @@ export function TableHead({
               >
                 {c.label}
                 <span className={cn("text-[0.6rem]", active ? "text-brand-deep" : "text-faint/60")}>
-                  {active ? "↓" : "↕"}
+                  {active ? (sortDir === "asc" ? "↑" : "↓") : "↕"}
                 </span>
               </button>
             ) : (

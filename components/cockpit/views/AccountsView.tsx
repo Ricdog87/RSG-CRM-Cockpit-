@@ -218,6 +218,8 @@ export function AccountsView({
       <AccountsTable
         accounts={page}
         healthById={healthById}
+        sort={sort}
+        onSort={(k) => setSort(k as Sort)}
         renderActions={(a) => (
           <RowActions
             confirmText={`„${a.name}“ wirklich löschen?`}

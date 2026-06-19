@@ -24,13 +24,24 @@ const healthMeta: Record<Health, { label: string; tone: "success" | "neutral" | 
   risiko: { label: "Risiko", tone: "danger" },
 };
 
+// Feste Sortier-Richtung je Schlüssel (entspricht der Logik in KiProjectsView).
+const SORT_DIR: Record<string, "asc" | "desc"> = {
+  mrr: "desc",
+  name: "asc",
+  status: "asc",
+};
+
 /** Projekttabelle für KI- & Telefonassistenz-Projekte. */
 export function KiProjectsTable({
   projects,
   renderActions,
+  sort,
+  onSort,
 }: {
   projects: KiProject[];
   renderActions?: (p: KiProject) => React.ReactNode;
+  sort?: string;
+  onSort?: (key: string) => void;
 }) {
   if (projects.length === 0) {
     return (
@@ -45,12 +56,15 @@ export function KiProjectsTable({
   return (
     <TableCard>
       <TableHead
+        sort={sort}
+        sortDir={sort ? SORT_DIR[sort] : undefined}
+        onSort={onSort}
         columns={[
-          { label: "Projekt", span: 4 },
+          { label: "Projekt", span: 4, sortKey: "name" },
           { label: "Segment", span: 2 },
-          { label: "Status", span: 2 },
+          { label: "Status", span: 2, sortKey: "status" },
           { label: "Health", span: 2 },
-          { label: "MRR", span: 2, align: "right" },
+          { label: "MRR", span: 2, align: "right", sortKey: "mrr" },
         ]}
       />
       <TableBody>

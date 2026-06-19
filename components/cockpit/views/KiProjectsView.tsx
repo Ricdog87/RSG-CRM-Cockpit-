@@ -38,6 +38,7 @@ export function KiProjectsView({
   useEffect(() => setItems(projects), [projects]);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"mrr" | "name" | "status">("mrr");
   const editFields = withCombobox(KIPROJECT_FIELDS, "account_name", accountNames);
 
   function resetFilters() {
@@ -59,13 +60,18 @@ export function KiProjectsView({
 
   const q = query.trim().toLowerCase();
   const byStatus = filter === "all" ? items : items.filter((p) => p.status === filter);
-  const shown = q
+  const searched = q
     ? byStatus.filter((p) =>
         [p.account_name, p.product, p.segment, p.use_case]
           .filter(Boolean)
           .some((v) => String(v).toLowerCase().includes(q))
       )
     : byStatus;
+  const shown = [...searched].sort((a, b) => {
+    if (sort === "name") return a.account_name.localeCompare(b.account_name);
+    if (sort === "status") return a.status.localeCompare(b.status);
+    return (b.mrr ?? 0) - (a.mrr ?? 0);
+  });
 
   return (
     <div className="space-y-4">
@@ -111,6 +117,8 @@ export function KiProjectsView({
       ) : (
       <KiProjectsTable
         projects={shown}
+        sort={sort}
+        onSort={(k) => setSort(k as "mrr" | "name" | "status")}
         renderActions={(p) => (
           <RowActions
             confirmText={`Projekt „${p.account_name}" wirklich löschen?`}
