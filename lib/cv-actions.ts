@@ -397,10 +397,19 @@ export interface CvAnalysis {
   matches?: MandateHit[];
   /** Bestes Mandat erreicht die Schwelle (≥ 45). */
   hasMatch?: boolean;
+  rsgIq?: RsgIq;
   sourcing?: SourcingQueries;
 }
 
 const MATCH_THRESHOLD = 45;
+
+export interface RsgIq {
+  score: number;
+  label: string;
+  summary: string;
+  recruiterView: string[];
+  recommendation: string;
+}
 
 /** Vollständiges Profil + Recruiter-Einschätzung aus einem PDF-CV (ein Call). */
 async function parseCvProfile(bytes: Uint8Array): Promise<CvProfile | null> {
@@ -502,6 +511,63 @@ function scoreProfileMandate(
   return { score: Math.min(100, roleScore + kwScore + locScore), factors };
 }
 
+function buildRsgIq(profile: CvProfile, matches: MandateHit[]): RsgIq {
+  const completeness =
+    (profile.name ? 10 : 0) +
+    (profile.role ? 12 : 0) +
+    (profile.email || profile.phone ? 10 : 0) +
+    (profile.location ? 8 : 0) +
+    (profile.skills.length ? 15 : 0) +
+    (profile.summary ? 10 : 0) +
+    (profile.experience_years != null ? 8 : 0) +
+    (profile.languages ? 5 : 0);
+  const best = matches[0]?.score ?? 0;
+  const score = Math.max(0, Math.min(100, Math.round(completeness * 0.65 + best * 0.35)));
+  const label = score >= 78 ? "Top-Profil" : score >= 60 ? "Starkes Profil" : score >= 42 ? "Prüfen" : "Talent-Pool";
+  const recruiterView = [
+    profile.role ? `Zielrolle/Aktueller Fokus: ${profile.role}` : "",
+    profile.seniority ? `Seniorität: ${profile.seniority}` : "",
+    profile.experience_years != null ? `Erfahrung: ca. ${profile.experience_years} Jahre` : "",
+    profile.current_employer ? `Aktueller Arbeitgeber: ${profile.current_employer}` : "",
+    profile.skills.length ? `Kernskills: ${profile.skills.slice(0, 8).join(", ")}` : "",
+    matches[0] ? `Bestes internes Mandat: ${matches[0].role} bei ${matches[0].account_name} (${matches[0].score}%)` : "Kein internes Mandat mit belastbarer Passung gefunden.",
+  ].filter(Boolean);
+  const recommendation = matches[0]?.score >= MATCH_THRESHOLD
+    ? "Direkt mit dem bestpassenden Mandat abgleichen und Kandidat:in kurzfristig vorqualifizieren."
+    : "In den Talent-Pool aufnehmen, Recruiter-Zusammenfassung prüfen und mit RSG-Sourcing-Strings passende Mandate/Auftraggeber suchen.";
+  return {
+    score,
+    label,
+    summary: profile.summary || "CV wurde strukturiert aus Recruiter-Sicht ausgewertet.",
+    recruiterView,
+    recommendation,
+  };
+}
+
+async function writeRsgIqNote(
+  supabase: ReturnType<typeof createClient>,
+  partnerId: string,
+  candidateId: string,
+  iq: RsgIq,
+  matches: MandateHit[]
+): Promise<void> {
+  const matchLines = matches.slice(0, 3).map((m) =>
+    `- ${m.role || "Mandat"} · ${m.account_name} · ${m.score}%${m.factors.length ? ` (${m.factors.join(", ")})` : ""}`
+  );
+  const body = [
+    `RSG IQ ${iq.score}/100 – ${iq.label}`,
+    "",
+    iq.summary,
+    "",
+    "Recruiter-Sicht:",
+    ...iq.recruiterView.map((line) => `- ${line}`),
+    "",
+    `Empfehlung: ${iq.recommendation}`,
+    matchLines.length ? "\nPassende Mandate:\n" + matchLines.join("\n") : "",
+  ].filter(Boolean).join("\n");
+  await supabase.from("candidate_notes").insert({ partner_id: partnerId, candidate_id: candidateId, body, kind: "note" });
+}
+
 /**
  * RSG CV Analyser: zentrale Server-Action für den intelligenten CV-Upload.
  */
@@ -510,21 +576,23 @@ export async function analyzeCv(input: {
   cv_filename: string;
 }): Promise<CvAnalysis> {
   if (useMockData) {
+    const demoProfile: CvProfile = {
+      name: "Demo Kandidat", salutation: "", title: "", role: "Senior Category Manager",
+      email: "", phone: "", location: "Frankfurt", zip: "", current_employer: "Demo GmbH",
+      languages: "Deutsch, Englisch", experience_years: 8,
+      skills: ["Category Management", "Einkauf", "FMCG", "Verhandlung"],
+      summary: "Demo: erfahrener Category Manager aus dem Handel/FMCG mit Schwerpunkt Einkauf und Sortimentssteuerung.",
+      seniority: "Senior", target_roles: ["Category Manager", "Einkaufsleiter"],
+    };
     return {
       ok: true,
       demo: true,
       created: true,
       enriched: ["Position", "Skills"],
-      profile: {
-        name: "Demo Kandidat", salutation: "", title: "", role: "Senior Category Manager",
-        email: "", phone: "", location: "Frankfurt", zip: "", current_employer: "Demo GmbH",
-        languages: "Deutsch, Englisch", experience_years: 8,
-        skills: ["Category Management", "Einkauf", "FMCG", "Verhandlung"],
-        summary: "Demo: erfahrener Category Manager aus dem Handel/FMCG mit Schwerpunkt Einkauf und Sortimentssteuerung.",
-        seniority: "Senior", target_roles: ["Category Manager", "Einkaufsleiter"],
-      },
+      profile: demoProfile,
       matches: [],
       hasMatch: false,
+      rsgIq: buildRsgIq(demoProfile, []),
       sourcing: buildSourcingQueries({
         role: "Senior Category Manager",
         skills: ["Category Management", "Einkauf", "FMCG"],
@@ -650,6 +718,13 @@ export async function analyzeCv(input: {
     .slice(0, 5);
 
   const hasMatch = matches.length > 0 && matches[0].score >= MATCH_THRESHOLD;
+  const rsgIq = buildRsgIq(prof, matches);
+
+  try {
+    await writeRsgIqNote(supabase, pid, candidateId, rsgIq, matches);
+  } catch {
+    // Best effort: Kandidatenanlage darf nie an der IQ-Notiz scheitern.
+  }
 
   // 5) Kein Treffer → Sourcing-Suchstrings beilegen.
   const sourcing = hasMatch
@@ -662,7 +737,8 @@ export async function analyzeCv(input: {
       });
 
   revalidatePath("/cockpit/kandidaten");
-  return { ok: true, candidateId, created, duplicateOf: dup, enriched, profile: prof, matches, hasMatch, sourcing };
+  revalidatePath(`/cockpit/kandidaten/${candidateId}`);
+  return { ok: true, candidateId, created, duplicateOf: dup, enriched, profile: prof, matches, hasMatch, rsgIq, sourcing };
 }
 
 /** candidates-Insert mit Spalten-Stripping (fehlende Spalten werden verworfen). */
