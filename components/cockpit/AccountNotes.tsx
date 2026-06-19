@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { IconTrash } from "@/components/ui/icons";
 import { formatDate } from "@/lib/format";
 import { addNote, deleteNote } from "@/lib/crm-actions";
+import { toast } from "@/lib/toast";
 import type { Note } from "@/lib/notes-data";
 
 export function AccountNotes({
@@ -32,6 +33,7 @@ export function AccountNotes({
       created_at: new Date().toISOString(),
     };
     setItems((prev) => [optimistic, ...prev]);
+    const savedBody = body;
     if (ref.current) ref.current.value = "";
     start(async () => {
       const res = await addNote(accountId, body);
@@ -40,15 +42,22 @@ export function AccountNotes({
         else router.refresh();
       } else if (!res.ok) {
         setItems((prev) => prev.filter((n) => n.id !== optimistic.id));
+        if (ref.current && !ref.current.value) ref.current.value = savedBody; // Text nicht verlieren
+        toast.error(res.error ?? "Notiz konnte nicht gespeichert werden.");
       }
     });
   }
 
   function remove(id: string) {
-    setItems((prev) => prev.filter((n) => n.id !== id));
+    const prev = items;
+    setItems((p) => p.filter((n) => n.id !== id));
     start(async () => {
       const res = await deleteNote(id, accountId);
       if (res.ok && !res.demo) router.refresh();
+      else if (!res.ok) {
+        setItems(prev); // fehlgeschlagen → Notiz wiederherstellen
+        toast.error(res.error ?? "Löschen fehlgeschlagen.");
+      }
     });
   }
 

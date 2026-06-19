@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { updateCandidateStage } from "@/lib/crm-actions";
+import { toast } from "@/lib/toast";
 import type { CandidateStage } from "@/lib/crm-types";
 
 const STAGE_OPTIONS = [
@@ -30,6 +31,7 @@ export function CandidateStageControl({
     start(async () => {
       const res = await updateCandidateStage(id, next);
       if (res.ok && !res.demo) router.refresh();
+      else if (!res.ok) toast.error(res.error ?? "Phasenwechsel fehlgeschlagen.");
     });
   }
 

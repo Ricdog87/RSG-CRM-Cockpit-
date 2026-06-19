@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setKiProjectStatus, setKiProjectHealth } from "@/lib/crm-actions";
+import { toast } from "@/lib/toast";
 import type { Health, KiStatus } from "@/lib/crm-types";
 
 const STATUS: { value: KiStatus; label: string }[] = [
@@ -37,12 +38,14 @@ export function KiProjectControls({
     start(async () => {
       const res = await setKiProjectStatus(id, v);
       if (res.ok && !res.demo) router.refresh();
+      else if (!res.ok) toast.error(res.error ?? "Status konnte nicht geändert werden.");
     });
   }
   function changeHealth(v: string) {
     start(async () => {
       const res = await setKiProjectHealth(id, v);
       if (res.ok && !res.demo) router.refresh();
+      else if (!res.ok) toast.error(res.error ?? "Health konnte nicht geändert werden.");
     });
   }
 
