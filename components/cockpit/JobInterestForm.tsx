@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { submitJobResponse, type ResponseMode } from "@/lib/job-response";
+import { IconCheck } from "@/components/ui/icons";
 
 const inputCls =
   "w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand";
@@ -72,7 +73,13 @@ export function JobInterestForm({ token, role }: { token: string; role: string }
         onClick={() => fileRef.current?.click()}
         className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-brand/40 bg-brand/[0.04] px-4 py-3 text-sm font-medium text-brand-deep hover:bg-brand/10"
       >
-        {cv ? `✓ ${cv.name}` : "Lebenslauf hochladen (PDF) – Felder automatisch ausfüllen"}
+        {cv ? (
+          <>
+            <IconCheck size={15} className="flex-none text-success" /> <span className="truncate">{cv.name}</span>
+          </>
+        ) : (
+          "Lebenslauf hochladen (PDF) – Felder automatisch ausfüllen"
+        )}
       </button>
       <input
         ref={fileRef}

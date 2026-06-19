@@ -370,7 +370,13 @@ export default async function BerichtePage() {
         <CardBody>
           <SectionHeader
             title="Aktivitäts-Trend"
-            hint="Calls (●) & E-Mails (●) je Woche – letzte 6 Wochen"
+            hint={
+              <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 flex-none rounded-full bg-brand" /> Calls</span>
+                <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 flex-none rounded-full bg-sky" /> E-Mails</span>
+                <span className="text-faint">je Woche – letzte 6 Wochen</span>
+              </span>
+            }
           />
           {activityHasData ? (
             <ActivityChart data={activityTrend} />

@@ -176,8 +176,8 @@ export function DailyGoals({
             <div className="h-full bg-brand" style={{ width: `${(recTotal / focusTotal) * 100}%` }} title={`Recruiting: ${recTotal}`} />
           </div>
           <div className="mt-1 flex items-center justify-between text-[0.7rem]">
-            <span className="text-sky-deep">● KI {kiTotal}</span>
-            <span className="text-brand-deep">Recruiting {recTotal} ●</span>
+            <span className="inline-flex items-center gap-1.5 text-sky-deep"><span className="h-2 w-2 flex-none rounded-full bg-sky" /> KI {kiTotal}</span>
+            <span className="inline-flex items-center gap-1.5 text-brand-deep">Recruiting {recTotal} <span className="h-2 w-2 flex-none rounded-full bg-brand" /></span>
           </div>
         </div>
       </CardBody>
@@ -210,7 +210,7 @@ function DayDot({ day }: { day: WeekDay }) {
     <div className="flex flex-1 flex-col items-center gap-1" title={title}>
       <span className="text-[0.65rem] font-medium text-faint">{day.label}</span>
       <span className={cn("flex h-7 w-7 items-center justify-center rounded-full text-[0.65rem] font-bold", dot, day.isToday && "ring-2 ring-brand ring-offset-1 ring-offset-surface")}>
-        {day.mode === "review" ? "R" : day.mode === "off" ? "–" : day.isFuture ? "·" : day.score === 4 ? "✓" : day.score}
+        {day.mode === "review" ? "R" : day.mode === "off" ? "–" : day.isFuture ? "·" : day.score === 4 ? <IconCheck size={13} /> : day.score}
       </span>
     </div>
   );

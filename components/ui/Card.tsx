@@ -28,7 +28,7 @@ export function SectionHeader({
   action,
 }: {
   title: string;
-  hint?: string;
+  hint?: React.ReactNode;
   action?: React.ReactNode;
 }) {
   return (

@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { ingestCv } from "@/lib/cv-actions";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-import { IconPlus } from "@/components/ui/icons";
+import { IconPlus, IconCheck } from "@/components/ui/icons";
+import { cn } from "@/components/ui/cn";
 
 /**
  * „CV hochladen" – lädt eine oder mehrere CV-Dateien in den privaten
@@ -146,12 +147,16 @@ export function CvUploadDialog() {
                     className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs"
                   >
                     <span className="min-w-0 truncate text-ink">{it.name || it.file.name}</span>
-                    <span className={statusClass[it.status]}>
-                      {it.status === "fertig"
-                        ? "✓ angelegt"
-                        : it.status === "fehler"
-                        ? it.error || "Fehler"
-                        : `${it.status} …`}
+                    <span className={cn("inline-flex items-center gap-1", statusClass[it.status])}>
+                      {it.status === "fertig" ? (
+                        <>
+                          <IconCheck size={12} className="flex-none" /> angelegt
+                        </>
+                      ) : it.status === "fehler" ? (
+                        it.error || "Fehler"
+                      ) : (
+                        `${it.status} …`
+                      )}
                     </span>
                   </li>
                 ))}
