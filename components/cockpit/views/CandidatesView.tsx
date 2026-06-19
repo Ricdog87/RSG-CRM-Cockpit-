@@ -9,6 +9,7 @@ import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
+import { ViewToggle } from "@/components/ui/ViewToggle";
 import { Badge } from "@/components/ui/Badge";
 import { IconMail, IconPhone, IconFolder, IconSearch, IconDashboard, IconLayers } from "@/components/ui/icons";
 import { CANDIDATE_FIELDS, withDatalist, withSelectOptions, candidateInitial } from "@/lib/crm-forms";
@@ -388,22 +389,14 @@ export function CandidatesView({
         >
           Export
         </button>
-        <div className="flex items-center gap-1 rounded-xl border border-border bg-elevated/60 p-1">
-          {(["liste", "board"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setView(v)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
-                view === v ? "bg-surface text-ink shadow-sm" : "text-muted hover:text-ink"
-              )}
-            >
-              {v === "liste" ? <IconLayers size={14} /> : <IconDashboard size={14} />}
-              {v === "liste" ? "Liste" : "Board"}
-            </button>
-          ))}
-        </div>
+        <ViewToggle<"liste" | "board">
+          value={view}
+          onChange={setView}
+          options={[
+            { value: "liste", label: "Liste", icon: <IconLayers size={14} /> },
+            { value: "board", label: "Board", icon: <IconDashboard size={14} /> },
+          ]}
+        />
       </div>
 
       {/* Tag-Schnellfilter */}

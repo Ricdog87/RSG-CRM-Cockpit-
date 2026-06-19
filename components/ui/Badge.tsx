@@ -11,19 +11,30 @@ const tones: Record<Tone, string> = {
   danger: "border-danger/30 bg-danger/10 text-danger",
 };
 
+const sizes: Record<"sm" | "md", string> = {
+  sm: "gap-1 px-2 py-0.5 text-[0.7rem]",
+  md: "gap-1.5 px-2.5 py-0.5 text-xs",
+};
+
 export function Badge({
   children,
   tone = "neutral",
+  size = "md",
+  title,
   className,
 }: {
   children: React.ReactNode;
   tone?: Tone;
+  size?: "sm" | "md";
+  title?: string;
   className?: string;
 }) {
   return (
     <span
+      title={title}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-full border font-medium",
+        sizes[size],
         tones[tone],
         className
       )}

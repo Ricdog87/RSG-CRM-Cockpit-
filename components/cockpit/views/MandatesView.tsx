@@ -8,9 +8,11 @@ import { MandatesBoard } from "@/components/cockpit/MandatesBoard";
 import { MandatesByCustomer } from "@/components/cockpit/MandatesByCustomer";
 import { MandateFormDialog } from "@/components/cockpit/MandateFormDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
+import { ViewToggle } from "@/components/ui/ViewToggle";
 import { IconPencil, IconLayers, IconTasks, IconUsers } from "@/components/ui/icons";
-import { cn } from "@/components/ui/cn";
+import { downloadCsv } from "@/lib/csv-export";
 import { deleteMandate } from "@/lib/crm-actions";
+import { mandateRevenue } from "@/lib/crm-types";
 import type { RecruitingMandate, Candidate } from "@/lib/crm-types";
 
 type View = "board" | "kunden" | "liste";
@@ -67,27 +69,39 @@ export function MandatesView({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-1 rounded-xl border border-border bg-surface p-1 w-fit">
-        {([
-          { key: "board", label: "Board", icon: IconLayers },
-          { key: "kunden", label: "Kunden", icon: IconUsers },
-          { key: "liste", label: "Liste", icon: IconTasks },
-        ] as const).map((v) => {
-          const Icon = v.icon;
-          return (
-            <button
-              key={v.key}
-              type="button"
-              onClick={() => setView(v.key)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                view === v.key ? "bg-elevated text-ink shadow-sm" : "text-muted hover:text-ink"
-              )}
-            >
-              <Icon size={15} /> {v.label}
-            </button>
-          );
-        })}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <ViewToggle<View>
+          value={view}
+          onChange={setView}
+          options={[
+            { value: "board", label: "Board", icon: <IconLayers size={14} /> },
+            { value: "kunden", label: "Kunden", icon: <IconUsers size={14} /> },
+            { value: "liste", label: "Liste", icon: <IconTasks size={14} /> },
+          ]}
+        />
+        <button
+          type="button"
+          onClick={() =>
+            downloadCsv(
+              `mandate-${new Date().toISOString().slice(0, 10)}`,
+              items,
+              [
+                { key: "account_name", label: "Kunde" },
+                { key: "role", label: "Position" },
+                { key: "status", label: "Status" },
+                { key: "positions", label: "Stellen" },
+                { key: "filled", label: "Besetzt" },
+                { key: "deadline", label: "Frist" },
+                { key: "pricing_model", label: "Honorarmodell" },
+                { key: "id", label: "Erwarteter Umsatz", get: (m) => mandateRevenue(m) },
+              ]
+            )
+          }
+          className="rounded-xl border border-border bg-surface px-3 py-2 text-sm font-medium text-ink hover:bg-elevated"
+          title="Mandate als CSV exportieren"
+        >
+          Export
+        </button>
       </div>
 
       {view === "board" ? (

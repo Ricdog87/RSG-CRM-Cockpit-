@@ -10,6 +10,7 @@ import { FilterTabs } from "@/components/ui/FilterTabs";
 import { Card, CardBody } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconSearch } from "@/components/ui/icons";
+import { downloadCsv } from "@/lib/csv-export";
 import { KIPROJECT_FIELDS, withCombobox } from "@/lib/crm-forms";
 import { updateKiProject, deleteKiProject } from "@/lib/crm-actions";
 import type { KiProject, KiStatus } from "@/lib/crm-types";
@@ -75,14 +76,43 @@ export function KiProjectsView({
 
   return (
     <div className="space-y-4">
-      <div className="relative min-w-0">
-        <IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="KI-Projekt suchen (Kunde, Produkt, Segment) …"
-          className="w-full rounded-xl border border-border bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand"
-        />
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-0 flex-1">
+          <IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="KI-Projekt suchen (Kunde, Produkt, Segment) …"
+            className="w-full rounded-xl border border-border bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            downloadCsv(
+              `ki-projekte-${new Date().toISOString().slice(0, 10)}`,
+              shown,
+              [
+                { key: "account_name", label: "Kunde" },
+                { key: "product", label: "Produkt" },
+                { key: "segment", label: "Segment" },
+                { key: "status", label: "Status" },
+                { key: "health", label: "Health" },
+                { key: "mrr", label: "MRR" },
+                { key: "setup_fee", label: "Setup" },
+                { key: "go_live", label: "Go-Live" },
+                { key: "project_manager", label: "Projektverantwortlich" },
+                { key: "decision_maker", label: "Entscheider" },
+                { key: "tech_contact", label: "Tech-Kontakt" },
+                { key: "kickoff_date", label: "Kickoff" },
+              ]
+            )
+          }
+          className="rounded-xl border border-border bg-surface px-3 py-2 text-sm font-medium text-ink hover:bg-elevated"
+          title="Gefilterte Liste als CSV exportieren"
+        >
+          Export
+        </button>
       </div>
 
       <FilterTabs<Filter>

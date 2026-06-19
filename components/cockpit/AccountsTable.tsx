@@ -27,13 +27,10 @@ const healthDot: Record<string, string> = {
 function HealthPill({ info }: { info?: { score: number; tone: string; label: string } }) {
   if (!info) return null;
   return (
-    <span
-      className="inline-flex items-center gap-1 rounded-full border border-border bg-elevated px-1.5 py-0.5 text-[0.65rem] font-semibold text-muted"
-      title={`Health ${info.score}/100 · ${info.label}`}
-    >
-      <span className={`h-1.5 w-1.5 rounded-full ${healthDot[info.tone] ?? "bg-elevated"}`} />
+    <Badge tone="neutral" size="sm" title={`Health ${info.score}/100 · ${info.label}`} className="font-semibold">
+      <span className={`h-1.5 w-1.5 flex-none rounded-full ${healthDot[info.tone] ?? "bg-elevated"}`} />
       {info.score}
-    </span>
+    </Badge>
   );
 }
 
