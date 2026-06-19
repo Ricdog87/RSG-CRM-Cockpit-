@@ -5,6 +5,7 @@ import { StatCard } from "@/components/cockpit/StatCard";
 import { CandidatesView } from "@/components/cockpit/views/CandidatesView";
 import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { CvUploadDialog } from "@/components/cockpit/CvUploadDialog";
+import { CvAnalyzerDialog } from "@/components/cockpit/CvAnalyzerDialog";
 import { CandidateDuplicates } from "@/components/cockpit/CandidateDuplicates";
 import { findCandidateDuplicates } from "@/lib/candidate-dedupe";
 import { CANDIDATE_FIELDS, withDatalist, withSelectOptions } from "@/lib/crm-forms";
@@ -45,6 +46,7 @@ export default async function KandidatenPage() {
         description="Die Recruiting-Pipeline – von der Ansprache bis zur Platzierung."
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <CvAnalyzerDialog />
             <CvUploadDialog />
             <EntityFormDialog
               triggerLabel="Kandidat:in anlegen"
