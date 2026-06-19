@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "@/lib/toast";
 import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
 import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { EditDialog } from "@/components/cockpit/EditDialog";
@@ -272,7 +273,7 @@ export function CandidatesView({
       router.refresh();
     } else if (!res.ok) {
       setItems(prevItems);
-      if (res.error) alert(res.error);
+      if (res.error) toast.error(res.error);
     }
   }
 

@@ -6,6 +6,7 @@ import { Topbar } from "@/components/cockpit/Topbar";
 import { MobileNav } from "@/components/cockpit/MobileNav";
 import { QuickActionsFab } from "@/components/cockpit/QuickActionsFab";
 import { CommandPalette } from "@/components/cockpit/CommandPalette";
+import { Toaster } from "@/components/ui/Toaster";
 
 /**
  * App-Shell des RSG-CRM: feste Sidebar (Desktop), Topbar und Mobile-Tab-Bar.
@@ -48,6 +49,7 @@ export default async function AppShellLayout({
       <QuickActionsFab />
       <MobileNav />
       <CommandPalette />
+      <Toaster />
     </div>
   );
 }

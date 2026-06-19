@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/lib/toast";
 import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
 import { LineBadge } from "@/components/cockpit/LineBadge";
 import { MoveSelect } from "@/components/cockpit/MoveSelect";
@@ -143,7 +144,7 @@ export function SalesView({ opportunities }: { opportunities: Opportunity[] }) {
       router.refresh();
     } else if (!res.ok) {
       setItems(prevItems);
-      if (res.error) alert(res.error);
+      if (res.error) toast.error(res.error);
     }
   }
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/lib/toast";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -26,7 +27,7 @@ export function SegmentsView({ segments }: { segments: Segment[] }) {
       router.refresh();
     } else if (!res.ok) {
       setItems(prevItems);
-      if (res.error) alert(res.error);
+      if (res.error) toast.error(res.error);
     }
   }
 

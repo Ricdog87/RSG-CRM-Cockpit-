@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/lib/toast";
 import { AccountsTable } from "@/components/cockpit/AccountsTable";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
@@ -42,7 +43,7 @@ export function AccountsView({
       router.refresh();
     } else if (!res.ok) {
       setItems(prev); // Fehlgeschlagen → wiederherstellen
-      if (res.error) alert(res.error);
+      if (res.error) toast.error(res.error);
     }
   }
 

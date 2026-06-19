@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/lib/toast";
 import { MandatesList } from "@/components/cockpit/MandatesList";
 import { MandatesBoard } from "@/components/cockpit/MandatesBoard";
 import { MandatesByCustomer } from "@/components/cockpit/MandatesByCustomer";
@@ -37,7 +38,7 @@ export function MandatesView({
       router.refresh();
     } else if (!res.ok) {
       setItems(prevItems);
-      if (res.error) alert(res.error);
+      if (res.error) toast.error(res.error);
     }
   }
 

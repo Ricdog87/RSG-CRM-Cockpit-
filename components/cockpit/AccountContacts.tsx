@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/lib/toast";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -83,7 +84,7 @@ export function AccountContacts({
         if (res.redirect) router.replace(res.redirect);
         else router.refresh();
       } else if (!res.ok) {
-        if (res.error) alert(res.error);
+        if (res.error) toast.error(res.error);
         router.refresh();
       }
     });
@@ -98,7 +99,7 @@ export function AccountContacts({
       if (res.ok && !res.demo) router.refresh();
       else if (!res.ok) {
         setItems(prev);
-        if (res.error) alert(res.error);
+        if (res.error) toast.error(res.error);
       }
     });
   }

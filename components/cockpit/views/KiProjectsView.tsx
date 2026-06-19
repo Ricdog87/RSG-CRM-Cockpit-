@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/lib/toast";
 import { KiProjectsTable } from "@/components/cockpit/KiProjectsTable";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
@@ -43,7 +44,7 @@ export function KiProjectsView({
       router.refresh();
     } else if (!res.ok) {
       setItems(prevItems);
-      if (res.error) alert(res.error);
+      if (res.error) toast.error(res.error);
     }
   }
 
