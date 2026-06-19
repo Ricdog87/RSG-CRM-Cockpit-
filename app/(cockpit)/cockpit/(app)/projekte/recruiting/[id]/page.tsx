@@ -15,6 +15,7 @@ import { MandateCandidates } from "@/components/cockpit/MandateCandidates";
 import { MandateMatchPanel } from "@/components/cockpit/MandateMatchPanel";
 import { MandateIntelCard } from "@/components/cockpit/MandateIntelCard";
 import { MandateProposalButton } from "@/components/cockpit/MandateProposalButton";
+import { MandateFormDialog } from "@/components/cockpit/MandateFormDialog";
 import { PlacementContractDialog } from "@/components/cockpit/PlacementContractDialog";
 import { MandatePaymentGate } from "@/components/cockpit/MandatePaymentGate";
 import { computeMandateIntel } from "@/lib/mandate-intel";
@@ -101,6 +102,7 @@ export default async function MandateDetailPage({
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <MandateFormDialog mandate={m} accountNames={accounts.map((a) => a.name)} />
               {account ? (
                 <PlacementContractDialog
                   account={account}
