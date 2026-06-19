@@ -254,13 +254,20 @@ async function syncAccountMrr(
   const n = (accountName || "").trim();
   if (!n) return;
   try {
+    const { id: pid } = await currentPartnerId();
+    if (!pid) return;
     const accId = await resolveAccountId(supabase, n);
     if (!accId) return;
-    const { data } = await supabase.from("ki_projects").select("mrr, status").ilike("account_name", n);
+    // Nur eigene KI-Projekte summieren, nur eigenen Account aktualisieren.
+    const { data } = await supabase
+      .from("ki_projects")
+      .select("mrr, status")
+      .eq("partner_id", pid)
+      .ilike("account_name", n);
     const sum = ((data as Array<{ mrr?: number; status?: string }> | null) ?? [])
       .filter((p) => p.status !== "gekuendigt" && p.status !== "angebot")
       .reduce((s, p) => s + Number(p.mrr ?? 0), 0);
-    await supabase.from("accounts").update({ mrr: sum }).eq("id", accId);
+    await supabase.from("accounts").update({ mrr: sum }).eq("id", accId).eq("partner_id", pid);
     revalidatePath("/cockpit/kunden");
     revalidatePath(`/cockpit/kunden/${accId}`);
   } catch {
@@ -1144,7 +1151,8 @@ export async function addNote(
   await supabase
     .from("accounts")
     .update({ last_activity_at: new Date().toISOString() })
-    .eq("id", accountId);
+    .eq("id", accountId)
+    .eq("partner_id", id);
   revalidatePath(`/cockpit/kunden/${accountId}`);
   return {
     ok: true,
@@ -1224,6 +1232,8 @@ export async function updateContact(
 ): Promise<ActionResult> {
   if (!contact.name?.trim()) return { ok: false, error: "Name erforderlich." };
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
   const { error } = await supabase
     .from("account_contacts")
@@ -1235,7 +1245,8 @@ export async function updateContact(
       email: contact.email?.trim() || null,
       phone: contact.phone?.trim() || null,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/cockpit/kunden/${accountId}`);
   return { ok: true };
@@ -1334,7 +1345,8 @@ export async function addTask(input: TaskInput): Promise<ActionResult> {
           await supabase
             .from("crm_tasks")
             .update({ google_event_id: eventId })
-            .eq("id", (inserted as { id: string }).id);
+            .eq("id", (inserted as { id: string }).id)
+            .eq("partner_id", id);
         }
       } catch (e) {
         console.error("[addTask] google sync", e);
@@ -1361,11 +1373,14 @@ export async function setTaskDone(
   done: boolean
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
   const { error } = await supabase
     .from("crm_tasks")
     .update({ done })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
 
   // ── Google-Sync: erledigte Tasks aus Google Calendar entfernen ────────
@@ -1378,6 +1393,7 @@ export async function setTaskDone(
           .from("crm_tasks")
           .select("google_event_id")
           .eq("id", id)
+          .eq("partner_id", pid)
           .maybeSingle();
         const gid = (task as { google_event_id?: string | null } | null)
           ?.google_event_id;
@@ -1386,7 +1402,8 @@ export async function setTaskDone(
           await supabase
             .from("crm_tasks")
             .update({ google_event_id: null })
-            .eq("id", id);
+            .eq("id", id)
+            .eq("partner_id", pid);
         }
       } catch (e) {
         console.error("[setTaskDone] google sync", e);
@@ -1667,7 +1684,8 @@ export async function recordContractCreated(
   await supabase
     .from("accounts")
     .update({ contract_status: "versendet", last_activity_at: new Date().toISOString() })
-    .eq("id", realId);
+    .eq("id", realId)
+    .eq("partner_id", pid);
 
   revalidatePath(`/cockpit/kunden/${realId}`);
   revalidatePath("/cockpit/kunden");
@@ -1686,11 +1704,11 @@ export async function markContractSent(accountId: string): Promise<ActionResult>
   const supabase = createClient();
   const realId = (await materializeAccount(supabase, pid, accountId)) ?? accountId;
 
-  const { data } = await supabase.from("accounts").select("contract_status").eq("id", realId).maybeSingle();
+  const { data } = await supabase.from("accounts").select("contract_status").eq("id", realId).eq("partner_id", pid).maybeSingle();
   const cur = (data as { contract_status?: string } | null)?.contract_status;
   const patch: Record<string, unknown> = { last_activity_at: new Date().toISOString() };
   if (cur !== "unterzeichnet") patch.contract_status = "versendet";
-  await supabase.from("accounts").update(patch).eq("id", realId);
+  await supabase.from("accounts").update(patch).eq("id", realId).eq("partner_id", pid);
 
   revalidatePath(`/cockpit/kunden/${realId}`);
   revalidatePath("/cockpit/kunden");
@@ -1711,7 +1729,7 @@ export async function markContractSigned(
   const supabase = createClient();
   const realId = (await materializeAccount(supabase, pid, accountId)) ?? accountId;
 
-  const { data: acc } = await supabase.from("accounts").select("name").eq("id", realId).maybeSingle();
+  const { data: acc } = await supabase.from("accounts").select("name").eq("id", realId).eq("partner_id", pid).maybeSingle();
   const accName = (acc as { name?: string } | null)?.name ?? "";
 
   await supabase
@@ -1721,7 +1739,8 @@ export async function markContractSigned(
       contract_signed_at: new Date().toISOString().slice(0, 10),
       last_activity_at: new Date().toISOString(),
     })
-    .eq("id", realId);
+    .eq("id", realId)
+    .eq("partner_id", pid);
   await supabase
     .from("account_notes")
     .insert({ partner_id: pid, account_id: realId, body: "Vermittlungsvertrag unterschrieben." });
@@ -1732,11 +1751,16 @@ export async function markContractSigned(
     const { data: ms } = await supabase
       .from("recruiting_mandates")
       .select("id")
+      .eq("partner_id", pid)
       .ilike("account_name", accName)
       .eq("status", "angebot");
     const ids = ((ms as Array<{ id?: string }> | null) ?? []).map((m) => m.id).filter(Boolean) as string[];
     if (ids.length) {
-      const { error: upErr } = await supabase.from("recruiting_mandates").update({ status: "offen" }).in("id", ids);
+      const { error: upErr } = await supabase
+        .from("recruiting_mandates")
+        .update({ status: "offen" })
+        .in("id", ids)
+        .eq("partner_id", pid);
       if (!upErr) activated = ids.length;
     }
   }
@@ -1888,12 +1912,15 @@ export async function setCandidateRating(
   rating: number
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
   const r = Math.max(0, Math.min(5, Math.round(rating)));
   const { error } = await supabase
     .from("candidates")
     .update({ rating: r || null })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("partner_id", pid);
   if (error) {
     if (/column .*rating.* does not exist/i.test(error.message))
       return { ok: false, error: "Spalte rating fehlt – Migration 06_candidate_rating_tags.sql ausführen." };
@@ -1908,6 +1935,8 @@ export async function setCandidateTags(
   tags: string[]
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
   const clean = Array.from(
     new Set(tags.map((t) => t.trim()).filter(Boolean))
@@ -1915,7 +1944,8 @@ export async function setCandidateTags(
   const { error } = await supabase
     .from("candidates")
     .update({ tags: clean })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("partner_id", pid);
   if (error) {
     if (/column .*tags.* does not exist/i.test(error.message))
       return { ok: false, error: "Spalte tags fehlt – Migration 06_candidate_rating_tags.sql ausführen." };

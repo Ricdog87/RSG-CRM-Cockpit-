@@ -218,6 +218,7 @@ export async function extractCandidateSkills(
     .from("candidates")
     .select("cv_path, cv_filename")
     .eq("id", id)
+    .eq("partner_id", pid)
     .maybeSingle();
   if (selErr || !cand) return { ok: false, error: selErr?.message ?? "Kandidat:in nicht gefunden." };
   const cvPath = (cand as { cv_path?: string }).cv_path;
@@ -238,7 +239,8 @@ export async function extractCandidateSkills(
   const { error: updErr } = await supabase
     .from("candidates")
     .update({ skills })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("partner_id", pid);
   if (updErr) {
     if (/column .*skills.* does not exist/i.test(updErr.message)) {
       return { ok: false, error: "Spalte `skills` fehlt – Migration 02_candidate_skills.sql ausführen." };
@@ -318,6 +320,7 @@ export async function attachCv(input: {
       .from("candidates")
       .select("role, email, phone, skills")
       .eq("id", input.candidateId)
+      .eq("partner_id", pid)
       .maybeSingle();
     const c = (cur as { role?: string; email?: string; phone?: string; skills?: unknown } | null) ?? null;
     const { data: file } = await supabase.storage.from(BUCKET).download(input.cv_path);
@@ -336,12 +339,13 @@ export async function attachCv(input: {
   const { error: updErr } = await supabase
     .from("candidates")
     .update(patch)
-    .eq("id", input.candidateId);
+    .eq("id", input.candidateId)
+    .eq("partner_id", pid);
   if (updErr) {
     // skills-Spalte evtl. noch nicht migriert → ohne skills erneut versuchen
     if ("skills" in patch && /column .*skills.* does not exist/i.test(updErr.message)) {
       delete patch.skills;
-      const { error: e2 } = await supabase.from("candidates").update(patch).eq("id", input.candidateId);
+      const { error: e2 } = await supabase.from("candidates").update(patch).eq("id", input.candidateId).eq("partner_id", pid);
       if (e2) return { ok: false, error: e2.message };
     } else {
       return { ok: false, error: updErr.message };
@@ -659,7 +663,7 @@ export async function analyzeCv(input: {
     candidateId = dup.id;
     created = false;
     // Nur leere Felder füllen.
-    const { data: cur } = await supabase.from("candidates").select("*").eq("id", dup.id).maybeSingle();
+    const { data: cur } = await supabase.from("candidates").select("*").eq("id", dup.id).eq("partner_id", pid).maybeSingle();
     const c = (cur as Record<string, unknown> | null) ?? {};
     const patch: Record<string, unknown> = { cv_path: input.cv_path, cv_filename: input.cv_filename, cv_uploaded_at: new Date().toISOString() };
     const labels: Record<string, string> = {
@@ -671,7 +675,7 @@ export async function analyzeCv(input: {
       const empty = c[k] == null || c[k] === "" || (Array.isArray(c[k]) && (c[k] as unknown[]).length === 0);
       if (empty && v != null && !(Array.isArray(v) && v.length === 0)) { patch[k] = v; enriched.push(labels[k] ?? k); }
     }
-    await updateGracefulCandidate(supabase, dup.id, patch);
+    await updateGracefulCandidate(supabase, dup.id, patch, pid);
   } else {
     created = true;
     const insert: Record<string, unknown> = {
@@ -761,15 +765,16 @@ async function insertGracefulCandidate(
   return { error: "Anlegen fehlgeschlagen (zu viele fehlende Spalten)." };
 }
 
-/** candidates-Update mit Spalten-Stripping. */
+/** candidates-Update mit Spalten-Stripping (partner-gescoped). */
 async function updateGracefulCandidate(
   supabase: ReturnType<typeof createClient>,
   id: string,
-  row: Record<string, unknown>
+  row: Record<string, unknown>,
+  pid: string
 ): Promise<void> {
   let payload = { ...row };
   for (let i = 0; i < 12; i++) {
-    const { error } = await supabase.from("candidates").update(payload).eq("id", id);
+    const { error } = await supabase.from("candidates").update(payload).eq("id", id).eq("partner_id", pid);
     if (!error) return;
     const m = /column "([^"]+)" of relation .* does not exist/i.exec(error.message)
       ?? /Could not find the '([^']+)' column/i.exec(error.message);

@@ -105,7 +105,8 @@ export async function logActivity(input: ActivityInput): Promise<ActionResult> {
       await supabase
         .from("accounts")
         .update({ last_activity_at: new Date().toISOString() })
-        .eq("id", accId);
+        .eq("id", accId)
+        .eq("partner_id", pid);
       revalidatePath(`/cockpit/kunden/${accId}`);
     }
   }
