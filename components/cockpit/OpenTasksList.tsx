@@ -9,6 +9,7 @@ import { IconCheck, IconChevronRight } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
 import { formatDate } from "@/lib/format";
 import { setTaskDone } from "@/lib/crm-actions";
+import { toast } from "@/lib/toast";
 import type { Task } from "@/lib/tasks-data";
 import { relatedHref } from "@/lib/task-link";
 
@@ -36,10 +37,15 @@ export function OpenTasksList({ tasks }: { tasks: Task[] }) {
   const [, start] = useTransition();
 
   function complete(t: Task) {
+    const prev = items;
     setItems((p) => p.filter((x) => x.id !== t.id));
     start(async () => {
       const res = await setTaskDone(t.id, true);
       if (res.ok && !res.demo) router.refresh();
+      else if (!res.ok) {
+        setItems(prev); // fehlgeschlagen → Aufgabe wiederherstellen
+        if (res.error) toast.error(res.error);
+      }
     });
   }
 

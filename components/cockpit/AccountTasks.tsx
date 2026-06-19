@@ -9,6 +9,7 @@ import { IconCheck, IconTrash } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
 import { formatDate } from "@/lib/format";
 import { addTask, setTaskDone, deleteTask } from "@/lib/crm-actions";
+import { toast } from "@/lib/toast";
 import type { Task } from "@/lib/tasks-data";
 
 function isOverdue(due: string | null): boolean {
@@ -35,10 +36,14 @@ export function AccountTasks({
   const titleRef = useRef<HTMLInputElement>(null);
   const dueRef = useRef<HTMLInputElement>(null);
 
-  function refresh(res: { ok: boolean; demo?: boolean; redirect?: string }) {
+  function refresh(res: { ok: boolean; demo?: boolean; redirect?: string; error?: string }) {
     if (res.ok && !res.demo) {
       if (res.redirect) router.replace(res.redirect);
       else router.refresh();
+    } else if (!res.ok) {
+      // Optimistische Änderung verwerfen → Server-Wahrheit wiederherstellen.
+      if (res.error) toast.error(res.error);
+      router.refresh();
     }
   }
 
@@ -153,7 +158,8 @@ export function AccountTasks({
                   type="button"
                   aria-label="Aufgabe löschen"
                   onClick={() => remove(t.id)}
-                  className="flex-none rounded-lg p-1.5 text-faint opacity-0 transition-opacity hover:bg-danger/10 hover:text-danger group-hover:opacity-100"
+                  disabled={pending}
+                  className="flex-none rounded-lg p-1.5 text-faint opacity-0 transition-opacity hover:bg-danger/10 hover:text-danger group-hover:opacity-100 disabled:opacity-50"
                 >
                   <IconTrash size={15} />
                 </button>

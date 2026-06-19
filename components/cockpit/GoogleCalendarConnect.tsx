@@ -50,8 +50,8 @@ function ConnectedBadge({ onDisconnect }: { onDisconnect: () => void }) {
 
   return (
     <div className="flex items-center gap-2.5">
-      <span className="flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-medium text-green-700 dark:text-green-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+      <span className="flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-3 py-1 text-xs font-medium text-success">
+        <span className="h-1.5 w-1.5 rounded-full bg-success" />
         Google Kalender verbunden
       </span>
       <button
@@ -128,7 +128,7 @@ export function GoogleCalendarConnect({
     <div className="space-y-3">
       {/* Erfolgs-Meldung nach OAuth-Redirect */}
       {justConnected && (
-        <div className="flex items-center gap-2 rounded-xl border border-green-500/30 bg-green-500/8 px-3 py-2 text-sm text-green-700 dark:text-green-400">
+        <div className="flex items-center gap-2 rounded-xl border border-success/30 bg-success/[0.08] px-3 py-2 text-sm text-success">
           <span>✓</span>
           <span>Google Kalender erfolgreich verbunden. Deine CRM-Aufgaben werden ab jetzt automatisch synchronisiert.</span>
         </div>

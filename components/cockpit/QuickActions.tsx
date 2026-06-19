@@ -10,42 +10,12 @@ import {
 } from "@/components/ui/icons";
 
 const QUICK_ACTIONS = [
-  {
-    label: "Aufgaben",
-    href: "/cockpit/aufgaben",
-    icon: IconTasks,
-    accent: "text-blue-500 bg-blue-500/10",
-  },
-  {
-    label: "Kandidaten",
-    href: "/cockpit/kandidaten",
-    icon: IconUsers,
-    accent: "text-emerald-500 bg-emerald-500/10",
-  },
-  {
-    label: "Kunden",
-    href: "/cockpit/kunden",
-    icon: IconBriefcase,
-    accent: "text-violet-500 bg-violet-500/10",
-  },
-  {
-    label: "Leads",
-    href: "/cockpit/leads",
-    icon: IconSpark,
-    accent: "text-sky-500 bg-sky-500/10",
-  },
-  {
-    label: "Chancen",
-    href: "/cockpit/sales",
-    icon: IconTrophy,
-    accent: "text-amber-500 bg-amber-500/10",
-  },
-  {
-    label: "Berichte",
-    href: "/cockpit/berichte",
-    icon: IconChart,
-    accent: "text-rose-500 bg-rose-500/10",
-  },
+  { label: "Aufgaben", href: "/cockpit/aufgaben", icon: IconTasks },
+  { label: "Kandidaten", href: "/cockpit/kandidaten", icon: IconUsers },
+  { label: "Kunden", href: "/cockpit/kunden", icon: IconBriefcase },
+  { label: "Leads", href: "/cockpit/leads", icon: IconSpark },
+  { label: "Chancen", href: "/cockpit/sales", icon: IconTrophy },
+  { label: "Berichte", href: "/cockpit/berichte", icon: IconChart },
 ] as const;
 
 /** Schnellzugriff-Leiste – oben im Dashboard als HubSpot-Ersatz. */
@@ -54,15 +24,13 @@ export function QuickActions() {
     <Card>
       <CardBody className="p-3">
         <div className="flex items-center gap-1">
-          {QUICK_ACTIONS.map(({ label, href, icon: Icon, accent }) => (
+          {QUICK_ACTIONS.map(({ label, href, icon: Icon }) => (
             <Link
               key={label}
               href={href}
               className="group flex flex-1 flex-col items-center gap-1.5 rounded-xl px-2 py-3 transition-colors hover:bg-surface"
             >
-              <div
-                className={`flex h-9 w-9 items-center justify-center rounded-xl ${accent} transition-transform group-hover:scale-110`}
-              >
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-elevated text-muted transition-all group-hover:scale-110 group-hover:bg-brand/10 group-hover:text-brand-deep">
                 <Icon size={17} />
               </div>
               <span className="text-[11px] font-medium text-muted group-hover:text-ink">

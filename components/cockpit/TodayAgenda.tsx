@@ -25,14 +25,14 @@ function TaskRow({ task, tone }: { task: Task; tone: "overdue" | "today" | "soon
   const href = relatedHref(task.related_type, task.related_id);
   const rowBg =
     tone === "overdue"
-      ? "border-red-500/30 bg-red-500/5"
+      ? "border-danger/30 bg-danger/[0.05]"
       : "border-border/60 bg-elevated/40";
 
   return (
     <div className={`flex items-start gap-3 rounded-xl border px-3 py-2.5 ${rowBg}`}>
       <TimeBadge time={task.due_time} />
       <div className="min-w-0 flex-1">
-        <p className={`truncate text-sm font-medium ${tone === "overdue" ? "text-red-700 dark:text-red-400" : "text-ink"}`}>
+        <p className={`truncate text-sm font-medium ${tone === "overdue" ? "text-danger" : "text-ink"}`}>
           {task.title}
         </p>
         {task.related_label ? (
@@ -66,9 +66,9 @@ function AgendaSection({
   if (tasks.length === 0) return null;
   const labelColor =
     tone === "overdue"
-      ? "text-red-600 dark:text-red-400"
+      ? "text-danger"
       : tone === "today"
-      ? "text-amber-600 dark:text-amber-400"
+      ? "text-warning"
       : "text-muted";
 
   return (

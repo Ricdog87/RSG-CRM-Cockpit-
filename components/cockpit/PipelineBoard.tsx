@@ -61,7 +61,9 @@ export function PipelineBoard({ deals }: { deals: Deal[] }) {
             </div>
             <div className="space-y-2">
               {items.length === 0 ? (
-                <p className="px-1 py-4 text-center text-xs text-faint">—</p>
+                <p className="rounded-xl border border-dashed border-border/60 px-1 py-5 text-center text-xs text-faint">
+                  Keine Deals
+                </p>
               ) : (
                 items.map((deal) => <DealCard key={deal.id} deal={deal} />)
               )}
