@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -24,6 +24,7 @@ export function AccountContacts({
 }) {
   const router = useRouter();
   const [items, setItems] = useState<Contact[]>(contacts);
+  useEffect(() => setItems(contacts), [contacts]);
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -61,8 +62,10 @@ export function AccountContacts({
       const res = editing
         ? await updateContact(editing, accountId, payload)
         : await addContact(accountId, payload);
-      if (res.ok && !res.demo) router.refresh();
-      else if (!res.ok) {
+      if (res.ok && !res.demo) {
+        if (res.redirect) router.replace(res.redirect);
+        else router.refresh();
+      } else if (!res.ok) {
         if (res.error) alert(res.error);
         router.refresh();
       }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MandatesList } from "@/components/cockpit/MandatesList";
 import { MandatesBoard } from "@/components/cockpit/MandatesBoard";
@@ -26,6 +26,7 @@ export function MandatesView({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(mandates);
+  useEffect(() => setItems(mandates), [mandates]);
   const [view, setView] = useState<View>("board");
 
   async function onDelete(id: string) {

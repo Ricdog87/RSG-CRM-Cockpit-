@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { KanbanBoard, type BoardColumn } from "@/components/cockpit/KanbanBoard";
 import { LineBadge } from "@/components/cockpit/LineBadge";
@@ -126,6 +126,7 @@ function OppCard({
 export function SalesView({ opportunities }: { opportunities: Opportunity[] }) {
   const router = useRouter();
   const [items, setItems] = useState(opportunities);
+  useEffect(() => setItems(opportunities), [opportunities]);
   const [filter, setFilter] = useState<Filter>("all");
 
   async function move(id: string, stage: SalesStage) {

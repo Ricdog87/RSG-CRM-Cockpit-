@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -16,6 +16,7 @@ import type { Segment } from "@/lib/crm-types";
 export function SegmentsView({ segments }: { segments: Segment[] }) {
   const router = useRouter();
   const [items, setItems] = useState(segments);
+  useEffect(() => setItems(segments), [segments]);
 
   async function onDelete(id: string) {
     const prevItems = items;

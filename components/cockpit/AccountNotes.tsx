@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -19,6 +19,7 @@ export function AccountNotes({
 }) {
   const router = useRouter();
   const [items, setItems] = useState<Note[]>(notes);
+  useEffect(() => setItems(notes), [notes]);
   const [pending, start] = useTransition();
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -34,8 +35,12 @@ export function AccountNotes({
     if (ref.current) ref.current.value = "";
     start(async () => {
       const res = await addNote(accountId, body);
-      if (res.ok && !res.demo) router.refresh();
-      else if (!res.ok) setItems((prev) => prev.filter((n) => n.id !== optimistic.id));
+      if (res.ok && !res.demo) {
+        if (res.redirect) router.replace(res.redirect);
+        else router.refresh();
+      } else if (!res.ok) {
+        setItems((prev) => prev.filter((n) => n.id !== optimistic.id));
+      }
     });
   }
 
