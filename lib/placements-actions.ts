@@ -62,20 +62,21 @@ export async function createPlacement(input: PlacementInput): Promise<ActionResu
     return { ok: false, error: insErr.message };
   }
 
-  // Kandidat:in auf „platziert" + Mandats-Besetzung +1 (best effort).
+  // Kandidat:in auf „platziert" + Mandats-Besetzung +1 (best effort, partner-gescoped).
   if (input.candidate_id) {
-    await supabase.from("candidates").update({ stage: "platziert" }).eq("id", input.candidate_id);
+    await supabase.from("candidates").update({ stage: "platziert" }).eq("id", input.candidate_id).eq("partner_id", pid);
   }
   if (input.mandate_id) {
     const { data: m } = await supabase
       .from("recruiting_mandates")
       .select("filled, positions")
       .eq("id", input.mandate_id)
+      .eq("partner_id", pid)
       .maybeSingle();
     const md = m as { filled?: number; positions?: number } | null;
     if (md) {
       const filled = Math.min((md.filled ?? 0) + 1, md.positions ?? (md.filled ?? 0) + 1);
-      await supabase.from("recruiting_mandates").update({ filled }).eq("id", input.mandate_id);
+      await supabase.from("recruiting_mandates").update({ filled }).eq("id", input.mandate_id).eq("partner_id", pid);
     }
     revalidatePath(`/cockpit/projekte/recruiting/${input.mandate_id}`);
   }
@@ -90,8 +91,10 @@ export async function setPlacementStatus(
   mandateId?: string
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("placements").update({ status }).eq("id", id);
+  const { error } = await supabase.from("placements").update({ status }).eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   if (mandateId) revalidatePath(`/cockpit/projekte/recruiting/${mandateId}`);
   revalidatePath("/cockpit");
@@ -100,8 +103,10 @@ export async function setPlacementStatus(
 
 export async function deletePlacement(id: string, mandateId?: string): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("placements").delete().eq("id", id);
+  const { error } = await supabase.from("placements").delete().eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   if (mandateId) revalidatePath(`/cockpit/projekte/recruiting/${mandateId}`);
   revalidatePath("/cockpit");

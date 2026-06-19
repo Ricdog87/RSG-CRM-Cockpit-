@@ -74,8 +74,10 @@ export async function upsertMetric(input: MetricInput): Promise<ActionResult> {
 
 export async function deleteMetric(id: string, projectId: string): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("ki_metrics").delete().eq("id", id);
+  const { error } = await supabase.from("ki_metrics").delete().eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/cockpit/projekte/ki/${projectId}`);
   return { ok: true };

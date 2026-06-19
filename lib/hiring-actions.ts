@@ -74,8 +74,10 @@ export async function updateInterview(
   patch: { status?: InterviewStatus; score?: number | null; feedback?: string | null }
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("candidate_interviews").update(patch).eq("id", id);
+  const { error } = await supabase.from("candidate_interviews").update(patch).eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
   return { ok: true };
@@ -83,8 +85,10 @@ export async function updateInterview(
 
 export async function deleteInterview(id: string, candidateId: string): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("candidate_interviews").delete().eq("id", id);
+  const { error } = await supabase.from("candidate_interviews").delete().eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
   return { ok: true };
@@ -126,7 +130,7 @@ export async function createOffer(input: OfferInput): Promise<ActionResult> {
     return { ok: false, error: insErr.message };
   }
   // Phase angleichen: Angebot ⇒ Kandidat:in mindestens „angebot".
-  await supabase.from("candidates").update({ stage: "angebot" }).eq("id", input.candidate_id);
+  await supabase.from("candidates").update({ stage: "angebot" }).eq("id", input.candidate_id).eq("partner_id", pid);
   revalidatePath(`/cockpit/kandidaten/${input.candidate_id}`);
   return { ok: true };
 }
@@ -137,12 +141,14 @@ export async function updateOffer(
   patch: { status?: OfferStatus; decline_reason?: string | null }
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("candidate_offers").update(patch).eq("id", id);
+  const { error } = await supabase.from("candidate_offers").update(patch).eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   // Abgelehntes Angebot ⇒ Kandidat:in auf „Absage" (Lernsignal fürs Matching).
   if (patch.status === "abgelehnt") {
-    await supabase.from("candidates").update({ stage: "abgelehnt" }).eq("id", candidateId);
+    await supabase.from("candidates").update({ stage: "abgelehnt" }).eq("id", candidateId).eq("partner_id", pid);
   }
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
   return { ok: true };
@@ -150,8 +156,10 @@ export async function updateOffer(
 
 export async function deleteOffer(id: string, candidateId: string): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("candidate_offers").delete().eq("id", id);
+  const { error } = await supabase.from("candidate_offers").delete().eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
   return { ok: true };

@@ -92,11 +92,13 @@ export async function updateMilestone(
   patch: { status?: MilestoneStatus; target_date?: string | null }
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
   const set: Record<string, unknown> = { ...patch };
   if (patch.status === "erledigt") set.done_date = new Date().toISOString().slice(0, 10);
   if (patch.status && patch.status !== "erledigt") set.done_date = null;
-  const { error } = await supabase.from("ki_milestones").update(set).eq("id", id);
+  const { error } = await supabase.from("ki_milestones").update(set).eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   rv(projectId);
   return { ok: true };
@@ -104,8 +106,10 @@ export async function updateMilestone(
 
 export async function deleteMilestone(id: string, projectId: string): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("ki_milestones").delete().eq("id", id);
+  const { error } = await supabase.from("ki_milestones").delete().eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   rv(projectId);
   return { ok: true };

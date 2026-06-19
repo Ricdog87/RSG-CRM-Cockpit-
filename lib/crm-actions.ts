@@ -139,7 +139,13 @@ async function updateGraceful(
   let payload: Record<string, unknown> = { ...patch };
   const stripped: string[] = [];
   for (let attempt = 0; attempt < 8; attempt++) {
-    const { error: updErr } = await supabase.from(table).update(payload).eq("id", id);
+    // Defense-in-Depth: zusätzlich zur RLS auf den eigenen Partner einschränken,
+    // damit niemals fremde Datensätze über eine bekannte ID verändert werden.
+    const { error: updErr } = await supabase
+      .from(table)
+      .update(payload)
+      .eq("id", id)
+      .eq("partner_id", pid);
     if (!updErr) {
       revalidateMany(revalidate);
       return { ok: true, warning: strippedWarning(table, stripped) };
@@ -793,8 +799,12 @@ async function update(
   const { id: pid, error } = await currentPartnerId();
   if (!pid) return { ok: false, error };
   const supabase = createClient();
-  // RLS beschränkt zusätzlich auf eigene Datensätze.
-  const { error: updErr } = await supabase.from(table).update(patch).eq("id", id);
+  // Defense-in-Depth zusätzlich zur RLS: nur eigene Datensätze ändern.
+  const { error: updErr } = await supabase
+    .from(table)
+    .update(patch)
+    .eq("id", id)
+    .eq("partner_id", pid);
   if (updErr) return { ok: false, error: updErr.message };
   revalidatePath(revalidate);
   return { ok: true };
@@ -1148,8 +1158,14 @@ export async function deleteNote(
   accountId: string
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("account_notes").delete().eq("id", id);
+  const { error } = await supabase
+    .from("account_notes")
+    .delete()
+    .eq("id", id)
+    .eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/cockpit/kunden/${accountId}`);
   return { ok: true };
@@ -1230,8 +1246,14 @@ export async function deleteContact(
   accountId: string
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("account_contacts").delete().eq("id", id);
+  const { error } = await supabase
+    .from("account_contacts")
+    .delete()
+    .eq("id", id)
+    .eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/cockpit/kunden/${accountId}`);
   return { ok: true };
@@ -1846,8 +1868,14 @@ export async function deleteCandidateNote(
   candidateId: string
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("candidate_notes").delete().eq("id", id);
+  const { error } = await supabase
+    .from("candidate_notes")
+    .delete()
+    .eq("id", id)
+    .eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
   return { ok: true };

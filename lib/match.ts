@@ -312,7 +312,9 @@ export async function submitCandidateToMandate(
     .from("recruiting_mandates")
     .select("account_name, role")
     .eq("id", mandateId)
+    .eq("partner_id", pid)
     .maybeSingle();
+  if (!mandate) return { ok: false, error: "Mandat nicht gefunden." };
   const md = (mandate as { account_name?: string; role?: string } | null) ?? null;
 
   const { data: existing } = await supabase
@@ -320,6 +322,7 @@ export async function submitCandidateToMandate(
     .select("id")
     .eq("candidate_id", candidateId)
     .eq("mandate_id", mandateId)
+    .eq("partner_id", pid)
     .maybeSingle();
   if (existing) return { ok: true, already: true };
 
@@ -338,7 +341,7 @@ export async function submitCandidateToMandate(
     return { ok: false, error: insErr.message };
   }
 
-  await supabase.from("candidates").update({ mandate_id: mandateId }).eq("id", candidateId);
+  await supabase.from("candidates").update({ mandate_id: mandateId }).eq("id", candidateId).eq("partner_id", pid);
 
   revalidatePath(`/cockpit/projekte/recruiting/${mandateId}`);
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);

@@ -97,9 +97,14 @@ async function upsertSubmission(supabase: Svc, mandate: Mandate, candidateId: st
     .select("id")
     .eq("candidate_id", candidateId)
     .eq("mandate_id", mandate.id)
+    .eq("partner_id", mandate.partner_id)
     .maybeSingle();
   if ((sub as { id?: string } | null)?.id) {
-    await supabase.from("candidate_submissions").update({ stage }).eq("id", (sub as { id: string }).id);
+    await supabase
+      .from("candidate_submissions")
+      .update({ stage })
+      .eq("id", (sub as { id: string }).id)
+      .eq("partner_id", mandate.partner_id);
   } else {
     await supabase.from("candidate_submissions").insert({
       partner_id: mandate.partner_id,
@@ -136,7 +141,8 @@ async function applyResponse(supabase: Svc, mandate: Mandate, input: CoreInput):
       await supabase
         .from("candidates")
         .update({ cv_path: input.cvPath, cv_filename: input.cvFilename ?? null, cv_uploaded_at: new Date().toISOString() })
-        .eq("id", candidateId);
+        .eq("id", candidateId)
+        .eq("partner_id", mandate.partner_id);
     }
   }
 
@@ -183,7 +189,8 @@ async function applyResponse(supabase: Svc, mandate: Mandate, input: CoreInput):
     await supabase
       .from("candidates")
       .update({ mandate_id: mandate.id, mandate_account: mandate.account_name ?? null })
-      .eq("id", candidateId);
+      .eq("id", candidateId)
+      .eq("partner_id", mandate.partner_id);
   }
 
   if (candidateId && input.consent) {
@@ -191,6 +198,7 @@ async function applyResponse(supabase: Svc, mandate: Mandate, input: CoreInput):
       .from("candidate_consents")
       .select("id")
       .eq("candidate_id", candidateId)
+      .eq("partner_id", mandate.partner_id)
       .eq("status", "granted")
       .maybeSingle();
     if (!(has as { id?: string } | null)?.id) {

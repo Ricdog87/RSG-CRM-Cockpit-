@@ -62,8 +62,10 @@ export async function updateReference(
   patch: { status?: ReferenceStatus; feedback?: string | null }
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("candidate_references").update(patch).eq("id", id);
+  const { error } = await supabase.from("candidate_references").update(patch).eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
   return { ok: true };
@@ -71,8 +73,10 @@ export async function updateReference(
 
 export async function deleteReference(id: string, candidateId: string): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("candidate_references").delete().eq("id", id);
+  const { error } = await supabase.from("candidate_references").delete().eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
   return { ok: true };
@@ -85,6 +89,8 @@ export async function updatePlacementAftercare(
   patch: { client_nps?: number | null; candidate_nps?: number | null; aftercare_notes?: string | null }
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
   const { error } = await supabase
     .from("placements")
@@ -93,7 +99,8 @@ export async function updatePlacementAftercare(
       candidate_nps: patch.candidate_nps ?? null,
       aftercare_notes: patch.aftercare_notes || null,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("partner_id", pid);
   if (error) {
     if (/column .*(client_nps|candidate_nps|aftercare_notes).* does not exist/i.test(error.message))
       return { ok: false, error: "Spalten fehlen – Migration 17_references_aftercare.sql ausführen." };

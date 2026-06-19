@@ -177,10 +177,12 @@ export async function setInvoiceStatus(
   mandateId?: string
 ): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
   const patch: Record<string, unknown> = { status };
   patch.paid_date = status === "bezahlt" ? today() : null;
-  const { error } = await supabase.from("invoices").update(patch).eq("id", id);
+  const { error } = await supabase.from("invoices").update(patch).eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   if (mandateId) revalidatePath(`/cockpit/projekte/recruiting/${mandateId}`);
   revalidatePath("/cockpit");
@@ -189,8 +191,10 @@ export async function setInvoiceStatus(
 
 export async function deleteInvoice(id: string, mandateId?: string): Promise<ActionResult> {
   if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
   const supabase = createClient();
-  const { error } = await supabase.from("invoices").delete().eq("id", id);
+  const { error } = await supabase.from("invoices").delete().eq("id", id).eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
   if (mandateId) revalidatePath(`/cockpit/projekte/recruiting/${mandateId}`);
   revalidatePath("/cockpit");
