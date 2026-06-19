@@ -20,11 +20,14 @@ export function MandateFormDialog({
   accountNames = [],
   mandate,
   renderTrigger,
+  compact = false,
   defaultAccountName,
 }: {
   accountNames?: string[];
   mandate?: RecruitingMandate;
   renderTrigger?: (open: () => void) => React.ReactNode;
+  /** Kompakter „+ Mandat"-Button – serialisierbar, nutzbar aus Server-Komponenten. */
+  compact?: boolean;
   /** Vorbelegung des Kunden beim Anlegen (z.B. aus der Kundenmaske). */
   defaultAccountName?: string;
 }) {
@@ -79,6 +82,14 @@ export function MandateFormDialog({
     <>
       {renderTrigger ? (
         renderTrigger(() => setOpen(true))
+      ) : compact ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="rounded-lg border border-border bg-elevated px-2.5 py-1 text-xs font-semibold text-ink hover:bg-elevated/70"
+        >
+          + Mandat
+        </button>
       ) : (
         <Button onClick={() => setOpen(true)}>
           <IconPlus size={16} /> Mandat anlegen

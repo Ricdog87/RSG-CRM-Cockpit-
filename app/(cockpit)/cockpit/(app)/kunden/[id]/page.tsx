@@ -424,9 +424,7 @@ export default async function AccountDetailPage({
             <SectionHeader
               title="Recruiting-Mandate"
               hint={`${mandates.length} verknüpft`}
-              action={<MandateFormDialog defaultAccountName={account.name} renderTrigger={(open) => (
-                <button type="button" onClick={open} className="rounded-lg border border-border bg-elevated px-2.5 py-1 text-xs font-semibold text-ink hover:bg-elevated/70">+ Mandat</button>
-              )} />}
+              action={<MandateFormDialog defaultAccountName={account.name} compact />}
             />
             {mandates.length === 0 ? (
               <EmptyState title="Kein Mandat für diesen Account." />
