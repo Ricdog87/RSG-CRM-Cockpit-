@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/components/ui/cn";
 import { IconBolt } from "@/components/ui/icons";
 import { setAutomation } from "@/lib/crm-actions";
+import { toast } from "@/lib/toast";
 import type { AutomationDef } from "@/lib/automations";
 
 type Item = AutomationDef & { enabled: boolean };
@@ -57,7 +58,10 @@ export function AutomationsView({ items }: { items: Item[] }) {
     setState((s) => ({ ...s, [key]: next }));
     start(async () => {
       const res = await setAutomation(key, next);
-      if (!res.ok) setState((s) => ({ ...s, [key]: !next }));
+      if (!res.ok) {
+        setState((s) => ({ ...s, [key]: !next }));
+        toast.error(res.error ?? "Automatisierung konnte nicht umgeschaltet werden.");
+      }
     });
   }
 
