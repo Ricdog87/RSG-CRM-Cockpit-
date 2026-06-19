@@ -33,6 +33,9 @@ export type ActionResult = {
    * Der Dialog bleibt dann offen und zeigt den Hinweis an.
    */
   warning?: string;
+  /** Zielpfad, zu dem der Client nach Erfolg navigieren soll (z.B. wenn ein
+   *  abgeleiteter Kunde beim Speichern eine echte ID bekommt). */
+  redirect?: string;
 };
 
 const DEMO: ActionResult = { ok: true, demo: true };
@@ -987,12 +990,16 @@ export async function updateAccount(
       .limit(1);
     const existingId = (rows as Array<{ id?: string }> | null)?.[0]?.id;
     if (existingId) {
-      return updateGraceful("accounts", existingId, patch, [
+      const res = await updateGraceful("accounts", existingId, patch, [
         "/cockpit/kunden",
         `/cockpit/kunden/${existingId}`,
       ]);
+      // Abgeleitete ID → echte ID: Client auf die echte Detailseite leiten,
+      // damit nach dem Speichern kein „Seite nicht gefunden" entsteht.
+      return res.ok ? { ...res, redirect: `/cockpit/kunden/${existingId}` } : res;
     }
-    return insertGraceful("accounts", patch, ["/cockpit/kunden", "/cockpit/suche"]);
+    const ins = await insertGraceful("accounts", patch, ["/cockpit/kunden", "/cockpit/suche"]);
+    return ins.ok && ins.id ? { ...ins, redirect: `/cockpit/kunden/${ins.id}` } : ins;
   }
   return updateGraceful("accounts", id, patch, ["/cockpit/kunden", `/cockpit/kunden/${id}`]);
 }

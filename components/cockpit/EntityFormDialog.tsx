@@ -83,6 +83,13 @@ export function EntityFormDialog({
 
   useEffect(() => {
     if (state?.ok && !state.demo) {
+      // Abgeleiteter Kunde → echte ID: auf die echte Detailseite wechseln
+      // (verhindert „Seite nicht gefunden" nach dem Speichern).
+      if (state.redirect && state.redirect !== window.location.pathname) {
+        setOpen(false);
+        router.replace(state.redirect);
+        return;
+      }
       // Bei Warnung (verworfene Felder) Dialog offen lassen, aber gespeicherte
       // Felder im Hintergrund aktualisieren.
       router.refresh();
