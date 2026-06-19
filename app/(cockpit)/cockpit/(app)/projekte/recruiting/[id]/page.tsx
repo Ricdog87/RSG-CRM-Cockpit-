@@ -11,6 +11,7 @@ import { EntityFormDialog } from "@/components/cockpit/EntityFormDialog";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { Badge } from "@/components/ui/Badge";
+import { SafeBoundary } from "@/components/cockpit/SafeBoundary";
 import { MandateCandidates } from "@/components/cockpit/MandateCandidates";
 import { MandateMatchPanel } from "@/components/cockpit/MandateMatchPanel";
 import { MandateIntelCard } from "@/components/cockpit/MandateIntelCard";
@@ -36,6 +37,16 @@ const statusMeta: Record<MandateStatus, { label: string; tone: "neutral" | "sky"
   besetzt: { label: "Besetzt", tone: "success" },
   pausiert: { label: "Pausiert", tone: "warning" },
 };
+
+/** Label/Wert-Zeile im „Eckdaten"-Block (HubSpot-Stil). */
+function InfoItem({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="py-2 first:pt-0 last:pb-0">
+      <p className="kpi-label">{label}</p>
+      <div className="mt-0.5 text-sm text-ink">{children}</div>
+    </div>
+  );
+}
 
 export default async function MandateDetailPage({
   params,
@@ -69,7 +80,7 @@ export default async function MandateDetailPage({
       : `Festpreis ${formatEur(m.fee)} je Stelle`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <nav className="flex items-center gap-1.5 text-sm text-muted">
         <Link href="/cockpit/projekte/recruiting" className="hover:text-ink">
           Personalvermittlung
@@ -78,195 +89,254 @@ export default async function MandateDetailPage({
         <span className="truncate text-ink">{m.role || "Mandat"}</span>
       </nav>
 
-      <Card>
-        <CardBody>
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-sky text-white">
-                <IconBriefcase size={22} />
-              </span>
-              <div className="min-w-0">
-                <h1 className="text-xl font-bold text-ink">{m.role || "Mandat"}</h1>
-                {account ? (
-                  <Link href={`/cockpit/kunden/${account.id}`} className="text-sm text-muted hover:text-brand-deep">
-                    {m.account_name}
-                  </Link>
-                ) : (
-                  <p className="text-sm text-muted">{m.account_name}</p>
-                )}
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <Badge tone={st.tone}>{st.label}</Badge>
-                  <Badge tone="neutral">{pricingLabel}</Badge>
-                  {m.deadline ? <Badge tone="sky">bis {formatDate(m.deadline)}</Badge> : null}
+      {/* HubSpot-Style 3-Spalten-Record: Identität · Arbeit · Ergebnisse */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,21rem)] xl:items-start">
+        {/* ─────────── LINKS: Identität & Eckdaten ─────────── */}
+        <div className="space-y-4 xl:sticky xl:top-20">
+          <Card>
+            <CardBody className="space-y-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-sky text-white">
+                  <IconBriefcase size={22} />
+                </span>
+                <div className="min-w-0">
+                  <h1 className="truncate text-lg font-bold text-ink">{m.role || "Mandat"}</h1>
+                  {account ? (
+                    <Link href={`/cockpit/kunden/${account.id}`} className="block truncate text-xs text-muted hover:text-brand-deep">
+                      {m.account_name}
+                    </Link>
+                  ) : (
+                    <p className="truncate text-xs text-muted">{m.account_name}</p>
+                  )}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <Badge tone={st.tone}>{st.label}</Badge>
+                    {m.deadline ? <Badge tone="sky">bis {formatDate(m.deadline)}</Badge> : null}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <MandateFormDialog mandate={m} accountNames={accounts.map((a) => a.name)} />
-              {account ? (
-                <PlacementContractDialog
-                  account={account}
-                  label="Vertrag"
-                  prefill={{
-                    type: m.pricing_model === "percent" ? "percent" : "fixed",
-                    role: m.role,
-                    fee: m.fee,
-                    deposit: m.deposit,
-                    percent: m.fee_percent,
-                    split: m.split_payment,
+
+              {/* Schnellaktionen */}
+              <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+                <MandateFormDialog mandate={m} accountNames={accounts.map((a) => a.name)} compact />
+                {account ? (
+                  <PlacementContractDialog
+                    account={account}
+                    label="Vertrag"
+                    prefill={{
+                      type: m.pricing_model === "percent" ? "percent" : "fixed",
+                      role: m.role,
+                      fee: m.fee,
+                      deposit: m.deposit,
+                      percent: m.fee_percent,
+                      split: m.split_payment,
+                    }}
+                  />
+                ) : null}
+                <MandateProposalButton
+                  mandate={m}
+                  customer={m.account_name}
+                  contactName={account?.contact_name}
+                  senderName={account?.owner}
+                />
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* Eckdaten */}
+          <Card>
+            <CardBody>
+              <SectionHeader title="Eckdaten" />
+              <div className="divide-y divide-border/60">
+                <InfoItem label="Honorarmodell">{pricingLabel}</InfoItem>
+                <InfoItem label="Stellen">
+                  {formatNumber(m.positions)} <span className="text-faint">· {formatNumber(offen)} offen</span>
+                </InfoItem>
+                <InfoItem label="Besetzt">{formatNumber(m.filled)}</InfoItem>
+                <InfoItem label="Erwarteter Umsatz">
+                  {formatEur(mandateRevenue(m))} <span className="text-faint">· {formatEur(offen * perPos)} offen</span>
+                </InfoItem>
+                <InfoItem label="Frist">{m.deadline ? formatDate(m.deadline) : "—"}</InfoItem>
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* Verknüpfter Kunde */}
+          {account ? (
+            <Card>
+              <CardBody>
+                <SectionHeader title="Kunde" hint="verknüpftes Unternehmen" />
+                <Link
+                  href={`/cockpit/kunden/${account.id}`}
+                  className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5 hover:border-brand/40"
+                >
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-sky/10 text-sky-deep">
+                      <IconBriefcase size={16} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-deep">{account.name}</span>
+                      <span className="block truncate text-xs text-faint">{account.branche || "Account öffnen"}</span>
+                    </span>
+                  </span>
+                  <IconChevronRight size={16} className="flex-none text-faint" />
+                </Link>
+              </CardBody>
+            </Card>
+          ) : null}
+        </div>
+
+        {/* ─────────── MITTE: Suche & Pipeline ─────────── */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard label="Stellen" value={formatNumber(m.positions)} hint={`${formatNumber(offen)} offen`} accent="brand" icon={IconBriefcase} />
+            <StatCard label="Besetzt" value={formatNumber(m.filled)} hint="erfolgreich" accent="success" icon={IconUserCheck} />
+            <StatCard label="Kandidat:innen" value={formatNumber(list.length)} hint="zugeordnet" accent="sky" icon={IconTarget} />
+            <StatCard label="Erw. Umsatz" value={formatEur(mandateRevenue(m))} hint={`${formatEur(offen * perPos)} offen`} accent="warning" icon={IconEuro} />
+          </div>
+
+          <SafeBoundary label="Intelligenz">
+            <MandateIntelCard intel={computeMandateIntel(m, list.length)} accountId={account?.id} accountName={account?.name} />
+          </SafeBoundary>
+
+          {m.pricing_model !== "percent" ? (
+            <SafeBoundary label="Zahlungsplan">
+              <MandatePaymentGate mandate={m} />
+            </SafeBoundary>
+          ) : null}
+
+          <SafeBoundary label="Stellenausschreibung">
+            <Card>
+              <CardBody>
+                <SectionHeader title="Stellenausschreibung" hint="Original hinterlegen · anonymisiert teilen" />
+                <JobPostingCard
+                  mandateId={m.id}
+                  role={m.role}
+                  jobPosting={m.job_posting}
+                  anonymized={m.job_posting_anonymized}
+                  shareToken={m.share_token}
+                />
+              </CardBody>
+            </Card>
+          </SafeBoundary>
+
+          <SafeBoundary label="Bewerber-Antworten">
+            <Card>
+              <CardBody>
+                <SectionHeader
+                  title="Bewerber-Antworten"
+                  hint="über den Stellen-Link: Interessiert / Absage"
+                  action={jobResponses.length > 0 ? <Badge tone="brand">{jobResponses.length}</Badge> : undefined}
+                />
+                {jobResponses.length === 0 ? (
+                  <p className="text-sm text-muted">
+                    Noch keine Rückmeldungen. Teile den anonymen Stellen-Link – wer „Interessiert“ oder
+                    „Nicht interessiert“ klickt, erscheint hier mit Name &amp; E-Mail.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {jobResponses.map((r) => (
+                      <li
+                        key={r.id}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5"
+                      >
+                        <div className="min-w-0">
+                          <Link
+                            href={`/cockpit/kandidaten/${r.candidate_id}`}
+                            className="truncate text-sm font-medium text-ink hover:text-brand-deep"
+                          >
+                            {r.candidate_name}
+                          </Link>
+                          <p className="truncate text-xs text-faint">
+                            {r.candidate_email ?? "—"}
+                            {r.created_at ? ` · ${formatDate(r.created_at)}` : ""}
+                          </p>
+                        </div>
+                        <Badge tone={r.stage === "interessiert" ? "success" : r.stage === "talent_pool" ? "brand" : "danger"}>
+                          {r.stage === "interessiert" ? "Interessiert" : r.stage === "talent_pool" ? "Talent-Pool" : "Absage"}
+                        </Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardBody>
+            </Card>
+          </SafeBoundary>
+
+          <SafeBoundary label="Search & Match">
+            <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.05] to-sky/[0.04]">
+              <CardBody>
+                <SectionHeader
+                  title="Search & Match"
+                  hint="passende Kandidat:innen per Algorithmus finden"
+                  action={<Badge tone="brand">Champions League</Badge>}
+                />
+                <MandateMatchPanel mandateId={m.id} />
+              </CardBody>
+            </Card>
+          </SafeBoundary>
+
+          <SafeBoundary label="Kandidaten-Pipeline">
+            <Card>
+              <CardBody>
+                <SectionHeader
+                  title="Kandidaten-Pipeline"
+                  hint="Status je Phase – per Auswahl verschieben"
+                  action={
+                    <EntityFormDialog
+                      triggerLabel="+ Kandidat:in"
+                      title="Kandidat:in zu diesem Mandat"
+                      description={`${m.account_name} · ${m.role}`}
+                      fields={withSelectOptions(CANDIDATE_FIELDS, "mandate_id", [
+                        { value: m.id, label: `${m.account_name} · ${m.role || "Mandat"}` },
+                      ])}
+                      action={createCandidate}
+                      initial={{ mandate_account: m.account_name, mandate_id: m.id }}
+                    />
+                  }
+                />
+                <MandateCandidates candidates={list} />
+              </CardBody>
+            </Card>
+          </SafeBoundary>
+        </div>
+
+        {/* ─────────── RECHTS: Ergebnisse (Platzierungen & Rechnungen) ─────────── */}
+        <SafeBoundary label="Ergebnisse">
+          <div className="space-y-4">
+            <Card>
+              <CardBody>
+                <SectionHeader title="Platzierungen" hint="Eintritt, 3-Monats-Honorarrate & Garantie" />
+                <PlacementsCard
+                  mandateId={m.id}
+                  accountName={m.account_name}
+                  role={m.role}
+                  defaultFee={mandateRevenue(m)}
+                  candidates={list.map((c) => ({ id: c.id, name: c.name }))}
+                  placements={placements}
+                />
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardBody>
+                <SectionHeader title="Rechnungen" hint="Honorar an den Kunden · Zahlstatus" />
+                <InvoicesCard
+                  mandateId={m.id}
+                  accountName={m.account_name}
+                  invoices={invoices}
+                  placements={placementsToInvoice}
+                  customer={{
+                    street: account?.strasse,
+                    zip: account?.plz,
+                    city: account?.ort,
+                    contactName: account?.contact_name,
                   }}
                 />
-              ) : null}
-              <MandateProposalButton
-                mandate={m}
-                customer={m.account_name}
-                contactName={account?.contact_name}
-                senderName={account?.owner}
-              />
-            </div>
+              </CardBody>
+            </Card>
           </div>
-        </CardBody>
-      </Card>
-
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Stellen" value={formatNumber(m.positions)} hint={`${formatNumber(offen)} offen`} accent="brand" icon={IconBriefcase} />
-        <StatCard label="Besetzt" value={formatNumber(m.filled)} hint="erfolgreich" accent="success" icon={IconUserCheck} />
-        <StatCard label="Kandidat:innen" value={formatNumber(list.length)} hint="zugeordnet" accent="sky" icon={IconTarget} />
-        <StatCard label="Erwarteter Umsatz" value={formatEur(mandateRevenue(m))} hint={`${formatEur(offen * perPos)} offen`} accent="warning" icon={IconEuro} />
+        </SafeBoundary>
       </div>
-
-      <MandateIntelCard intel={computeMandateIntel(m, list.length)} accountId={account?.id} accountName={account?.name} />
-
-      {m.pricing_model !== "percent" ? <MandatePaymentGate mandate={m} /> : null}
-
-      <Card>
-        <CardBody>
-          <SectionHeader
-            title="Stellenausschreibung"
-            hint="Original hinterlegen · anonymisiert teilen"
-          />
-          <JobPostingCard
-            mandateId={m.id}
-            role={m.role}
-            jobPosting={m.job_posting}
-            anonymized={m.job_posting_anonymized}
-            shareToken={m.share_token}
-          />
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardBody>
-          <SectionHeader
-            title="Bewerber-Antworten"
-            hint="über den Stellen-Link: Interessiert / Absage"
-            action={
-              jobResponses.length > 0 ? (
-                <Badge tone="brand">{jobResponses.length}</Badge>
-              ) : undefined
-            }
-          />
-          {jobResponses.length === 0 ? (
-            <p className="text-sm text-muted">
-              Noch keine Rückmeldungen. Teile den anonymen Stellen-Link – wer „Interessiert“ oder
-              „Nicht interessiert“ klickt, erscheint hier mit Name &amp; E-Mail.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {jobResponses.map((r) => (
-                <li
-                  key={r.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5"
-                >
-                  <div className="min-w-0">
-                    <Link
-                      href={`/cockpit/kandidaten/${r.candidate_id}`}
-                      className="truncate text-sm font-medium text-ink hover:text-brand-deep"
-                    >
-                      {r.candidate_name}
-                    </Link>
-                    <p className="truncate text-xs text-faint">
-                      {r.candidate_email ?? "—"}
-                      {r.created_at ? ` · ${formatDate(r.created_at)}` : ""}
-                    </p>
-                  </div>
-                  <Badge tone={r.stage === "interessiert" ? "success" : r.stage === "talent_pool" ? "brand" : "danger"}>
-                    {r.stage === "interessiert" ? "Interessiert" : r.stage === "talent_pool" ? "Talent-Pool" : "Absage"}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardBody>
-      </Card>
-
-      <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.05] to-sky/[0.04]">
-        <CardBody>
-          <SectionHeader
-            title="Search & Match"
-            hint="passende Kandidat:innen per Algorithmus finden"
-            action={<Badge tone="brand">Champions League</Badge>}
-          />
-          <MandateMatchPanel mandateId={m.id} />
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardBody>
-          <SectionHeader
-            title="Kandidaten-Pipeline"
-            hint="Status je Phase – per Auswahl verschieben"
-            action={
-              <EntityFormDialog
-                triggerLabel="+ Kandidat:in"
-                title="Kandidat:in zu diesem Mandat"
-                description={`${m.account_name} · ${m.role}`}
-                fields={withSelectOptions(CANDIDATE_FIELDS, "mandate_id", [
-                  { value: m.id, label: `${m.account_name} · ${m.role || "Mandat"}` },
-                ])}
-                action={createCandidate}
-                initial={{ mandate_account: m.account_name, mandate_id: m.id }}
-              />
-            }
-          />
-          <MandateCandidates candidates={list} />
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardBody>
-          <SectionHeader
-            title="Platzierungen"
-            hint="Eintritt, 3-Monats-Honorarrate & Garantie"
-          />
-          <PlacementsCard
-            mandateId={m.id}
-            accountName={m.account_name}
-            role={m.role}
-            defaultFee={mandateRevenue(m)}
-            candidates={list.map((c) => ({ id: c.id, name: c.name }))}
-            placements={placements}
-          />
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardBody>
-          <SectionHeader title="Rechnungen" hint="Honorar an den Kunden · Zahlstatus" />
-          <InvoicesCard
-            mandateId={m.id}
-            accountName={m.account_name}
-            invoices={invoices}
-            placements={placementsToInvoice}
-            customer={{
-              street: account?.strasse,
-              zip: account?.plz,
-              city: account?.ort,
-              contactName: account?.contact_name,
-            }}
-          />
-        </CardBody>
-      </Card>
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Copyable } from "@/components/ui/Copyable";
+import { SafeBoundary } from "@/components/cockpit/SafeBoundary";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { CandidateStageControl } from "@/components/cockpit/CandidateStageControl";
 import { CvDownloadButton } from "@/components/cockpit/CvDownloadButton";
@@ -54,16 +55,6 @@ const STAGE: Record<CandidateStage, { label: string; tone: "neutral" | "sky" | "
   platziert: { label: "Platziert", tone: "success" },
   abgelehnt: { label: "Abgelehnt", tone: "danger" },
 };
-
-function initials(name: string): string {
-  return name
-    .split(" ")
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
 
 function candNo(n?: number): string {
   return n != null ? `RSG-${String(n).padStart(5, "0")}` : "";
@@ -132,8 +123,13 @@ export default async function KandidatDetailPage({
     c.willing_to_relocate ? "umzugsbereit" : null,
   ].filter(Boolean) as string[];
 
+  const contactBtn = (active: boolean) =>
+    active
+      ? "inline-flex items-center gap-1.5 rounded-xl border border-border bg-elevated/60 px-3 py-1.5 text-xs font-medium text-ink hover:border-brand/40 hover:text-brand-deep"
+      : "inline-flex items-center gap-1.5 rounded-xl border border-border bg-elevated/30 px-3 py-1.5 text-xs font-medium text-faint";
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-sm text-muted">
         <Link href="/cockpit/kandidaten" className="hover:text-ink">
@@ -143,85 +139,68 @@ export default async function KandidatDetailPage({
         <span className="truncate text-ink">{c.name}</span>
       </nav>
 
-      {/* Profil-Header (volle Breite, mobil zuerst) */}
-      <Card>
-        <CardBody className="space-y-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <CandidatePhoto
-                candidateId={c.id}
-                name={c.name}
-                photoPath={c.photo_path}
-                hasCv={Boolean(c.cv_path)}
-                size={56}
-              />
-              <div className="min-w-0">
-                <h1 className="truncate text-lg font-bold text-ink">{[c.salutation, c.title, c.name].filter(Boolean).join(" ")}</h1>
-                <p className="truncate text-sm text-muted">{[c.role || "Position offen", c.current_employer].filter(Boolean).join(" · ")}</p>
-                {c.candidate_no != null ? (
-                  <p className="mt-0.5 font-mono text-[0.7rem] font-medium text-faint">{candNo(c.candidate_no)}</p>
-                ) : null}
+      {/* HubSpot-Style 3-Spalten-Record: Identität · Aktivitäten · Verknüpfungen */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,21rem)] xl:items-start">
+        {/* ─────────── LINKS: Identität & Stammdaten ─────────── */}
+        <div className="space-y-4 xl:sticky xl:top-20">
+          <Card>
+            <CardBody className="space-y-4">
+              <div className="flex items-start gap-3">
+                <CandidatePhoto
+                  candidateId={c.id}
+                  name={c.name}
+                  photoPath={c.photo_path}
+                  hasCv={Boolean(c.cv_path)}
+                  size={52}
+                />
+                <div className="min-w-0">
+                  <h1 className="truncate text-lg font-bold text-ink">{[c.salutation, c.title, c.name].filter(Boolean).join(" ")}</h1>
+                  <p className="truncate text-xs text-muted">{[c.role || "Position offen", c.current_employer].filter(Boolean).join(" · ")}</p>
+                  {c.candidate_no != null ? (
+                    <p className="mt-0.5 font-mono text-[0.7rem] font-medium text-faint">{candNo(c.candidate_no)}</p>
+                  ) : null}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <Badge tone={stage.tone}>{stage.label}</Badge>
+                    {c.source ? <Badge tone="neutral">{c.source}</Badge> : null}
+                  </div>
+                </div>
               </div>
-            </div>
-            <EditDialog
-              id={c.id}
-              title="Kandidat:in bearbeiten"
-              fields={editFields}
-              action={updateCandidate}
-              initial={candidateInitial(c)}
-            />
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={stage.tone}>{stage.label}</Badge>
-            {c.source ? <Badge tone="neutral">{c.source}</Badge> : null}
-            <a
-              href={c.email ? `mailto:${c.email}` : undefined}
-              aria-disabled={!c.email}
-              className={
-                c.email
-                  ? "ml-auto inline-flex items-center gap-1.5 rounded-xl border border-border bg-elevated/60 px-3 py-1.5 text-xs font-medium text-ink hover:border-brand/40 hover:text-brand-deep"
-                  : "ml-auto inline-flex items-center gap-1.5 rounded-xl border border-border bg-elevated/30 px-3 py-1.5 text-xs font-medium text-faint"
-              }
-            >
-              <IconMail size={14} /> E-Mail
-            </a>
-            <a
-              href={c.phone ? `tel:${c.phone.replace(/\s+/g, "")}` : undefined}
-              aria-disabled={!c.phone}
-              className={
-                c.phone
-                  ? "inline-flex items-center gap-1.5 rounded-xl border border-border bg-elevated/60 px-3 py-1.5 text-xs font-medium text-ink hover:border-brand/40 hover:text-brand-deep"
-                  : "inline-flex items-center gap-1.5 rounded-xl border border-border bg-elevated/30 px-3 py-1.5 text-xs font-medium text-faint"
-              }
-            >
-              <IconPhone size={14} /> Anruf
-            </a>
-          </div>
+              {/* Schnellaktionen */}
+              <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+                <a href={c.email ? `mailto:${c.email}` : undefined} aria-disabled={!c.email} className={contactBtn(Boolean(c.email))}>
+                  <IconMail size={14} /> E-Mail
+                </a>
+                <a href={c.phone ? `tel:${c.phone.replace(/\s+/g, "")}` : undefined} aria-disabled={!c.phone} className={contactBtn(Boolean(c.phone))}>
+                  <IconPhone size={14} /> Anruf
+                </a>
+                <EditDialog
+                  id={c.id}
+                  title="Kandidat:in bearbeiten"
+                  fields={editFields}
+                  action={updateCandidate}
+                  initial={candidateInitial(c)}
+                />
+              </div>
 
-          <AiCallButton candidateId={c.id} phone={c.phone} />
+              <AiCallButton candidateId={c.id} phone={c.phone} />
 
-          {quickFacts.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {quickFacts.map((chip, i) => (
-                <span
-                  key={i}
-                  className="inline-flex items-center rounded-lg bg-elevated/60 px-2 py-1 text-[0.7rem] font-medium text-muted ring-1 ring-border"
-                >
-                  {chip}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </CardBody>
-      </Card>
+              {quickFacts.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {quickFacts.map((chip, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center rounded-lg bg-elevated/60 px-2 py-1 text-[0.7rem] font-medium text-muted ring-1 ring-border"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </CardBody>
+          </Card>
 
-      <CandidateIntelHint intel={computeCandidateIntel(c)} candidateId={c.id} candidateName={c.name} />
-
-      <div className="grid gap-5 lg:grid-cols-12">
-        {/* Eigenschaften – mobil NACH dem Aktivitäts-Center */}
-        <div className="order-2 space-y-5 lg:order-1 lg:col-span-3">
-          {/* Wichtige Informationen */}
+          {/* Auf einen Blick */}
           <Card>
             <CardBody>
               <SectionHeader title="Auf einen Blick" hint="Recruiter-Sicht" />
@@ -310,219 +289,231 @@ export default async function KandidatDetailPage({
           </Card>
         </div>
 
-        {/* Aktivitäts-Center – mobil direkt nach dem Header */}
-        <div className="order-1 lg:order-2 lg:col-span-6">
-          <CandidateActivity
-            candidateId={c.id}
-            candidateName={c.name}
-            notes={notes}
-            tasks={tasks}
-            emails={emails}
-          />
-        </div>
+        {/* ─────────── MITTE: Aktivitäten & Intelligenz ─────────── */}
+        <div className="space-y-4">
+          <SafeBoundary label="Intelligenz">
+            <CandidateIntelHint intel={computeCandidateIntel(c)} candidateId={c.id} candidateName={c.name} />
+          </SafeBoundary>
 
-        {/* Rechte Spalte: Verknüpfungen / Dokumente */}
-        <div className="order-3 space-y-5 lg:order-3 lg:col-span-3">
-          <Card>
-            <CardBody>
-              <SectionHeader title="DSGVO-Einwilligung" hint="Datenverarbeitung" />
-              <CandidateConsent
-                candidateId={c.id}
-                hasEmail={Boolean(c.email)}
-                status={consent?.status ?? "none"}
-                sentAt={consent?.sent_at}
-                grantedAt={consent?.granted_at}
-              />
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardBody>
-              <SectionHeader title="Mandat / Account" hint="verknüpftes Unternehmen" />
-              {mandateAccount || assignedMandate ? (
-                <div className="space-y-2">
-                  {mandateAccount ? (
-                    <Link
-                      href={`/cockpit/kunden/${mandateAccount.id}`}
-                      className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5 hover:border-brand/40"
-                    >
-                      <span className="flex min-w-0 items-center gap-2.5">
-                        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-sky/10 text-sky-deep">
-                          <IconBriefcase size={16} />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-deep">
-                            {mandateAccount.name}
-                          </span>
-                          <span className="block truncate text-xs text-faint">
-                            {mandateAccount.branche || "Account öffnen"}
-                          </span>
-                        </span>
-                      </span>
-                      <IconChevronRight size={16} className="flex-none text-faint" />
-                    </Link>
-                  ) : null}
-                  {assignedMandate ? (
-                    <Link
-                      href={`/cockpit/projekte/recruiting/${assignedMandate.id}`}
-                      className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5 hover:border-brand/40"
-                    >
-                      <span className="flex min-w-0 items-center gap-2.5">
-                        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand/10 text-brand-deep">
-                          <IconBriefcase size={16} />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-deep">
-                            {assignedMandate.role || "Suchprojekt"}
-                          </span>
-                          <span className="block truncate text-xs text-faint">
-                            Suchprojekt öffnen
-                          </span>
-                        </span>
-                      </span>
-                      <IconChevronRight size={16} className="flex-none text-faint" />
-                    </Link>
-                  ) : null}
-                </div>
-              ) : (
-                <EmptyState title="Noch keinem Mandat zugeordnet." />
-              )}
-            </CardBody>
-          </Card>
-
-          {/* Vorstellungs-Historie (gegen Doppelbewerbung) */}
-          <Card>
-            <CardBody>
-              <SectionHeader title="Vorstellungen" hint="Bewerbungshistorie" />
-              {submissions.length === 0 ? (
-                <EmptyState title="Noch keinem Mandat vorgestellt." />
-              ) : (
-                <ul className="space-y-2">
-                  {submissions.map((sub) => (
-                    <li
-                      key={sub.id}
-                      className="rounded-xl border border-border bg-elevated/40 px-3 py-2"
-                    >
-                      <p className="truncate text-sm font-medium text-ink">
-                        {sub.account_name || "Mandat"}
-                        {sub.role ? <span className="text-faint"> · {sub.role}</span> : null}
-                      </p>
-                      <p className="text-[0.7rem] text-faint">
-                        {sub.stage} · {sub.created_at ? formatDate(sub.created_at) : ""}
-                        {sub.mandate_id ? (
-                          <>
-                            {" · "}
-                            <Link
-                              href={`/cockpit/projekte/recruiting/${sub.mandate_id}`}
-                              className="text-sky-deep hover:underline"
-                            >
-                              Mandat
-                            </Link>
-                          </>
-                        ) : null}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardBody>
-          </Card>
-
-          {/* Interviews */}
-          <Card>
-            <CardBody>
-              <SectionHeader title="Interviews" hint="Termine, Art & Feedback" />
-              <InterviewsCard candidateId={c.id} mandateId={c.mandate_id} interviews={interviews} />
-            </CardBody>
-          </Card>
-
-          {/* Angebote */}
-          <Card>
-            <CardBody>
-              <SectionHeader title="Angebote" hint="Gehalt, Status & Ablehnungsgrund" />
-              <OffersCard
-                candidateId={c.id}
-                mandateId={c.mandate_id}
-                defaultSalary={c.salary_expectation}
-                offers={offers}
-              />
-            </CardBody>
-          </Card>
-
-          {/* Referenzen */}
-          <Card>
-            <CardBody>
-              <SectionHeader title="Referenzen" hint="Referenz-Check & Feedback" />
-              <ReferencesCard candidateId={c.id} references={references} />
-            </CardBody>
-          </Card>
-
-          {/* Outbound-Sequenz */}
-          <Card>
-            <CardBody>
-              <SectionHeader title="Outbound-Sequenz" hint="Nachfass-Kadenz als Aufgaben" />
-              <SequenceEnroll candidateId={c.id} candidateName={c.name} />
-            </CardBody>
-          </Card>
+          <SafeBoundary label="Aktivitäten">
+            <CandidateActivity
+              candidateId={c.id}
+              candidateName={c.name}
+              notes={notes}
+              tasks={tasks}
+              emails={emails}
+            />
+          </SafeBoundary>
 
           {/* KI-Matching zum aktuell verknüpften Mandat */}
-          <Card>
-            <CardBody>
-              <SectionHeader title="KI-Matching" hint="Passung zum Mandat" />
-              <CandidateMatch id={c.id} />
-            </CardBody>
-          </Card>
+          <SafeBoundary label="KI-Matching">
+            <Card>
+              <CardBody>
+                <SectionHeader title="KI-Matching" hint="Passung zum Mandat" />
+                <CandidateMatch id={c.id} />
+              </CardBody>
+            </Card>
+          </SafeBoundary>
 
           {/* Reverse-Match: passende offene Mandate */}
-          <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.05] to-sky/[0.04]">
-            <CardBody>
-              <SectionHeader title="Passende Mandate" hint="offene Suchprojekte für diese Person" />
-              <CandidateMandateMatch candidateId={c.id} />
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardBody>
-              <SectionHeader title="Lebenslauf" hint="PDF oder Word" />
-              {cvPath ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand/10 text-brand-deep">
-                      <IconFolder size={16} />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm text-ink">{c.cv_filename || "CV-Datei"}</p>
-                      {c.cv_uploaded_at ? (
-                        <p className="text-[0.7rem] text-faint">
-                          hochgeladen am {formatDate(c.cv_uploaded_at)}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <CvDownloadButton path={cvPath} />
-                    <CandidateCvUpload candidateId={c.id} hasCv />
-                  </div>
-                  {isPdf ? <AnonymizeButton candidateId={c.id} /> : null}
-                  {isPdf ? <CvPreview path={cvPath} /> : null}
-                </div>
-              ) : (
-                <EmptyState
-                  icon={<IconFolder size={20} />}
-                  title="Kein CV hinterlegt. Lade die Bewerbungsunterlagen hoch."
-                  action={<CandidateCvUpload candidateId={c.id} hasCv={false} />}
-                />
-              )}
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardBody>
-              <SectionHeader title="Skill-Set" hint="aus dem Lebenslauf" />
-              <CandidateSkills id={c.id} skills={c.skills ?? []} canExtract={canExtract} />
-            </CardBody>
-          </Card>
+          <SafeBoundary label="Passende Mandate">
+            <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.05] to-sky/[0.04]">
+              <CardBody>
+                <SectionHeader title="Passende Mandate" hint="offene Suchprojekte für diese Person" />
+                <CandidateMandateMatch candidateId={c.id} />
+              </CardBody>
+            </Card>
+          </SafeBoundary>
         </div>
+
+        {/* ─────────── RECHTS: Verknüpfungen & Dokumente ─────────── */}
+        <SafeBoundary label="Verknüpfungen">
+          <div className="space-y-4">
+            <Card>
+              <CardBody>
+                <SectionHeader title="DSGVO-Einwilligung" hint="Datenverarbeitung" />
+                <CandidateConsent
+                  candidateId={c.id}
+                  hasEmail={Boolean(c.email)}
+                  status={consent?.status ?? "none"}
+                  sentAt={consent?.sent_at}
+                  grantedAt={consent?.granted_at}
+                />
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardBody>
+                <SectionHeader title="Mandat / Account" hint="verknüpftes Unternehmen" />
+                {mandateAccount || assignedMandate ? (
+                  <div className="space-y-2">
+                    {mandateAccount ? (
+                      <Link
+                        href={`/cockpit/kunden/${mandateAccount.id}`}
+                        className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5 hover:border-brand/40"
+                      >
+                        <span className="flex min-w-0 items-center gap-2.5">
+                          <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-sky/10 text-sky-deep">
+                            <IconBriefcase size={16} />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-deep">
+                              {mandateAccount.name}
+                            </span>
+                            <span className="block truncate text-xs text-faint">
+                              {mandateAccount.branche || "Account öffnen"}
+                            </span>
+                          </span>
+                        </span>
+                        <IconChevronRight size={16} className="flex-none text-faint" />
+                      </Link>
+                    ) : null}
+                    {assignedMandate ? (
+                      <Link
+                        href={`/cockpit/projekte/recruiting/${assignedMandate.id}`}
+                        className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5 hover:border-brand/40"
+                      >
+                        <span className="flex min-w-0 items-center gap-2.5">
+                          <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand/10 text-brand-deep">
+                            <IconBriefcase size={16} />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-deep">
+                              {assignedMandate.role || "Suchprojekt"}
+                            </span>
+                            <span className="block truncate text-xs text-faint">
+                              Suchprojekt öffnen
+                            </span>
+                          </span>
+                        </span>
+                        <IconChevronRight size={16} className="flex-none text-faint" />
+                      </Link>
+                    ) : null}
+                  </div>
+                ) : (
+                  <EmptyState title="Noch keinem Mandat zugeordnet." />
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Vorstellungs-Historie (gegen Doppelbewerbung) */}
+            <Card>
+              <CardBody>
+                <SectionHeader title="Vorstellungen" hint="Bewerbungshistorie" />
+                {submissions.length === 0 ? (
+                  <EmptyState title="Noch keinem Mandat vorgestellt." />
+                ) : (
+                  <ul className="space-y-2">
+                    {submissions.map((sub) => (
+                      <li
+                        key={sub.id}
+                        className="rounded-xl border border-border bg-elevated/40 px-3 py-2"
+                      >
+                        <p className="truncate text-sm font-medium text-ink">
+                          {sub.account_name || "Mandat"}
+                          {sub.role ? <span className="text-faint"> · {sub.role}</span> : null}
+                        </p>
+                        <p className="text-[0.7rem] text-faint">
+                          {sub.stage} · {sub.created_at ? formatDate(sub.created_at) : ""}
+                          {sub.mandate_id ? (
+                            <>
+                              {" · "}
+                              <Link
+                                href={`/cockpit/projekte/recruiting/${sub.mandate_id}`}
+                                className="text-sky-deep hover:underline"
+                              >
+                                Mandat
+                              </Link>
+                            </>
+                          ) : null}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Interviews */}
+            <Card>
+              <CardBody>
+                <SectionHeader title="Interviews" hint="Termine, Art & Feedback" />
+                <InterviewsCard candidateId={c.id} mandateId={c.mandate_id} interviews={interviews} />
+              </CardBody>
+            </Card>
+
+            {/* Angebote */}
+            <Card>
+              <CardBody>
+                <SectionHeader title="Angebote" hint="Gehalt, Status & Ablehnungsgrund" />
+                <OffersCard
+                  candidateId={c.id}
+                  mandateId={c.mandate_id}
+                  defaultSalary={c.salary_expectation}
+                  offers={offers}
+                />
+              </CardBody>
+            </Card>
+
+            {/* Referenzen */}
+            <Card>
+              <CardBody>
+                <SectionHeader title="Referenzen" hint="Referenz-Check & Feedback" />
+                <ReferencesCard candidateId={c.id} references={references} />
+              </CardBody>
+            </Card>
+
+            {/* Outbound-Sequenz */}
+            <Card>
+              <CardBody>
+                <SectionHeader title="Outbound-Sequenz" hint="Nachfass-Kadenz als Aufgaben" />
+                <SequenceEnroll candidateId={c.id} candidateName={c.name} />
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardBody>
+                <SectionHeader title="Lebenslauf" hint="PDF oder Word" />
+                {cvPath ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-brand/10 text-brand-deep">
+                        <IconFolder size={16} />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm text-ink">{c.cv_filename || "CV-Datei"}</p>
+                        {c.cv_uploaded_at ? (
+                          <p className="text-[0.7rem] text-faint">
+                            hochgeladen am {formatDate(c.cv_uploaded_at)}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <CvDownloadButton path={cvPath} />
+                      <CandidateCvUpload candidateId={c.id} hasCv />
+                    </div>
+                    {isPdf ? <AnonymizeButton candidateId={c.id} /> : null}
+                    {isPdf ? <CvPreview path={cvPath} /> : null}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={<IconFolder size={20} />}
+                    title="Kein CV hinterlegt. Lade die Bewerbungsunterlagen hoch."
+                    action={<CandidateCvUpload candidateId={c.id} hasCv={false} />}
+                  />
+                )}
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardBody>
+                <SectionHeader title="Skill-Set" hint="aus dem Lebenslauf" />
+                <CandidateSkills id={c.id} skills={c.skills ?? []} canExtract={canExtract} />
+              </CardBody>
+            </Card>
+          </div>
+        </SafeBoundary>
       </div>
     </div>
   );

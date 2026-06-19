@@ -149,12 +149,13 @@ export default async function AccountDetailPage({
 
   return (
     <div className="space-y-4">
-      <Link
-        href="/cockpit/kunden"
-        className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"
-      >
-        <IconChevronRight size={14} className="rotate-180" /> Zurück zu Kunden
-      </Link>
+      <nav className="flex items-center gap-1.5 text-sm text-muted">
+        <Link href="/cockpit/kunden" className="hover:text-ink">
+          Kunden
+        </Link>
+        <IconChevronRight size={14} className="text-faint" />
+        <span className="truncate text-ink">{account.name}</span>
+      </nav>
 
       {account.synthetic ? (
         <Card>
