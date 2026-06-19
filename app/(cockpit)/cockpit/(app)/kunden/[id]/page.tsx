@@ -513,7 +513,7 @@ export default async function AccountDetailPage({
                 <SectionHeader
                   title="Vermittlungsvertrag"
                   hint="Mandatsart, Status & Honorar"
-                  action={<PlacementContractDialog account={account} />}
+                  action={<PlacementContractDialog account={account} label="Erstellen" />}
                 />
                 <AccountContractCard account={account} />
               </CardBody>

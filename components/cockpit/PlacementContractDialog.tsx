@@ -95,9 +95,9 @@ export function PlacementContractDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/10 px-3 py-1.5 text-sm font-semibold text-brand-deep transition-colors hover:bg-brand/15"
+        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-brand/40 bg-brand/10 px-3 py-1.5 text-sm font-semibold text-brand-deep transition-colors hover:bg-brand/15"
       >
-        <IconBriefcase size={14} /> {label}
+        <IconBriefcase size={14} className="flex-none" /> {label}
       </button>
 
       <Dialog

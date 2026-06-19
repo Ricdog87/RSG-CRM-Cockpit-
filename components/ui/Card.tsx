@@ -33,11 +33,11 @@ export function SectionHeader({
 }) {
   return (
     <div className="mb-4 flex items-end justify-between gap-3">
-      <div>
+      <div className="min-w-0">
         <h2 className="section-title">{title}</h2>
         {hint ? <p className="mt-1 text-sm text-muted">{hint}</p> : null}
       </div>
-      {action}
+      {action ? <div className="flex-none">{action}</div> : null}
     </div>
   );
 }
