@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -39,6 +39,7 @@ export function MandatesBoard({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(mandates);
+  useEffect(() => setItems(mandates), [mandates]);
   const [dragId, setDragId] = useState<string | null>(null);
   const [overStatus, setOverStatus] = useState<MandateStatus | null>(null);
   const [preview, setPreview] = useState<{ x: number; y: number; label: string } | null>(null);

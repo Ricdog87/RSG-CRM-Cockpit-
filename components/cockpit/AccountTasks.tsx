@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -30,12 +30,16 @@ export function AccountTasks({
 }) {
   const router = useRouter();
   const [items, setItems] = useState<Task[]>(tasks);
+  useEffect(() => setItems(tasks), [tasks]);
   const [pending, start] = useTransition();
   const titleRef = useRef<HTMLInputElement>(null);
   const dueRef = useRef<HTMLInputElement>(null);
 
-  function refresh(res: { ok: boolean; demo?: boolean }) {
-    if (res.ok && !res.demo) router.refresh();
+  function refresh(res: { ok: boolean; demo?: boolean; redirect?: string }) {
+    if (res.ok && !res.demo) {
+      if (res.redirect) router.replace(res.redirect);
+      else router.refresh();
+    }
   }
 
   function add() {
