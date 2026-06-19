@@ -31,6 +31,7 @@ import { AccountSequenceEnroll } from "@/components/cockpit/AccountSequenceEnrol
 import { RelationshipSummary } from "@/components/cockpit/RelationshipSummary";
 import { computeAccountIntel } from "@/lib/account-intel";
 import { BackfillAccountsButton } from "@/components/cockpit/BackfillAccountsButton";
+import { SafeBoundary } from "@/components/cockpit/SafeBoundary";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -163,7 +164,9 @@ export default async function AccountDetailPage({
                 <p className="text-xs text-faint">wiederkehrender Umsatz</p>
               </div>
               <div className="flex items-center gap-2">
+              <SafeBoundary label="Aktionen">
               <EmailComposer account={account} contacts={contacts} senderName={identity.display_name} />
+              </SafeBoundary>
               <EditDialog
                 id={account.id}
                 title="Kunde bearbeiten"
@@ -235,7 +238,9 @@ export default async function AccountDetailPage({
       </Card>
 
       {/* Account-Intelligenz: Health-Score + nächste beste Aktion */}
-      <AccountIntelCard intel={intel} accountId={account.id} accountName={account.name} />
+      <SafeBoundary label="Intelligenz">
+        <AccountIntelCard intel={intel} accountId={account.id} accountName={account.name} />
+      </SafeBoundary>
 
       {/* Schnell protokollieren: Call/E-Mail bei diesem Kunden */}
       <Card>
@@ -245,81 +250,96 @@ export default async function AccountDetailPage({
       </Card>
 
       {notes.length > 0 || emails.length > 0 ? (
-        <RelationshipSummary
-          account={account.name}
-          line={account.line}
-          touchpoints={[
-            ...notes.slice(0, 8).map((n) => ({ kind: "note" as const, date: n.created_at, text: n.body })),
-            ...emails.slice(0, 8).map((e) => ({
-              kind: "email" as const,
-              date: e.occurred_at,
-              direction: e.direction,
-              text: `${e.subject}${e.snippet ? ` – ${e.snippet}` : ""}`,
-            })),
-          ]
-            .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))
-            .slice(0, 12)}
-        />
+        <SafeBoundary label="Beziehung">
+          <RelationshipSummary
+            account={account.name}
+            line={account.line}
+            touchpoints={[
+              ...notes.slice(0, 8).map((n) => ({ kind: "note" as const, date: n.created_at, text: n.body })),
+              ...emails.slice(0, 8).map((e) => ({
+                kind: "email" as const,
+                date: e.occurred_at,
+                direction: e.direction,
+                text: `${e.subject}${e.snippet ? ` – ${e.snippet}` : ""}`,
+              })),
+            ]
+              .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))
+              .slice(0, 12)}
+          />
+        </SafeBoundary>
       ) : null}
 
       {/* Ansprechpartner:innen */}
-      <AccountContacts accountId={account.id} contacts={contacts} />
+      <SafeBoundary label="Kontakte">
+        <AccountContacts accountId={account.id} contacts={contacts} />
+      </SafeBoundary>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* KI-Analyse des Accounts */}
-        <AccountEnrich
-          company={account.name}
-          domain={account.contact_email ? account.contact_email.split("@")[1] : undefined}
-          notes={[account.branche, account.segment, account.ort]
-            .filter(Boolean)
-            .join(" · ")}
-        />
-        {/* KI-Follow-up-Entwurf */}
-        <FollowupDrafter
-          account={account.name}
-          line={account.line}
-          context={followupContext}
-          goal={intel.nextAction}
-          recipientEmail={account.contact_email || undefined}
-        />
-      </div>
+      <SafeBoundary label="KI-Analyse">
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* KI-Analyse des Accounts */}
+          <AccountEnrich
+            company={account.name}
+            domain={account.contact_email ? account.contact_email.split("@")[1] : undefined}
+            notes={[account.branche, account.segment, account.ort]
+              .filter(Boolean)
+              .join(" · ")}
+          />
+          {/* KI-Follow-up-Entwurf */}
+          <FollowupDrafter
+            account={account.name}
+            line={account.line}
+            context={followupContext}
+            goal={intel.nextAction}
+            recipientEmail={account.contact_email || undefined}
+          />
+        </div>
+      </SafeBoundary>
 
       {/* B2B-Outbound-Sequenz (Kaltakquise-Kadenz) */}
-      <AccountSequenceEnroll accountId={account.id} accountName={account.name} defaultLine={account.line} />
+      <SafeBoundary label="Sequenz">
+        <AccountSequenceEnroll accountId={account.id} accountName={account.name} defaultLine={account.line} />
+      </SafeBoundary>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Aufgaben */}
-        <AccountTasks accountId={account.id} accountName={account.name} tasks={tasks} />
-        {/* Notizen */}
-        <AccountNotes accountId={account.id} notes={notes} />
-      </div>
+      <SafeBoundary label="Aufgaben & Notizen">
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Aufgaben */}
+          <AccountTasks accountId={account.id} accountName={account.name} tasks={tasks} />
+          {/* Notizen */}
+          <AccountNotes accountId={account.id} notes={notes} />
+        </div>
+      </SafeBoundary>
 
       {/* Korrespondenz (BCC-getrackte E-Mails) */}
-      <Card>
-        <CardBody>
-          <SectionHeader
-            title="Korrespondenz"
-            hint="per BCC automatisch getrackte E-Mails"
-          />
-          <EmailTimeline
-            activities={emails}
-            limit={5}
-            emptyText="Noch keine E-Mails. Setze deine BCC-Adresse (Postfach) ins BCC, um Mails automatisch hier zu protokollieren."
-          />
-        </CardBody>
-      </Card>
+      <SafeBoundary label="Korrespondenz">
+        <Card>
+          <CardBody>
+            <SectionHeader
+              title="Korrespondenz"
+              hint="per BCC automatisch getrackte E-Mails"
+            />
+            <EmailTimeline
+              activities={emails}
+              limit={5}
+              emptyText="Noch keine E-Mails. Setze deine BCC-Adresse (Postfach) ins BCC, um Mails automatisch hier zu protokollieren."
+            />
+          </CardBody>
+        </Card>
+      </SafeBoundary>
 
-      <Card>
-        <CardBody>
-          <SectionHeader
-            title="Vermittlungsvertrag"
-            hint="Mandatsart, Status & Honorarvereinbarung"
-            action={<PlacementContractDialog account={account} />}
-          />
-          <AccountContractCard account={account} />
-        </CardBody>
-      </Card>
+      <SafeBoundary label="Vermittlungsvertrag">
+        <Card>
+          <CardBody>
+            <SectionHeader
+              title="Vermittlungsvertrag"
+              hint="Mandatsart, Status & Honorarvereinbarung"
+              action={<PlacementContractDialog account={account} />}
+            />
+            <AccountContractCard account={account} />
+          </CardBody>
+        </Card>
+      </SafeBoundary>
 
+      <SafeBoundary label="Verknüpfungen">
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Verkaufschancen */}
         <Card>
@@ -449,6 +469,7 @@ export default async function AccountDetailPage({
           </CardBody>
         </Card>
       </div>
+      </SafeBoundary>
     </div>
   );
 }
