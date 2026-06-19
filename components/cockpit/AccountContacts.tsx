@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { IconUsers, IconTrash, IconPencil } from "@/components/ui/icons";
+import { IconUsers, IconTrash, IconPencil, IconCopy } from "@/components/ui/icons";
 import { addContact, updateContact, deleteContact } from "@/lib/crm-actions";
 import type { Contact } from "@/lib/contacts-data";
 
@@ -14,6 +14,14 @@ const inputClass =
 
 type Form = { salutation: string; title: string; name: string; role: string; email: string; phone: string };
 const EMPTY: Form = { salutation: "", title: "", name: "", role: "", email: "", phone: "" };
+const ROLE_PRESETS = [
+  "Geschäftsführung",
+  "HR / Recruiting",
+  "Fachbereich",
+  "Einkauf",
+  "Assistenz",
+  "Technik / IT",
+];
 
 export function AccountContacts({
   accountId,
@@ -29,8 +37,17 @@ export function AccountContacts({
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(EMPTY);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const selected = useMemo(
+    () => items.filter((c) => selectedIds.includes(c.id)),
+    [items, selectedIds]
+  );
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  useEffect(() => {
+    setSelectedIds((ids) => ids.filter((id) => items.some((c) => c.id === id)));
+  }, [items]);
 
   function openNew() {
     setForm(EMPTY);
@@ -75,6 +92,7 @@ export function AccountContacts({
   function remove(id: string) {
     const prev = items;
     setItems((p) => p.filter((x) => x.id !== id));
+    setSelectedIds((ids) => ids.filter((x) => x !== id));
     start(async () => {
       const res = await deleteContact(id, accountId);
       if (res.ok && !res.demo) router.refresh();
@@ -83,6 +101,27 @@ export function AccountContacts({
         if (res.error) alert(res.error);
       }
     });
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((ids) => ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
+  }
+
+  function mailSelected() {
+    const emails = selected.map((c) => c.email).filter(Boolean);
+    if (emails.length) window.location.href = `mailto:${emails.join(",")}`;
+  }
+
+  async function copySelected() {
+    const text = selected
+      .map((c) => [
+        [c.salutation, c.title, c.name].filter(Boolean).join(" "),
+        c.role ? `Funktion: ${c.role}` : "",
+        c.email ? `E-Mail: ${c.email}` : "",
+        c.phone ? `Telefon: ${c.phone}` : "",
+      ].filter(Boolean).join(" · "))
+      .join("\n");
+    if (text) await navigator.clipboard?.writeText(text);
   }
 
   return (
@@ -111,7 +150,18 @@ export function AccountContacts({
             </select>
             <input value={form.title} onChange={set("title")} placeholder="Titel (z.B. Dr.)" className={inputClass} />
             <input value={form.name} onChange={set("name")} placeholder="Name *" className={inputClass} />
-            <input value={form.role} onChange={set("role")} placeholder="Rolle (z.B. Inhaber)" className={inputClass} />
+            <div>
+              <input
+                value={form.role}
+                onChange={set("role")}
+                list="account-contact-role-presets"
+                placeholder="Funktion (z.B. HR / Recruiting)"
+                className={inputClass}
+              />
+              <datalist id="account-contact-role-presets">
+                {ROLE_PRESETS.map((r) => <option key={r} value={r} />)}
+              </datalist>
+            </div>
             <input value={form.email} onChange={set("email")} type="email" placeholder="E-Mail" className={inputClass} />
             <input value={form.phone} onChange={set("phone")} placeholder="Telefon" className={inputClass} />
             <div className="flex justify-end sm:col-span-2">
@@ -128,12 +178,69 @@ export function AccountContacts({
             icon={<IconUsers size={22} />}
           />
         ) : (
+          <>
+          <div className="mb-3 rounded-xl border border-border bg-elevated/30 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-faint">Stakeholder-Auswahl</p>
+                <p className="text-sm text-ink">
+                  {selected.length
+                    ? `${selected.length} Ansprechpartner:in${selected.length > 1 ? "nen" : ""} ausgewählt`
+                    : "Wähle HR, Fachbereich, GF oder weitere Entscheider für den nächsten Schritt."}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds(items.map((c) => c.id))}
+                  className="rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted hover:bg-surface hover:text-ink"
+                >
+                  Alle wählen
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds([])}
+                  disabled={!selected.length}
+                  className="rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted hover:bg-surface hover:text-ink disabled:opacity-50"
+                >
+                  Auswahl löschen
+                </button>
+                <button
+                  type="button"
+                  onClick={copySelected}
+                  disabled={!selected.length}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted hover:bg-surface hover:text-ink disabled:opacity-50"
+                >
+                  <IconCopy size={12} /> Zusammenfassung kopieren
+                </button>
+                <button
+                  type="button"
+                  onClick={mailSelected}
+                  disabled={!selected.some((c) => c.email)}
+                  className="rounded-lg bg-brand-deep px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-brand-ink disabled:opacity-50"
+                >
+                  E-Mail an Auswahl
+                </button>
+              </div>
+            </div>
+          </div>
           <ul className="space-y-2">
             {items.map((c) => (
               <li
                 key={c.id}
-                className="group flex items-center gap-3 rounded-xl border border-border bg-elevated/40 px-3 py-2.5"
+                className={`group flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
+                  selectedIds.includes(c.id)
+                    ? "border-brand/45 bg-brand/[0.06]"
+                    : "border-border bg-elevated/40"
+                }`}
               >
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(c.id)}
+                  onChange={() => toggleSelected(c.id)}
+                  aria-label={`${c.name} auswählen`}
+                  className="h-4 w-4 rounded border-border text-brand focus-visible:ring-2 focus-visible:ring-brand"
+                />
                 <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gradient-to-br from-brand/25 to-sky/25 text-sm font-bold text-ink">
                   {(c.name || "?").charAt(0).toUpperCase()}
                 </span>
@@ -167,6 +274,7 @@ export function AccountContacts({
               </li>
             ))}
           </ul>
+          </>
         )}
       </CardBody>
     </Card>
