@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { TableCard, TableHead, TableBody, TableRow } from "@/components/ui/Table";
 import { LineBadge } from "@/components/cockpit/LineBadge";
 import { formatDate, formatEur } from "@/lib/format";
 import type { Account, Lifecycle } from "@/lib/crm-types";
@@ -57,24 +58,21 @@ export function AccountsTable({
   }
 
   return (
-    <Card>
-      <CardBody className="p-0 sm:p-0">
-        <div className="hidden grid-cols-12 gap-3 border-b border-border px-5 py-3 text-xs font-medium uppercase tracking-wider text-faint lg:grid">
-          <span className="col-span-3">Unternehmen</span>
-          <span className="col-span-3">Kontakt</span>
-          <span className="col-span-2">Segment</span>
-          <span className="col-span-2">Phase</span>
-          <span className="col-span-2 text-right">MRR</span>
-        </div>
-
-        <ul className="divide-y divide-border">
-          {accounts.map((a) => {
-            const lc = lifecycleMeta[a.lifecycle];
-            return (
-              <li
-                key={a.id}
-                className="px-4 py-4 lg:grid lg:grid-cols-12 lg:items-center lg:gap-3 lg:px-5 lg:py-3.5"
-              >
+    <TableCard>
+      <TableHead
+        columns={[
+          { label: "Unternehmen", span: 3 },
+          { label: "Kontakt", span: 3 },
+          { label: "Segment", span: 2 },
+          { label: "Phase", span: 2 },
+          { label: "MRR", span: 2, align: "right" },
+        ]}
+      />
+      <TableBody>
+        {accounts.map((a) => {
+          const lc = lifecycleMeta[a.lifecycle];
+          return (
+            <TableRow key={a.id}>
                 {/* Mobile layout */}
                 <div className="flex items-start justify-between gap-3 lg:hidden">
                   <div className="min-w-0 flex-1">
@@ -151,11 +149,10 @@ export function AccountsTable({
                   </div>
                   {renderActions ? renderActions(a) : null}
                 </div>
-              </li>
-            );
-          })}
-        </ul>
-      </CardBody>
-    </Card>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </TableCard>
   );
 }
