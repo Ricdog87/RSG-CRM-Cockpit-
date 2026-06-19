@@ -32,6 +32,7 @@ import { RelationshipSummary } from "@/components/cockpit/RelationshipSummary";
 import { computeAccountIntel } from "@/lib/account-intel";
 import { BackfillAccountsButton } from "@/components/cockpit/BackfillAccountsButton";
 import { SafeBoundary } from "@/components/cockpit/SafeBoundary";
+import { Copyable } from "@/components/ui/Copyable";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -199,13 +200,13 @@ export default async function AccountDetailPage({
               <p className="kpi-label">Ansprechpartner:in</p>
               <p className="mt-1 text-sm text-ink">{account.contact_name || "—"}</p>
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="kpi-label">E-Mail</p>
-              <p className="mt-1 truncate text-sm text-ink">{account.contact_email || "—"}</p>
+              <Copyable value={account.contact_email} label="E-Mail" className="mt-1 w-full text-sm text-ink" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="kpi-label">Telefon</p>
-              <p className="mt-1 truncate text-sm text-ink">{account.contact_phone || "—"}</p>
+              <Copyable value={account.contact_phone} label="Telefon" className="mt-1 w-full text-sm text-ink" />
             </div>
             <div>
               <p className="kpi-label">Adresse</p>

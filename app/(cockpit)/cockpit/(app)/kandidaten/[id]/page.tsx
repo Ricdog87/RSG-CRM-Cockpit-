@@ -14,6 +14,7 @@ import { aiConfigured } from "@/lib/ai/config";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Copyable } from "@/components/ui/Copyable";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { CandidateStageControl } from "@/components/cockpit/CandidateStageControl";
 import { CvDownloadButton } from "@/components/cockpit/CvDownloadButton";
@@ -284,8 +285,8 @@ export default async function KandidatDetailPage({
                       }
                     />
                     <Prop label="Quelle" value={c.source} />
-                    <Prop label="E-Mail" value={c.email} />
-                    <Prop label="Telefon" value={c.phone} />
+                    <Prop label="E-Mail" value={<Copyable value={c.email} label="E-Mail" className="justify-end" />} />
+                    <Prop label="Telefon" value={<Copyable value={c.phone} label="Telefon" className="justify-end" />} />
                     <Prop
                       label="CV hochgeladen"
                       value={c.cv_uploaded_at ? formatDate(c.cv_uploaded_at) : "—"}
