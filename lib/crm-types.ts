@@ -46,6 +46,8 @@ export interface Account {
   fee_agreement?: string;
   /** Konzernstruktur: Muttergesellschaft (übergeordneter Account). */
   parent_account_id?: string;
+  /** Unternehmens-Website/Domain (für öffentliche Anreicherung). */
+  domain?: string;
   /**
    * true ⇒ dieser Account existiert (noch) nicht als eigener Datensatz, sondern
    * wurde aus einem referenzierenden Datensatz (Mandat/KI-Projekt/Chance/

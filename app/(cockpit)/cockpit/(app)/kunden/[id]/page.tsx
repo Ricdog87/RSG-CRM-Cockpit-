@@ -15,6 +15,7 @@ import { LineBadge } from "@/components/cockpit/LineBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconChevronRight } from "@/components/ui/icons";
 import { AccountEnrich } from "@/components/cockpit/AccountEnrich";
+import { WebsiteEnrich } from "@/components/cockpit/WebsiteEnrich";
 import { AccountContractCard } from "@/components/cockpit/AccountContractCard";
 import { PlacementContractDialog } from "@/components/cockpit/PlacementContractDialog";
 import { EditDialog } from "@/components/cockpit/EditDialog";
@@ -216,6 +217,7 @@ export default async function AccountDetailPage({
                     contact_phone: account.contact_phone ?? "",
                     owner: account.owner ?? "",
                     mrr: String(account.mrr ?? ""),
+                    domain: account.domain ?? "",
                   }}
                 />
               </div>
@@ -306,6 +308,11 @@ export default async function AccountDetailPage({
         <div className="space-y-4">
           <SafeBoundary label="Intelligenz">
             <AccountIntelCard intel={intel} accountId={account.id} accountName={account.name} />
+          </SafeBoundary>
+
+          {/* Website: öffentliches Firmenprofil laden (Claude liest die Seite) */}
+          <SafeBoundary label="Website">
+            <WebsiteEnrich accountId={account.id} domain={account.domain} />
           </SafeBoundary>
 
           <Card>

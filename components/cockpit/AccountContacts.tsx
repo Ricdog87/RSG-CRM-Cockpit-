@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "@/lib/toast";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { IconUsers, IconTrash, IconPencil, IconCopy } from "@/components/ui/icons";
-import { addContact, updateContact, deleteContact } from "@/lib/crm-actions";
+import { IconUsers, IconTrash, IconPencil, IconCopy, IconUserCheck, IconClose } from "@/components/ui/icons";
+import { addContact, updateContact, deleteContact, setContactTags } from "@/lib/crm-actions";
 import type { Contact } from "@/lib/contacts-data";
 
 const inputClass =
@@ -70,7 +71,7 @@ export function AccountContacts({
       // optimistisch aktualisieren
       setItems((p) => p.map((x) => (x.id === editing ? { ...x, ...payload } : x)));
     } else {
-      const tmp: Contact = { id: `tmp-${Date.now()}`, ...payload };
+      const tmp: Contact = { id: `tmp-${Date.now()}`, ...payload, tags: [] };
       setItems((p) => [...p, tmp]);
     }
     setOpen(false);
@@ -97,6 +98,20 @@ export function AccountContacts({
     setSelectedIds((ids) => ids.filter((x) => x !== id));
     start(async () => {
       const res = await deleteContact(id, accountId);
+      if (res.ok && !res.demo) router.refresh();
+      else if (!res.ok) {
+        setItems(prev);
+        if (res.error) toast.error(res.error);
+      }
+    });
+  }
+
+  function setTags(id: string, tags: string[]) {
+    const clean = Array.from(new Set(tags.map((t) => t.trim()).filter(Boolean))).slice(0, 20);
+    const prev = items;
+    setItems((p) => p.map((x) => (x.id === id ? { ...x, tags: clean } : x)));
+    start(async () => {
+      const res = await setContactTags(id, clean);
       if (res.ok && !res.demo) router.refresh();
       else if (!res.ok) {
         setItems(prev);
@@ -247,13 +262,30 @@ export function AccountContacts({
                   {(c.name || "?").charAt(0).toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-ink">
-                    {[c.salutation, c.title, c.name].filter(Boolean).join(" ")}
-                    {c.role ? <span className="text-faint"> · {c.role}</span> : null}
+                  <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm font-medium text-ink">
+                    <span className="truncate">
+                      {[c.salutation, c.title, c.name].filter(Boolean).join(" ")}
+                      {c.role ? <span className="text-faint"> · {c.role}</span> : null}
+                    </span>
+                    {c.candidate_id ? (
+                      <Link
+                        href={`/cockpit/kandidaten/${c.candidate_id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex flex-none items-center gap-1 rounded-full border border-sky/30 bg-sky/10 px-2 py-0.5 text-[11px] font-semibold text-sky-deep hover:bg-sky/20"
+                        title="Dieser Kontakt ist auch als Kandidat:in erfasst"
+                      >
+                        <IconUserCheck size={11} /> Auch Kandidat
+                      </Link>
+                    ) : null}
                   </p>
                   <p className="truncate text-xs text-muted">
                     {[c.email, c.phone].filter(Boolean).join(" · ") || "—"}
                   </p>
+                  <ContactTags
+                    tags={c.tags}
+                    disabled={pending}
+                    onChange={(next) => setTags(c.id, next)}
+                  />
                 </div>
                 <div className="flex flex-none items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                   <button
@@ -280,5 +312,69 @@ export function AccountContacts({
         )}
       </CardBody>
     </Card>
+  );
+}
+
+/** Inline-Tag-Verwaltung pro Kontakt: Pills mit x zum Entfernen, Input + Enter
+ *  zum Hinzufügen. Ruft beim Ändern den übergebenen onChange-Callback. */
+function ContactTags({
+  tags,
+  disabled,
+  onChange,
+}: {
+  tags: string[];
+  disabled?: boolean;
+  onChange: (next: string[]) => void;
+}) {
+  const [value, setValue] = useState("");
+
+  function add() {
+    const t = value.trim();
+    if (!t) return;
+    if (!tags.some((x) => x.toLowerCase() === t.toLowerCase())) {
+      onChange([...tags, t]);
+    }
+    setValue("");
+  }
+
+  function removeTag(tag: string) {
+    onChange(tags.filter((x) => x !== tag));
+  }
+
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-1">
+      {tags.map((t) => (
+        <span
+          key={t}
+          className="inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand/10 px-2 py-0.5 text-[11px] font-medium text-brand-deep"
+        >
+          {t}
+          <button
+            type="button"
+            aria-label={`Tag ${t} entfernen`}
+            onClick={() => removeTag(t)}
+            disabled={disabled}
+            className="rounded-full p-0.5 text-brand-deep/70 hover:bg-brand/20 hover:text-brand-deep disabled:opacity-50"
+          >
+            <IconClose size={10} />
+          </button>
+        </span>
+      ))}
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            add();
+          }
+        }}
+        onBlur={add}
+        disabled={disabled}
+        placeholder="+ Tag"
+        aria-label="Tag hinzufügen"
+        className="w-20 rounded-full border border-dashed border-border bg-transparent px-2 py-0.5 text-[11px] text-ink placeholder:text-faint focus-visible:w-28 focus-visible:border-brand focus-visible:outline-none disabled:opacity-50"
+      />
+    </div>
   );
 }

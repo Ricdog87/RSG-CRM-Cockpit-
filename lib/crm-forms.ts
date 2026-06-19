@@ -34,6 +34,7 @@ export function candidateInitial(c: Candidate): Record<string, string> {
 /** Feldkonfiguration für Account-Formulare (Anlegen + Bearbeiten). */
 export const ACCOUNT_FIELDS: FormField[] = [
   { name: "name", label: "Unternehmen", required: true, full: true, placeholder: "Muster GmbH" },
+  { name: "domain", label: "Website/Domain", placeholder: "firma.de" },
   {
     name: "line",
     label: "Geschäftslinie",

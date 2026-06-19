@@ -9,6 +9,11 @@ import { narrateBriefing } from "@/lib/ai/briefing-narrate";
 import { draftFollowup, type FollowupDraft } from "@/lib/ai/followup";
 import { narrateWeeklyReview, type WeeklyReviewInput } from "@/lib/ai/weekly-review";
 import { summarizeRelationship, type RelationshipInput } from "@/lib/ai/account-summary";
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import { useMockData } from "@/lib/env";
+import { logDataError } from "@/lib/log";
+import { enrichCompanyFromWebsite } from "@/lib/ai/company-enrich";
 import { getOpportunities } from "@/lib/crm-data";
 import { createAccount, type ActionResult } from "@/lib/crm-actions";
 import type {
@@ -279,4 +284,120 @@ export async function importLeadAsAccount(fd: FormData): Promise<ActionResult> {
   fd.set("line", rec === "recruiting" ? "recruiting" : "ki");
   fd.set("lifecycle", "lead");
   return createAccount(null, fd);
+}
+
+// ---------- Website-Anreicherung (öffentliches Firmenprofil) ----------
+
+async function currentPartnerId(): Promise<{ id: string | null; error?: string }> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { id: null, error: "Keine aktive Session." };
+  const { data, error } = await supabase
+    .from("partners")
+    .select("id")
+    .eq("auth_user_id", user.id)
+    .single();
+  if (error || !data) return { id: null, error: "Kein Partner-Profil gefunden." };
+  return { id: data.id as string };
+}
+
+export type WebsiteEnrichResult = {
+  ok: boolean;
+  error?: string;
+  demo?: boolean;
+  /** Felder, die tatsächlich (weil zuvor leer) befüllt wurden. */
+  filled?: Partial<Record<"branche" | "segment" | "ort" | "country", string>>;
+  /** Firmenbeschreibung von der Website (als Notiz gespeichert). */
+  beschreibung?: string;
+};
+
+/**
+ * Reichert einen bestehenden Account aus seiner Website an: Claude liest die
+ * Startseite (serverseitig geladen) und extrahiert ein öffentliches Profil.
+ * Es werden NUR leere Account-Felder (branche/segment/ort/country) befüllt; die
+ * Beschreibung wird als Notiz hinterlegt. Partner-scoped (Session-Client, RLS +
+ * zusätzlicher partner_id-Filter). Robuste Fehlerbehandlung.
+ */
+export async function enrichAccountFromWebsiteAction(
+  accountId: string
+): Promise<WebsiteEnrichResult> {
+  if (!accountId) return { ok: false, error: "Kein Account." };
+  if (useMockData) return { ok: true, demo: true };
+  try {
+    const { id: pid, error: pidErr } = await currentPartnerId();
+    if (!pid) return { ok: false, error: pidErr };
+    const supabase = createClient();
+
+    // Account partner-scoped laden (RLS + expliziter partner_id-Filter).
+    const { data: acc, error: accErr } = await supabase
+      .from("accounts")
+      .select("id, domain, branche, segment, ort, country")
+      .eq("id", accountId)
+      .eq("partner_id", pid)
+      .maybeSingle();
+    if (accErr) return { ok: false, error: accErr.message };
+    if (!acc) return { ok: false, error: "Account nicht gefunden." };
+
+    const domain = String((acc as Record<string, unknown>).domain ?? "").trim();
+    if (!domain) {
+      return { ok: false, error: "Keine Domain hinterlegt – im Bearbeiten-Dialog ergänzen." };
+    }
+
+    const profile = await enrichCompanyFromWebsite(domain);
+
+    // Nur LEERE Felder befüllen (vorhandene Daten nie überschreiben).
+    const isEmpty = (v: unknown) => v == null || String(v).trim() === "";
+    const patch: Record<string, string> = {};
+    const filled: WebsiteEnrichResult["filled"] = {};
+    const consider = (
+      key: "branche" | "segment" | "ort" | "country",
+      value?: string
+    ) => {
+      if (value && isEmpty((acc as Record<string, unknown>)[key])) {
+        patch[key] = value;
+        filled[key] = value;
+      }
+    };
+    consider("branche", profile.branche);
+    consider("segment", profile.segment);
+    consider("ort", profile.ort);
+    consider("country", profile.country);
+
+    if (Object.keys(patch).length > 0) {
+      const { error: updErr } = await supabase
+        .from("accounts")
+        .update(patch)
+        .eq("id", accountId)
+        .eq("partner_id", pid);
+      if (updErr) return { ok: false, error: updErr.message };
+    }
+
+    // Firmenbeschreibung als Notiz hinterlegen (best effort – nie blockierend).
+    const beschreibung = profile.beschreibung?.trim() || undefined;
+    if (beschreibung) {
+      const extras = [
+        profile.mitarbeiter_ca ? `Mitarbeiter ca. ${profile.mitarbeiter_ca}` : "",
+        profile.gegruendet ? `gegründet ${profile.gegruendet}` : "",
+      ].filter(Boolean);
+      const body = `Firmenprofil (Web): ${beschreibung}${
+        extras.length ? ` (${extras.join(", ")})` : ""
+      }`;
+      const { error: noteErr } = await supabase.from("account_notes").insert({
+        partner_id: pid,
+        account_id: accountId,
+        body,
+      });
+      if (noteErr) logDataError("ai-actions:account_notes", noteErr);
+    }
+
+    revalidatePath(`/cockpit/kunden/${accountId}`);
+    return { ok: true, filled, beschreibung };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Anreicherung fehlgeschlagen.",
+    };
+  }
 }

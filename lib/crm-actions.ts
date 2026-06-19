@@ -490,6 +490,7 @@ export async function createAccount(
     plz: s(fd, "plz") || null,
     country: s(fd, "country") || null,
     owner: s(fd, "owner") || null,
+    domain: s(fd, "domain") || null,
   };
   // Robust gegen noch nicht migrierte Spalten: fehlende Spalten werden
   // automatisch weggelassen, damit das Anlegen nie komplett scheitert.
@@ -991,6 +992,7 @@ export async function updateAccount(
     plz: s(fd, "plz") || null,
     country: s(fd, "country") || null,
     owner: s(fd, "owner") || null,
+    domain: s(fd, "domain") || null,
   };
   // Abgeleiteter (virtueller) Account ODER bereits (leer) materialisierter Kunde:
   // Upsert über den Namen – existiert schon ein echter Datensatz, wird DIESER
@@ -1952,5 +1954,38 @@ export async function setCandidateTags(
     return { ok: false, error: error.message };
   }
   revalidatePath(`/cockpit/kandidaten/${id}`);
+  return { ok: true };
+}
+
+/**
+ * Schlagworte (Tags) eines Ansprechpartners setzen. Partner-scoped (RLS +
+ * expliziter partner_id-Filter). Revalidiert die zugehörige Kunden-Detailseite.
+ */
+export async function setContactTags(
+  contactId: string,
+  tags: string[]
+): Promise<ActionResult> {
+  if (!contactId) return { ok: false, error: "Kontakt nicht gefunden." };
+  if (useMockData) return DEMO;
+  const { id: pid, error: pidErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pidErr };
+  const supabase = createClient();
+  const clean = Array.from(
+    new Set(tags.map((t) => t.trim()).filter(Boolean))
+  ).slice(0, 20);
+  const { data, error } = await supabase
+    .from("account_contacts")
+    .update({ tags: clean })
+    .eq("id", contactId)
+    .eq("partner_id", pid)
+    .select("account_id")
+    .maybeSingle();
+  if (error) {
+    if (/column .*tags.* does not exist/i.test(error.message))
+      return { ok: false, error: "Spalte tags fehlt – Migration für account_contacts.tags ausführen." };
+    return { ok: false, error: error.message };
+  }
+  const accountId = (data as { account_id?: string } | null)?.account_id;
+  if (accountId) revalidatePath(`/cockpit/kunden/${accountId}`);
   return { ok: true };
 }

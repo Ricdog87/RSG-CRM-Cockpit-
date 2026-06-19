@@ -105,6 +105,7 @@ function mapAccountRow(r: Row): Account {
     contract_signed_at: str(r.contract_signed_at) || undefined,
     fee_agreement: str(r.fee_agreement) || undefined,
     parent_account_id: str(r.parent_account_id) || undefined,
+    domain: str(r.domain) || undefined,
   };
 }
 
