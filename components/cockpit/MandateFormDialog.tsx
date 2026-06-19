@@ -5,7 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-import { IconPlus } from "@/components/ui/icons";
+import { IconPlus, IconPencil } from "@/components/ui/icons";
 import { createMandate, updateMandate, type ActionResult } from "@/lib/crm-actions";
 import { AccountCombobox } from "@/components/cockpit/AccountCombobox";
 import { formatEur } from "@/lib/format";
@@ -94,7 +94,15 @@ export function MandateFormDialog({
         </button>
       ) : (
         <Button onClick={() => setOpen(true)}>
-          <IconPlus size={16} /> Mandat anlegen
+          {isEdit ? (
+            <>
+              <IconPencil size={16} /> Mandat bearbeiten
+            </>
+          ) : (
+            <>
+              <IconPlus size={16} /> Mandat anlegen
+            </>
+          )}
         </Button>
       )}
 
