@@ -260,9 +260,14 @@ export function CandidatesView({
   );
 
   async function move(id: string, stage: CandidateStage) {
+    const prevItems = items;
     setItems((prev) => prev.map((c) => (c.id === id ? { ...c, stage } : c)));
     const res = await updateCandidateStage(id, stage);
     if (res.ok && !res.demo) router.refresh();
+    else if (!res.ok) {
+      setItems(prevItems); // fehlgeschlagen → Phase zurücksetzen
+      if (res.error) toast.error(res.error);
+    }
   }
 
   async function onDelete(id: string) {

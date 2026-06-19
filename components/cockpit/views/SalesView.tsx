@@ -131,9 +131,14 @@ export function SalesView({ opportunities }: { opportunities: Opportunity[] }) {
   const [filter, setFilter] = useState<Filter>("all");
 
   async function move(id: string, stage: SalesStage) {
+    const prevItems = items;
     setItems((prev) => prev.map((o) => (o.id === id ? { ...o, stage } : o)));
     const res = await updateOpportunityStage(id, stage);
     if (res.ok && !res.demo) router.refresh();
+    else if (!res.ok) {
+      setItems(prevItems); // fehlgeschlagen → Phase zurücksetzen
+      if (res.error) toast.error(res.error);
+    }
   }
 
   async function onDelete(id: string) {
