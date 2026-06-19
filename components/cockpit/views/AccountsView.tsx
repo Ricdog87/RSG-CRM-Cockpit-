@@ -7,6 +7,8 @@ import { AccountsTable } from "@/components/cockpit/AccountsTable";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
+import { Card, CardBody } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { IconSearch } from "@/components/ui/icons";
 import { ACCOUNT_FIELDS } from "@/lib/crm-forms";
 import { downloadCsv } from "@/lib/csv-export";
@@ -48,6 +50,13 @@ export function AccountsView({
   }
 
   const q = query.trim().toLowerCase();
+
+  function resetFilters() {
+    setQuery("");
+    setFilter("all");
+    setLifecycle("all");
+    setHealth("all");
+  }
 
   // Nach Line-Filter (Basis für Lifecycle-Counts)
   const afterLineFilter = useMemo(
@@ -188,6 +197,24 @@ export function AccountsView({
         />
       ) : null}
 
+      {shown.length === 0 && items.length > 0 ? (
+        <Card>
+          <CardBody>
+            <EmptyState
+              title="Keine Treffer für deine Suche oder Filter."
+              action={
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="rounded-lg border border-border bg-elevated px-3 py-1.5 text-xs font-semibold text-ink hover:bg-elevated/70"
+                >
+                  Filter zurücksetzen
+                </button>
+              }
+            />
+          </CardBody>
+        </Card>
+      ) : (
       <AccountsTable
         accounts={page}
         healthById={healthById}
@@ -223,6 +250,7 @@ export function AccountsView({
           />
         )}
       />
+      )}
 
       {shown.length > visible ? (
         <div className="flex items-center justify-center gap-3 pt-1">

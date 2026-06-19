@@ -7,6 +7,9 @@ import { KiProjectsTable } from "@/components/cockpit/KiProjectsTable";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
+import { Card, CardBody } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { IconSearch } from "@/components/ui/icons";
 import { KIPROJECT_FIELDS, withCombobox } from "@/lib/crm-forms";
 import { updateKiProject, deleteKiProject } from "@/lib/crm-actions";
 import type { KiProject, KiStatus } from "@/lib/crm-types";
@@ -34,7 +37,13 @@ export function KiProjectsView({
   const [items, setItems] = useState(projects);
   useEffect(() => setItems(projects), [projects]);
   const [filter, setFilter] = useState<Filter>("all");
+  const [query, setQuery] = useState("");
   const editFields = withCombobox(KIPROJECT_FIELDS, "account_name", accountNames);
+
+  function resetFilters() {
+    setQuery("");
+    setFilter("all");
+  }
 
   async function onDelete(id: string) {
     const prevItems = items;
@@ -48,10 +57,28 @@ export function KiProjectsView({
     }
   }
 
-  const shown = filter === "all" ? items : items.filter((p) => p.status === filter);
+  const q = query.trim().toLowerCase();
+  const byStatus = filter === "all" ? items : items.filter((p) => p.status === filter);
+  const shown = q
+    ? byStatus.filter((p) =>
+        [p.account_name, p.product, p.segment, p.use_case]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q))
+      )
+    : byStatus;
 
   return (
     <div className="space-y-4">
+      <div className="relative min-w-0">
+        <IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="KI-Projekt suchen (Kunde, Produkt, Segment) …"
+          className="w-full rounded-xl border border-border bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-faint focus-visible:ring-2 focus-visible:ring-brand"
+        />
+      </div>
+
       <FilterTabs<Filter>
         value={filter}
         onChange={setFilter}
@@ -64,6 +91,24 @@ export function KiProjectsView({
               : items.filter((p) => p.status === s.value).length,
         }))}
       />
+      {shown.length === 0 && items.length > 0 ? (
+        <Card>
+          <CardBody>
+            <EmptyState
+              title="Keine Treffer für deine Suche oder Filter."
+              action={
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="rounded-lg border border-border bg-elevated px-3 py-1.5 text-xs font-semibold text-ink hover:bg-elevated/70"
+                >
+                  Filter zurücksetzen
+                </button>
+              }
+            />
+          </CardBody>
+        </Card>
+      ) : (
       <KiProjectsTable
         projects={shown}
         renderActions={(p) => (
@@ -97,6 +142,7 @@ export function KiProjectsView({
           />
         )}
       />
+      )}
     </div>
   );
 }

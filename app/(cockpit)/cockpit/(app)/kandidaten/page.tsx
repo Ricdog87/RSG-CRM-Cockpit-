@@ -60,7 +60,7 @@ export default async function KandidatenPage() {
         }
       />
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <StatCard
           label="In Pipeline"
           value={formatNumber(aktiv)}
