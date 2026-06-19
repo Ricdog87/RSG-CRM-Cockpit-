@@ -87,7 +87,7 @@ export default async function AccountDetailPage({
 }) {
   const detail = await getAccountDetail(params.id);
   if (!detail) notFound();
-  const { account, opportunities, kiProjects, mandates, candidates } = detail;
+  const { account, parent, children, opportunities, kiProjects, mandates, candidates } = detail;
   const [emails, notes, tasks, contacts, identity] = await Promise.all([
     getEmailActivitiesForAccount(account.id, account.name),
     getNotesForAccount(account.id),
@@ -156,6 +156,38 @@ export default async function AccountDetailPage({
               <p className="mt-1 text-sm text-muted">
                 {[account.branche, account.ort].filter(Boolean).join(" · ") || "—"}
               </p>
+              {(parent || children.length > 0) && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  {parent && (
+                    <span className="inline-flex items-center gap-1 text-muted">
+                      Gehört zu:
+                      <Link
+                        href={`/cockpit/kunden/${parent.id}`}
+                        className="font-medium text-brand-deep hover:underline"
+                      >
+                        {parent.name}
+                      </Link>
+                    </span>
+                  )}
+                  {children.length > 0 && (
+                    <span className="inline-flex flex-wrap items-center gap-1 text-muted">
+                      {children.length === 1 ? "1 Tochter" : `${children.length} Töchter`}:
+                      {children.slice(0, 6).map((c) => (
+                        <Link
+                          key={c.id}
+                          href={`/cockpit/kunden/${c.id}`}
+                          className="rounded-full bg-elevated px-2 py-0.5 font-medium text-ink hover:text-brand-deep"
+                        >
+                          {c.name}
+                        </Link>
+                      ))}
+                      {children.length > 6 ? (
+                        <span className="text-faint">+{children.length - 6}</span>
+                      ) : null}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className="text-right">

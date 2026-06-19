@@ -104,6 +104,7 @@ function mapAccountRow(r: Row): Account {
     contract_status: (str(r.contract_status) || undefined) as Account["contract_status"],
     contract_signed_at: str(r.contract_signed_at) || undefined,
     fee_agreement: str(r.fee_agreement) || undefined,
+    parent_account_id: str(r.parent_account_id) || undefined,
   };
 }
 
@@ -421,6 +422,9 @@ export async function getSegments(): Promise<Segment[]> {
 
 export interface AccountDetail {
   account: Account;
+  /** Konzernstruktur: Mutter + direkte Töchter. */
+  parent: { id: string; name: string } | null;
+  children: { id: string; name: string }[];
   opportunities: Opportunity[];
   kiProjects: KiProject[];
   mandates: RecruitingMandate[];
@@ -460,8 +464,17 @@ export async function getAccountDetail(id: string): Promise<AccountDetail | null
   const key = accountKey(account.name);
   const eq = (v: string) => accountKey(v) === key;
 
+  // Konzernstruktur aus der ohnehin geladenen Accounts-Liste ableiten
+  // (keine Extra-Query): Mutter über parent_account_id, Töchter umgekehrt.
+  const parentRow = account.parent_account_id
+    ? (accounts.find((a) => a.id === account!.parent_account_id) ?? null)
+    : null;
+  const childRows = accounts.filter((a) => a.parent_account_id === account!.id);
+
   return {
     account,
+    parent: parentRow ? { id: parentRow.id, name: parentRow.name } : null,
+    children: childRows.map((c) => ({ id: c.id, name: c.name })),
     opportunities: opportunities.filter((o) => eq(o.account_name)),
     kiProjects: kiProjects.filter((p) => eq(p.account_name)),
     mandates: mandates.filter((m) => eq(m.account_name)),

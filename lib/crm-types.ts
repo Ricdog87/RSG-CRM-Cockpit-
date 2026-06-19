@@ -44,6 +44,8 @@ export interface Account {
   contract_status?: "kein" | "versendet" | "unterzeichnet";
   contract_signed_at?: string;
   fee_agreement?: string;
+  /** Konzernstruktur: Muttergesellschaft (übergeordneter Account). */
+  parent_account_id?: string;
   /**
    * true ⇒ dieser Account existiert (noch) nicht als eigener Datensatz, sondern
    * wurde aus einem referenzierenden Datensatz (Mandat/KI-Projekt/Chance/
