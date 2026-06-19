@@ -42,7 +42,7 @@ export function CvPreview({ path }: { path: string }) {
         <iframe
           src={url}
           title="CV-Vorschau"
-          className="h-[600px] w-full rounded-xl border border-border"
+          className="h-[65dvh] w-full rounded-xl border border-border sm:h-[640px]"
         />
       ) : null}
     </div>
