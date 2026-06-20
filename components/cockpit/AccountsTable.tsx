@@ -84,14 +84,20 @@ export function AccountsTable({
         {accounts.map((a) => {
           const lc = lifecycleMeta[a.lifecycle];
           return (
-            <TableRow key={a.id}>
+            <TableRow key={a.id} className="relative">
+                {/* Ganze Zeile klickbar (Overlay-Link unter den interaktiven Elementen) */}
+                <Link
+                  href={`/cockpit/kunden/${a.id}`}
+                  aria-label={`${a.name} öffnen`}
+                  className="absolute inset-0 z-10"
+                />
                 {/* Mobile layout */}
                 <div className="flex items-start justify-between gap-3 lg:hidden">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
                         href={`/cockpit/kunden/${a.id}`}
-                        className="text-sm font-semibold text-ink hover:text-brand-deep hover:underline"
+                        className="relative z-20 text-sm font-semibold text-ink hover:text-brand-deep hover:underline"
                       >
                         {a.name}
                       </Link>
@@ -111,7 +117,7 @@ export function AccountsTable({
                     {a.mrr > 0 ? (
                       <p className="text-sm font-semibold text-ink">{formatEur(a.mrr)}/M</p>
                     ) : null}
-                    {renderActions ? renderActions(a) : null}
+                    {renderActions ? <span className="relative z-20">{renderActions(a)}</span> : null}
                   </div>
                 </div>
 
@@ -120,7 +126,7 @@ export function AccountsTable({
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/cockpit/kunden/${a.id}`}
-                      className="truncate text-sm font-semibold text-ink hover:text-brand-deep hover:underline"
+                      className="relative z-20 truncate text-sm font-semibold text-ink hover:text-brand-deep hover:underline"
                     >
                       {a.name}
                     </Link>
@@ -137,8 +143,7 @@ export function AccountsTable({
                   {a.contact_phone ? (
                     <a
                       href={`tel:${a.contact_phone.replace(/\s+/g, "")}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="truncate text-xs text-faint hover:text-brand"
+                      className="relative z-20 truncate text-xs text-faint hover:text-brand"
                     >
                       {a.contact_phone}
                     </a>
@@ -159,7 +164,7 @@ export function AccountsTable({
                     </p>
                     <p className="text-xs text-faint">seit {formatDate(a.since)}</p>
                   </div>
-                  {renderActions ? renderActions(a) : null}
+                  {renderActions ? <span className="relative z-20">{renderActions(a)}</span> : null}
                 </div>
             </TableRow>
           );
