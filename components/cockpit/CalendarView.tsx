@@ -235,10 +235,12 @@ export function CalendarView({
                     {crmItems
                       .slice(0, gItems.length > 0 ? 2 : 3)
                       .map((t) => (
-                        <div
+                        <Link
                           key={t.id}
+                          href={relatedHref(t.related_type, t.related_id) ?? "/cockpit/aufgaben"}
+                          title={`${t.due_time ? `${t.due_time} · ` : ""}${t.title}${t.related_label ? ` · ${t.related_label}` : ""}`}
                           className={cn(
-                            "flex items-center gap-1 truncate rounded px-1 py-0.5 text-[0.65rem]",
+                            "flex items-center gap-1 truncate rounded px-1 py-0.5 text-[0.65rem] transition-colors hover:bg-elevated",
                             t.done ? "text-faint line-through" : "text-ink"
                           )}
                         >
@@ -252,29 +254,41 @@ export function CalendarView({
                             {t.due_time ? `${t.due_time} ` : ""}
                             {t.title}
                           </span>
-                        </div>
+                        </Link>
                       ))}
 
                     {/* Google-Events */}
-                    {gItems.slice(0, 1).map((e) => (
-                      <div
-                        key={e.id}
-                        className="flex items-center gap-1 truncate rounded px-1 py-0.5 text-[0.65rem] text-ink"
-                      >
-                        <span
-                          className={cn(
-                            "h-1.5 w-1.5 flex-none rounded-full",
-                            GOOGLE_DOT
-                          )}
-                        />
-                        <span className="truncate">
-                          {googleEventTime(e)
-                            ? `${googleEventTime(e)} `
-                            : ""}
-                          {e.summary}
-                        </span>
-                      </div>
-                    ))}
+                    {gItems.slice(0, 1).map((e) => {
+                      const gt = googleEventTime(e);
+                      const gTitle = `${gt ? `${gt} · ` : ""}${e.summary ?? "Termin"}`;
+                      const gCls =
+                        "flex items-center gap-1 truncate rounded px-1 py-0.5 text-[0.65rem] text-ink transition-colors hover:bg-elevated";
+                      const gInner = (
+                        <>
+                          <span className={cn("h-1.5 w-1.5 flex-none rounded-full", GOOGLE_DOT)} />
+                          <span className="truncate">
+                            {gt ? `${gt} ` : ""}
+                            {e.summary}
+                          </span>
+                        </>
+                      );
+                      return e.htmlLink ? (
+                        <a
+                          key={e.id}
+                          href={e.htmlLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={gTitle}
+                          className={gCls}
+                        >
+                          {gInner}
+                        </a>
+                      ) : (
+                        <div key={e.id} title={gTitle} className={cn(gCls, "cursor-default")}>
+                          {gInner}
+                        </div>
+                      );
+                    })}
 
                     {/* Overflow-Zähler */}
                     {totalItems > 3 && (
