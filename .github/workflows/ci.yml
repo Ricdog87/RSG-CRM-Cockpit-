@@ -1,0 +1,56 @@
+name: CI
+
+# Quality-Gate: kein roter Commit rutscht durch. Läuft bei Push auf die
+# Production-Branch (+ main-Spiegel) und bei jedem Pull Request.
+on:
+  push:
+    branches:
+      - claude/partner-cockpit-dashboard-hdicqg
+      - main
+  pull_request:
+
+# Redundante Läufe für denselben Ref abbrechen (spart Runner-Zeit).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Typecheck · Lint · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Dummy-Build-Env (KEINE echten Keys) – verhindert Build-Zeit-Fehler,
+      # falls Module Env zur Build-Zeit lesen. Vercel nutzt die echten Werte.
+      NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "ci-placeholder-anon-key"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node 22 einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Next.js-Build-Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+      - name: Typecheck (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Lint (next lint)
+        run: npm run lint
+
+      - name: Build (next build)
+        run: npm run build
