@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { getCandidate, getAccounts, getMandates, accountKey } from "@/lib/crm-data";
 import { getNotesForCandidate } from "@/lib/notes-data";
 import { getConsentForCandidate } from "@/lib/consent-data";
@@ -16,6 +15,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Copyable } from "@/components/ui/Copyable";
 import { SafeBoundary } from "@/components/cockpit/SafeBoundary";
+import { RecordUnavailable } from "@/components/cockpit/RecordUnavailable";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { CandidateStageControl } from "@/components/cockpit/CandidateStageControl";
 import { CvDownloadButton } from "@/components/cockpit/CvDownloadButton";
@@ -75,7 +75,7 @@ export default async function KandidatDetailPage({
   params: { id: string };
 }) {
   const c = await getCandidate(params.id);
-  if (!c) notFound();
+  if (!c) return <RecordUnavailable backHref="/cockpit/kandidaten" backLabel="Zurück zu Kandidaten" />;
 
   const [notes, tasks, emails, accounts, consent, submissions, mandates, interviews, offers, references] =
     await Promise.all([

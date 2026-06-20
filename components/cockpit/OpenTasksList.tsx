@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardBody } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { IconCheck, IconChevronRight } from "@/components/ui/icons";
+import { IconCheck, IconChevronRight, IconAlertTriangle } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
 import { formatDate } from "@/lib/format";
 import { setTaskDone } from "@/lib/crm-actions";
@@ -31,10 +31,18 @@ const GROUPS: { key: "overdue" | "today" | "upcoming" | "none"; label: string }[
   { key: "none", label: "Ohne Datum" },
 ];
 
-export function OpenTasksList({ tasks }: { tasks: Task[] }) {
+export function OpenTasksList({
+  tasks,
+  orphanTaskIds = [],
+}: {
+  tasks: Task[];
+  /** IDs von Aufgaben, deren verknüpfter Datensatz nicht mehr existiert. */
+  orphanTaskIds?: string[];
+}) {
   const router = useRouter();
   const [items, setItems] = useState<Task[]>(tasks);
   const [, start] = useTransition();
+  const orphans = new Set(orphanTaskIds);
 
   function complete(t: Task) {
     const prev = items;
@@ -94,7 +102,15 @@ export function OpenTasksList({ tasks }: { tasks: Task[] }) {
                           {t.related_label ? ` · ${t.related_label}` : ""}
                         </p>
                       </div>
-                      {relatedHref(t.related_type, t.related_id) ? (
+                      {orphans.has(t.id) ? (
+                        <span
+                          className="flex-none text-warning"
+                          title="Datensatz nicht mehr verfügbar"
+                          aria-label="Datensatz nicht mehr verfügbar"
+                        >
+                          <IconAlertTriangle size={15} />
+                        </span>
+                      ) : relatedHref(t.related_type, t.related_id) ? (
                         <Link
                           href={relatedHref(t.related_type, t.related_id)!}
                           className="flex-none text-faint hover:text-brand-deep"

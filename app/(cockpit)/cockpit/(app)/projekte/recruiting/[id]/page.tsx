@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { getMandates, getCandidates, getAccounts, accountKey } from "@/lib/crm-data";
 import { getPlacementsForMandate } from "@/lib/placements-data";
 import { getInvoicesForMandate } from "@/lib/invoices-data";
@@ -12,6 +11,7 @@ import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/cockpit/StatCard";
 import { Badge } from "@/components/ui/Badge";
 import { SafeBoundary } from "@/components/cockpit/SafeBoundary";
+import { RecordUnavailable } from "@/components/cockpit/RecordUnavailable";
 import { MandateCandidates } from "@/components/cockpit/MandateCandidates";
 import { MandateMatchPanel } from "@/components/cockpit/MandateMatchPanel";
 import { MandateIntelCard } from "@/components/cockpit/MandateIntelCard";
@@ -62,7 +62,7 @@ export default async function MandateDetailPage({
     getJobResponsesForMandate(params.id),
   ]);
   const m = mandates.find((x) => x.id === params.id);
-  if (!m) notFound();
+  if (!m) return <RecordUnavailable backHref="/cockpit/projekte/recruiting" backLabel="Zurück zu Personalvermittlung" />;
   const account = accounts.find((a) => accountKey(a.name) === accountKey(m.account_name));
 
   const list = candidates.filter((c) => c.mandate_id === m.id);

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { getAccountDetail } from "@/lib/crm-data";
 import { getEmailActivitiesForAccount } from "@/lib/email-data";
 import { getNotesForAccount } from "@/lib/notes-data";
@@ -33,6 +32,7 @@ import { RelationshipSummary } from "@/components/cockpit/RelationshipSummary";
 import { computeAccountIntel } from "@/lib/account-intel";
 import { BackfillAccountsButton } from "@/components/cockpit/BackfillAccountsButton";
 import { SafeBoundary } from "@/components/cockpit/SafeBoundary";
+import { RecordUnavailable } from "@/components/cockpit/RecordUnavailable";
 import { Copyable } from "@/components/ui/Copyable";
 import { formatDate, formatEur, formatPercent } from "@/lib/format";
 
@@ -107,7 +107,7 @@ export default async function AccountDetailPage({
   params: { id: string };
 }) {
   const detail = await getAccountDetail(params.id);
-  if (!detail) notFound();
+  if (!detail) return <RecordUnavailable backHref="/cockpit/kunden" backLabel="Zurück zu Kunden" />;
   const { account, parent, children, opportunities, kiProjects, mandates, candidates } = detail;
   const [emails, notes, tasks, contacts, identity] = await Promise.all([
     getEmailActivitiesForAccount(account.id, account.name),

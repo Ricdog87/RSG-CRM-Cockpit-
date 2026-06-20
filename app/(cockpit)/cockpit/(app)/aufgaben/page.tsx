@@ -15,6 +15,12 @@ export default async function AufgabenPage() {
     getMandates(),
   ]);
 
+  // Verwaiste Aufgaben erkennen: verknüpfter Kunde existiert nicht (mehr).
+  const accountIds = new Set(accounts.map((a) => a.id));
+  const orphanTaskIds = tasks
+    .filter((t) => t.related_type === "customer" && t.related_id && !accountIds.has(t.related_id))
+    .map((t) => t.id);
+
   const customers = accounts.map((a) => ({ label: a.name, id: a.id }));
   const cands = candidates.map((c) => ({ label: c.name, id: c.id }));
   const projects = [
@@ -30,7 +36,7 @@ export default async function AufgabenPage() {
         description="Alle offenen Aufgaben über deine Accounts – nach Fälligkeit sortiert."
         action={<TaskCreateDialog customers={customers} candidates={cands} projects={projects} />}
       />
-      <OpenTasksList tasks={tasks} />
+      <OpenTasksList tasks={tasks} orphanTaskIds={orphanTaskIds} />
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { getKiProject, getAccounts, accountKey } from "@/lib/crm-data";
 import { getTasksForRelated } from "@/lib/tasks-data";
 import { getMilestonesForProject, getReadinessForProject } from "@/lib/ki-plan-data";
@@ -11,6 +10,7 @@ import { StatCard } from "@/components/cockpit/StatCard";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SafeBoundary } from "@/components/cockpit/SafeBoundary";
+import { RecordUnavailable } from "@/components/cockpit/RecordUnavailable";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { KiProjectControls } from "@/components/cockpit/KiProjectControls";
 import { MilestonesCard, ReadinessChecklist } from "@/components/cockpit/KiProjectPlan";
@@ -65,7 +65,7 @@ export default async function KiProjectDetailPage({ params }: { params: { id: st
     getReadinessForProject(params.id),
     getMetricsForProject(params.id),
   ]);
-  if (!p) notFound();
+  if (!p) return <RecordUnavailable backHref="/cockpit/projekte/ki" backLabel="Zurück zu KI-Projekten" />;
 
   const account = accounts.find((a) => accountKey(a.name) === accountKey(p.account_name));
   const st = statusMeta[p.status] ?? statusMeta.onboarding;
