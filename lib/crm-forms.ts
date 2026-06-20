@@ -87,7 +87,6 @@ export const CANDIDATE_FIELDS: FormField[] = [
   { name: "birth_date", label: "Geburtsdatum", type: "date" },
   { name: "email", label: "E-Mail", type: "email", placeholder: "name@beispiel.de" },
   { name: "phone", label: "Telefon", placeholder: "+49 …" },
-  { name: "mandate_account", label: "Mandat (Account)", full: true },
   {
     name: "mandate_id",
     label: "Mandat / Suchprojekt",
@@ -95,6 +94,7 @@ export const CANDIDATE_FIELDS: FormField[] = [
     full: true,
     options: [{ value: "", label: "— kein Mandat —" }],
   },
+  { name: "mandate_account", label: "Kunde (falls ohne Mandat)", full: true, placeholder: "nur nötig ohne Mandat-Auswahl" },
   {
     name: "stage",
     label: "Phase",
@@ -126,27 +126,6 @@ export const CANDIDATE_FIELDS: FormField[] = [
   { name: "availability", label: "Verfügbarkeit", placeholder: "z.B. ab sofort / in 3 Monaten" },
   { name: "experience_years", label: "Berufserfahrung (Jahre)", type: "number", placeholder: "z.B. 8" },
   { name: "languages", label: "Sprachen", full: true, placeholder: "z.B. DE muttersprachlich, EN fließend" },
-];
-
-export const MANDATE_FIELDS: FormField[] = [
-  { name: "account_name", label: "Account", required: true, full: true, placeholder: "Muster GmbH" },
-  { name: "role", label: "Position", full: true, placeholder: "z.B. Pflegefachkraft (m/w/d)" },
-  { name: "positions", label: "Anzahl Stellen", type: "number", placeholder: "1" },
-  { name: "filled", label: "Davon besetzt", type: "number", placeholder: "0" },
-  { name: "fee", label: "Festpreis je Stelle (€)", type: "number", placeholder: "9999" },
-  {
-    name: "status",
-    label: "Status",
-    type: "select",
-    options: [
-      { value: "offen", label: "Offen" },
-      { value: "in_arbeit", label: "In Arbeit" },
-      { value: "interviews", label: "Interviews" },
-      { value: "besetzt", label: "Besetzt" },
-      { value: "pausiert", label: "Pausiert" },
-    ],
-  },
-  { name: "deadline", label: "Deadline", type: "date" },
 ];
 
 export const SEGMENT_FIELDS: FormField[] = [

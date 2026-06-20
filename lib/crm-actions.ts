@@ -599,6 +599,27 @@ async function candidateKeys(): Promise<{ name: string; email?: string }[]> {
   }));
 }
 
+/**
+ * Kundennamen zur Kandidat:in bestimmen: bei gewähltem Mandat automatisch aus
+ * dem Mandat ableiten (spart die doppelte Eingabe), sonst den Freitext-Fallback.
+ */
+async function resolveCandidateMandateAccount(fd: FormData): Promise<string> {
+  const freetext = s(fd, "mandate_account");
+  const mandateId = s(fd, "mandate_id");
+  if (!mandateId || freetext || useMockData) return freetext;
+  try {
+    const { data } = await createClient()
+      .from("recruiting_mandates")
+      .select("account_name")
+      .eq("id", mandateId)
+      .maybeSingle();
+    if (data?.account_name) return String(data.account_name);
+  } catch {
+    /* best effort – Freitext bleibt */
+  }
+  return freetext;
+}
+
 export async function createCandidate(
   _prev: ActionResult | null,
   fd: FormData
@@ -624,6 +645,8 @@ export async function createCandidate(
     }
   }
 
+  const mandateAccount = await resolveCandidateMandateAccount(fd);
+
   return insertGraceful(
     "candidates",
     {
@@ -633,7 +656,7 @@ export async function createCandidate(
       role: s(fd, "role"),
       email: s(fd, "email") || null,
       phone: s(fd, "phone") || null,
-      mandate_account: s(fd, "mandate_account"),
+      mandate_account: mandateAccount,
       mandate_id: s(fd, "mandate_id") || null,
       stage: s(fd, "stage") || "neu",
       source: s(fd, "source"),
@@ -1517,6 +1540,7 @@ export async function updateCandidate(
   const id = s(fd, "id");
   if (!id) return { ok: false, error: "Datensatz nicht gefunden." };
   if (!s(fd, "name")) return { ok: false, error: "Name ist erforderlich." };
+  const mandateAccount = await resolveCandidateMandateAccount(fd);
   return updateGraceful(
     "candidates",
     id,
@@ -1527,7 +1551,7 @@ export async function updateCandidate(
       role: s(fd, "role"),
       email: s(fd, "email") || null,
       phone: s(fd, "phone") || null,
-      mandate_account: s(fd, "mandate_account"),
+      mandate_account: mandateAccount,
       mandate_id: s(fd, "mandate_id") || null,
       stage: s(fd, "stage") || "neu",
       source: s(fd, "source"),
