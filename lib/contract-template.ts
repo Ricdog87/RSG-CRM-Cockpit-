@@ -159,7 +159,9 @@ export function buildPlacementContractHtml(p: ContractParams): string {
   .parties{display:flex;gap:24px;margin:14px 0 6px;break-inside:avoid} .party{flex:1} .muted{color:#6b7280;font-size:12px}
   ol{margin:6px 0 6px 18px} p{margin:9px 0;orphans:3;widows:3}
   .agb{page-break-before:always}
-  .sig{width:100%;border-collapse:collapse;margin-top:30px;break-inside:avoid} .sig td{width:50%;vertical-align:bottom;padding-right:22px}
+  .signpage{page-break-before:always;break-before:page}
+  .signpage h2{text-align:center;margin-bottom:6px}
+  .sig{width:100%;border-collapse:collapse;margin-top:18px;break-inside:avoid} .sig td{width:50%;vertical-align:bottom;padding-right:22px}
   .sigbox{height:54px;display:flex;align-items:flex-end} .sig-img{max-height:74px;max-width:230px;margin-bottom:-6px}
   .sigline{border-bottom:1px solid #15192a;height:2px;margin-bottom:5px} .sigcap{font-size:11px;color:#6b7280}
   .legal{margin-top:30px;padding-top:12px;border-top:1px solid #e5e7eb;text-align:center;font-size:10.5px;color:#8a90a2;line-height:1.5}
@@ -172,18 +174,22 @@ export function buildPlacementContractHtml(p: ContractParams): string {
 
   <div class="parties">
     <div class="party"><div class="muted">Zwischen der</div><strong>${esc(RSG.name)}</strong><br/>${esc(RSG.rep)}<br/>${esc(RSG.street)}<br/>${esc(RSG.city)}<br/><span class="muted">nachfolgend „RSG“ genannt</span></div>
-    <div class="party"><div class="muted">und</div><strong>${esc(p.customerName)}</strong><br/>${customerAddr || '<span class="muted">— Adresse —</span>'}${p.contactName ? `<br/>z.Hd. ${esc(p.contactName)}` : ""}<br/><span class="muted">nachfolgend „Auftraggeber“ genannt</span></div>
+    <div class="party"><div class="muted">und</div><strong>${esc(p.customerName)}</strong>${customerAddr ? `<br/>${customerAddr}` : ""}${p.contactName ? `<br/>z.Hd. ${esc(p.contactName)}` : ""}<br/><span class="muted">nachfolgend „Auftraggeber“ genannt</span></div>
   </div>
   <p class="muted">werden folgende Vereinbarungen über Personalvermittlungen getroffen:</p>
 
   ${beauftragung}
   <p><strong>§ 2 Vertragsbestandteil.</strong> Bestandteil dieses Vertrags sind die nachstehenden Allgemeinen Geschäftsbedingungen (AGB).</p>
 
-  ${signatureBlock(place, date, p.signatureUrl)}
   <div class="agb">
   ${agb}
-  ${signatureBlock(place, date, p.signatureUrl)}
-  <p class="legal">${legal}</p>
+  </div>
+
+  <div class="signpage">
+    <h2>Unterzeichnung</h2>
+    <p class="muted" style="text-align:center;margin-top:0">Mit ihrer Unterschrift bestätigen die Parteien diese Vereinbarung einschließlich der vorstehenden AGB.</p>
+    ${signatureBlock(place, date, p.signatureUrl)}
+    <p class="legal">${legal}</p>
   </div>
 
   <div class="btn">
