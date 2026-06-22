@@ -302,7 +302,7 @@ export async function analyzeMatch(
 export async function submitCandidateToMandate(
   candidateId: string,
   mandateId: string
-): Promise<{ ok: boolean; error?: string; demo?: boolean; already?: boolean }> {
+): Promise<{ ok: boolean; error?: string; demo?: boolean; already?: boolean; warning?: string }> {
   if (useMockData) return { ok: true, demo: true };
   const { id: pid, error } = await currentPartnerId();
   if (!pid) return { ok: false, error };
@@ -341,9 +341,16 @@ export async function submitCandidateToMandate(
     return { ok: false, error: insErr.message };
   }
 
-  await supabase.from("candidates").update({ mandate_id: mandateId }).eq("id", candidateId).eq("partner_id", pid);
+  const { error: linkErr } = await supabase
+    .from("candidates")
+    .update({ mandate_id: mandateId })
+    .eq("id", candidateId)
+    .eq("partner_id", pid);
 
   revalidatePath(`/cockpit/projekte/recruiting/${mandateId}`);
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
+  if (linkErr) {
+    return { ok: true, warning: "Vorgestellt – Mandat-Verknüpfung konnte nicht gesetzt werden." };
+  }
   return { ok: true };
 }

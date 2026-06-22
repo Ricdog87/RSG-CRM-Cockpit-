@@ -172,11 +172,12 @@ export async function getEmailActivitiesForCandidate(
   if (useMockData) return [];
   try {
     const supabase = createClient();
-    const e = email.toLowerCase();
+    // PostgREST-Quoting: schützt vor Komma/Sonderzeichen im Wert (Filter-Bruch).
+    const e = email.toLowerCase().replace(/"/g, "");
     const { data, error } = await supabase
       .from("email_activities")
       .select("*")
-      .or(`from_email.eq.${e},to_email.eq.${e}`)
+      .or(`from_email.eq."${e}",to_email.eq."${e}"`)
       .order("occurred_at", { ascending: false })
       .limit(50);
     if (error) {
