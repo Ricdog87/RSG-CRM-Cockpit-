@@ -670,6 +670,11 @@ export async function createCandidate(
       current_employer: s(fd, "current_employer") || null,
       languages: s(fd, "languages") || null,
       experience_years: fd.get("experience_years") ? n(fd, "experience_years") : null,
+      availability_status: s(fd, "availability_status") || "NEU",
+      seniority: s(fd, "seniority") || null,
+      linkedin_url: s(fd, "linkedin_url") || null,
+      verfuegbar_ab: s(fd, "verfuegbar_ab") || null,
+      wechselmotivation: s(fd, "wechselmotivation") || null,
     },
     "/cockpit/kandidaten"
   );
@@ -1565,6 +1570,11 @@ export async function updateCandidate(
       current_employer: s(fd, "current_employer") || null,
       languages: s(fd, "languages") || null,
       experience_years: fd.get("experience_years") ? n(fd, "experience_years") : null,
+      availability_status: s(fd, "availability_status") || "NEU",
+      seniority: s(fd, "seniority") || null,
+      linkedin_url: s(fd, "linkedin_url") || null,
+      verfuegbar_ab: s(fd, "verfuegbar_ab") || null,
+      wechselmotivation: s(fd, "wechselmotivation") || null,
       updated_at: new Date().toISOString(),
     },
     ["/cockpit/kandidaten", `/cockpit/kandidaten/${id}`]
