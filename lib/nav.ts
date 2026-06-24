@@ -4,15 +4,8 @@ import {
   IconBolt,
   IconCalendar,
   IconTasks,
-  IconTarget,
-  IconUsers,
-  IconMail,
-  IconLayers,
-  IconPhone,
-  IconBriefcase,
   IconUserCheck,
   IconNetwork,
-  IconChart,
   IconEuro,
   IconTrophy,
   IconSettings,
@@ -74,61 +67,17 @@ export const NAV_GROUPS: NavGroup[] = [
       },
     ],
   },
+  // Pivot zur Kandidaten-DB: Kunden/Deals/Projekte leben künftig in HubSpot
+  // und sind hier aus der Navigation ausgeblendet (Seiten/Daten bleiben per
+  // URL erreichbar, nichts gelöscht).
   {
-    label: "Vertrieb",
+    label: "Kandidaten",
     items: [
-      {
-        href: "/cockpit/sales",
-        label: "Sales-Pipeline",
-        icon: IconTarget,
-        description: "Projekt-Chancen über beide Geschäftslinien",
-      },
-      {
-        href: "/cockpit/kunden",
-        label: "Kunden",
-        icon: IconUsers,
-        description: "Accounts, Kontakte und Lifecycle",
-      },
-      {
-        href: "/cockpit/postfach",
-        label: "Postfach",
-        icon: IconMail,
-        description: "BCC-E-Mail-Tracking je Kunde",
-      },
-      {
-        href: "/cockpit/segmente",
-        label: "Segmente",
-        icon: IconLayers,
-        description: "KI-Zielgruppen und Use-Cases",
-      },
-      {
-        href: "/cockpit/berichte",
-        label: "Berichte",
-        icon: IconChart,
-        description: "Funnel, Forecast und Kennzahlen",
-      },
-    ],
-  },
-  {
-    label: "Projekte",
-    items: [
-      {
-        href: "/cockpit/projekte/ki",
-        label: "KI & Telefonassistenz",
-        icon: IconPhone,
-        description: "Umsetzung und Betrieb der KI-Projekte",
-      },
-      {
-        href: "/cockpit/projekte/recruiting",
-        label: "Personalvermittlung",
-        icon: IconBriefcase,
-        description: "Recruiting-Mandate und Besetzungen",
-      },
       {
         href: "/cockpit/kandidaten",
         label: "Kandidaten",
         icon: IconUserCheck,
-        description: "Recruiting-Pipeline der Kandidat:innen",
+        description: "Datenschutz-konforme Kandidaten-Datenbank",
       },
       {
         href: "/cockpit/einwilligungen",
@@ -175,10 +124,10 @@ export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 /** Kuratiierte Primär-Einträge für die Mobile-Tab-Bar. */
 export const MOBILE_NAV_HREFS = [
   "/cockpit",
-  "/cockpit/kunden",
   "/cockpit/kandidaten",
-  "/cockpit/projekte/ki",
-  "/cockpit/projekte/recruiting",
+  "/cockpit/einwilligungen",
+  "/cockpit/aufgaben",
+  "/cockpit/kalender",
 ];
 
 /** Findet den aktiven Nav-Eintrag zum aktuellen Pfad (längster Präfix-Match). */
