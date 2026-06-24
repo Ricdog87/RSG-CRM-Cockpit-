@@ -9,6 +9,7 @@ export interface Consent {
   candidate_id: string;
   token: string;
   status: "pending" | "granted" | "revoked";
+  zweck: string | null;
   text_version: string;
   email_to: string | null;
   sent_at: string | null;
@@ -30,6 +31,7 @@ function mapConsent(r: Row): Consent {
     candidate_id: String(r.candidate_id),
     token: String(r.token),
     status: (String(r.status || "pending") as Consent["status"]),
+    zweck: str(r.zweck),
     text_version: String(r.text_version || ""),
     email_to: str(r.email_to),
     sent_at: str(r.sent_at),
@@ -69,14 +71,22 @@ export async function getConsents(): Promise<ConsentRow[]> {
       .order("created_at", { ascending: false })
       .limit(500);
     if (error || !data) return [];
-    return (data as Row[]).map((r) => {
+    // Append-only: pro (Kandidat, Zweck) nur den jüngsten Record zeigen
+    // (data ist created_at desc → erster Treffer je Schlüssel gewinnt).
+    const seen = new Set<string>();
+    const rows: ConsentRow[] = [];
+    for (const r of data as Row[]) {
+      const key = `${String(r.candidate_id)}|${r.zweck == null ? "" : String(r.zweck)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
       const cand = (r.candidates as { name?: string; email?: string } | null) ?? null;
-      return {
+      rows.push({
         ...mapConsent(r),
         candidate_name: cand?.name ? String(cand.name) : "—",
         candidate_email: cand?.email ? String(cand.email) : null,
-      };
-    });
+      });
+    }
+    return rows;
   } catch {
     return [];
   }

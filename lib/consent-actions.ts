@@ -45,9 +45,12 @@ async function currentPartnerId(): Promise<{ id: string | null; error?: string }
   return { id: data.id as string };
 }
 
+type ConsentPurpose = "PROFIL_SPEICHERN" | "VERMITTLUNG" | "WEITERGABE_AN_KUNDE";
+
 /** Erzeugt eine Einwilligungs-Anfrage und schickt dem/der Kandidat:in den Link per E-Mail. */
 export async function requestConsent(
-  candidateId: string
+  candidateId: string,
+  zweck: ConsentPurpose = "VERMITTLUNG"
 ): Promise<ActionResult & { link?: string; emailed?: boolean }> {
   if (useMockData) return { ok: true, demo: true };
   const { id: pid, error } = await currentPartnerId();
@@ -73,6 +76,9 @@ export async function requestConsent(
     partner_id: pid,
     token,
     status: "pending",
+    zweck,
+    rechtsgrundlage: "Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)",
+    nachweis: "Double-Opt-In per E-Mail-Link",
     text_version: TEXT_VERSION,
     email_to: email,
     sent_at: now.toISOString(),
@@ -109,7 +115,38 @@ function clientMeta(): { ip: string | null; ua: string | null } {
   return { ip, ua };
 }
 
-/** Einwilligung erteilen (öffentlich, per Token) – protokolliert Zeit/IP/UA. */
+interface ConsentReq {
+  id: string;
+  candidate_id: string;
+  partner_id: string;
+  zweck: string | null;
+  status: string;
+  expires_at: string | null;
+  email_to: string | null;
+}
+
+/** Jüngsten Consent-Record für (Kandidat, Zweck) holen – Append-only-Kette. */
+async function latestForPurpose(
+  svc: ReturnType<typeof createServiceClient>,
+  candidateId: string,
+  zweck: string | null
+): Promise<{ status: string; granted_at: string | null } | null> {
+  let q = svc
+    .from("candidate_consents")
+    .select("status, granted_at")
+    .eq("candidate_id", candidateId)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  q = zweck === null ? q.is("zweck", null) : q.eq("zweck", zweck);
+  const { data } = await q.maybeSingle();
+  return (data as { status: string; granted_at: string | null } | null) ?? null;
+}
+
+/**
+ * Einwilligung erteilen (öffentlich, per Token). Append-only: legt einen NEUEN
+ * Record an (supersedes_id auf die Anfrage), überschreibt nichts. Protokolliert
+ * Zeit/IP/UA als Nachweis.
+ */
 export async function grantConsent(
   token: string
 ): Promise<{ ok: boolean; error?: string; granted_at?: string }> {
@@ -117,26 +154,46 @@ export async function grantConsent(
   const svc = createServiceClient();
   const { data: row } = await svc
     .from("candidate_consents")
-    .select("id, status, granted_at, expires_at")
+    .select("id, candidate_id, partner_id, zweck, status, expires_at, email_to")
     .eq("token", token)
     .maybeSingle();
   if (!row) return { ok: false, error: "Ungültiger oder abgelaufener Link." };
-  const r = row as { status: string; granted_at: string | null; expires_at: string | null };
-  if (r.status === "granted" && r.granted_at) return { ok: true, granted_at: r.granted_at };
+  const r = row as ConsentReq;
+
+  // Idempotent: bereits erteilt?
+  const latest = await latestForPurpose(svc, r.candidate_id, r.zweck);
+  if (latest?.status === "granted") {
+    return { ok: true, granted_at: latest.granted_at ?? undefined };
+  }
   if (r.expires_at && new Date(r.expires_at) < new Date()) {
     return { ok: false, error: "Dieser Link ist abgelaufen. Bitte fordern Sie einen neuen an." };
   }
+
   const { ip, ua } = clientMeta();
   const now = new Date().toISOString();
-  const { error } = await svc
-    .from("candidate_consents")
-    .update({ status: "granted", granted_at: now, revoked_at: null, ip_address: ip, user_agent: ua })
-    .eq("token", token);
+  const { error } = await svc.from("candidate_consents").insert({
+    candidate_id: r.candidate_id,
+    partner_id: r.partner_id,
+    zweck: r.zweck,
+    token: newToken(),
+    status: "granted",
+    granted_at: now,
+    supersedes_id: r.id,
+    rechtsgrundlage: "Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)",
+    nachweis: "Bestätigung über Einwilligungs-Link",
+    text_version: TEXT_VERSION,
+    email_to: r.email_to,
+    ip_address: ip,
+    user_agent: ua,
+  });
   if (error) return { ok: false, error: error.message };
   return { ok: true, granted_at: now };
 }
 
-/** Einwilligung widerrufen (öffentlich, per Token). */
+/**
+ * Einwilligung widerrufen (öffentlich, per Token). Append-only: neuer Record
+ * mit Status revoked (supersedes_id auf die Anfrage).
+ */
 export async function revokeConsent(
   token: string
 ): Promise<{ ok: boolean; error?: string; revoked_at?: string }> {
@@ -144,16 +201,27 @@ export async function revokeConsent(
   const svc = createServiceClient();
   const { data: row } = await svc
     .from("candidate_consents")
-    .select("id")
+    .select("id, candidate_id, partner_id, zweck, status, expires_at, email_to")
     .eq("token", token)
     .maybeSingle();
   if (!row) return { ok: false, error: "Ungültiger Link." };
+  const r = row as ConsentReq;
+
   const { ip, ua } = clientMeta();
   const now = new Date().toISOString();
-  const { error } = await svc
-    .from("candidate_consents")
-    .update({ status: "revoked", revoked_at: now, ip_address: ip, user_agent: ua })
-    .eq("token", token);
+  const { error } = await svc.from("candidate_consents").insert({
+    candidate_id: r.candidate_id,
+    partner_id: r.partner_id,
+    zweck: r.zweck,
+    token: newToken(),
+    status: "revoked",
+    revoked_at: now,
+    supersedes_id: r.id,
+    text_version: TEXT_VERSION,
+    email_to: r.email_to,
+    ip_address: ip,
+    user_agent: ua,
+  });
   if (error) return { ok: false, error: error.message };
   return { ok: true, revoked_at: now };
 }
