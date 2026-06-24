@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient, hasServiceRole } from "@/lib/supabase/service";
 
 /**
  * HubSpot → RSG-CRM **read-only** Sync der Recruiting-Deals in project_refs.
@@ -130,18 +131,30 @@ export async function syncHubspotProjects(): Promise<SyncResult> {
     return { ok: false, error: e instanceof Error ? e.message : "HubSpot-Abruf fehlgeschlagen." };
   }
 
+  const rows = buildRows(deals, pid, new Date().toISOString());
+  if (rows.length === 0) return { ok: true, synced: 0 };
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("project_refs")
+    .upsert(rows, { onConflict: "partner_id,hubspot_deal_id" });
+  if (error) return { ok: false, error: error.message };
+
+  return { ok: true, synced: rows.length };
+}
+
+/** Mappt HubSpot-Deals → project_refs-Zeilen für einen Partner (gefiltert auf offen/Pipeline). */
+function buildRows(deals: HsDeal[], partnerId: string, now: string) {
   const onlyPipeline = process.env.HUBSPOT_RECRUITING_PIPELINE || null;
   const propStandort = process.env.HUBSPOT_PROP_STANDORT;
   const propAnf = process.env.HUBSPOT_PROP_ANFORDERUNGEN;
   const propSkills = process.env.HUBSPOT_PROP_SKILLS;
   const propKunde = process.env.HUBSPOT_PROP_KUNDE;
-  const now = new Date().toISOString();
-
-  const rows = deals
+  return deals
     .filter((d) => isOpen(d.properties.dealstage))
     .filter((d) => !onlyPipeline || d.properties.pipeline === onlyPipeline)
     .map((d) => ({
-      partner_id: pid,
+      partner_id: partnerId,
       hubspot_deal_id: d.id,
       titel: d.properties.dealname ?? null,
       kunde: propKunde ? d.properties[propKunde] ?? null : null,
@@ -155,14 +168,36 @@ export async function syncHubspotProjects(): Promise<SyncResult> {
       last_synced_at: now,
       updated_at: now,
     }));
+}
 
-  if (rows.length === 0) return { ok: true, synced: 0 };
-
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("project_refs")
-    .upsert(rows, { onConflict: "partner_id,hubspot_deal_id" });
-  if (error) return { ok: false, error: error.message };
-
-  return { ok: true, synced: rows.length };
+/**
+ * Cron/n8n-Pfad: read-only Sync für ALLE Partner via Service-Role (ohne Session).
+ * Wird von der Route nur bei gültigem Secret-Header (SYNC_CRON_SECRET) aufgerufen.
+ */
+export async function syncHubspotProjectsForAllPartners(): Promise<SyncResult> {
+  const token = process.env.HUBSPOT_PRIVATE_APP_TOKEN;
+  if (!token) return { ok: false, error: "HUBSPOT_PRIVATE_APP_TOKEN nicht gesetzt." };
+  if (!hasServiceRole()) {
+    return { ok: false, error: "Service-Role nicht verfügbar (SUPABASE_SERVICE_ROLE_KEY fehlt)." };
+  }
+  let deals: HsDeal[];
+  try {
+    deals = await fetchDeals(token);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "HubSpot-Abruf fehlgeschlagen." };
+  }
+  const svc = createServiceClient();
+  const { data: partners } = await svc.from("partners").select("id");
+  const now = new Date().toISOString();
+  let synced = 0;
+  for (const p of ((partners as { id: string }[] | null) ?? [])) {
+    const rows = buildRows(deals, p.id, now);
+    if (rows.length === 0) continue;
+    const { error } = await svc
+      .from("project_refs")
+      .upsert(rows, { onConflict: "partner_id,hubspot_deal_id" });
+    if (error) return { ok: false, error: error.message, synced };
+    synced += rows.length;
+  }
+  return { ok: true, synced };
 }

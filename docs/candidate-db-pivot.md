@@ -52,6 +52,13 @@ gegen **HubSpot-Recruiting-Projekte**. Kunden/Deals/Projekte bleiben Source-of-T
 | `HUBSPOT_PRIVATE_APP_TOKEN` | ✅ | Private-App-Token (Read) |
 | `HUBSPOT_RECRUITING_PIPELINE` | optional | nur diese Pipeline syncen |
 | `HUBSPOT_PROP_STANDORT` / `_ANFORDERUNGEN` / `_SKILLS` / `_KUNDE` | optional | Custom-Property-Namen eures Deal-Schemas |
+| `SYNC_CRON_SECRET` | optional | aktiviert den Cron/n8n-Pfad (Header `x-sync-secret`) |
+
+### Cron/n8n-Trigger
+`SYNC_CRON_SECRET` setzen, dann z.B. stündlich:
+`POST /api/hubspot/sync-projects` mit Header `x-sync-secret: <SYNC_CRON_SECRET>`
+→ Sync für alle Partner via Service-Role (ohne Login). Ohne Secret-Header läuft
+der Sync über die Partner-Session (Cockpit-Button).
 
 ### HubSpot Private App – Read-Scopes
 `crm.objects.deals.read`, `crm.schemas.deals.read`
@@ -71,9 +78,13 @@ Einwilligungen". Seiten/Daten bleiben per URL erreichbar – **nichts gelöscht*
    `PartnerPricing`, `PartnerCustomer`) haben RLS deaktiviert → über Anon-Key voll
    exponiert. RLS aktivieren **nur mit passenden Policies** (sonst Total-Sperre).
 
-## Noch offen (nächste Slices)
-- Search-&-Match-**UI** (Projektauswahl → gerankte Kandidaten, „Vorschlagen").
-- Consent-Status (neuer Zweck-Überblick) sichtbar im Kandidatenprofil.
-- Append-only-Consent-**Schreiblogik** (jeder Statuswechsel = neuer Record) in
-  `consent-actions.ts` umstellen.
-- Cron/n8n-Trigger des Sync mit Secret-Header.
+## Erledigt (komplett nutzbar)
+- ✅ Search-&-Match-**UI** (`/cockpit/match`): Projekt wählen → gerankte Kandidaten + „Vorschlagen".
+- ✅ Consent-**Zweck-Überblick** + Betroffenenrechte (Art. 15/17) im Kandidatenprofil.
+- ✅ Append-only-Consent-Schreiblogik + zweck-bewusste Anfrage (Default VERMITTLUNG).
+- ✅ Kandidaten-DB-Felder editierbar (`availability_status`, Seniorität, LinkedIn, …).
+- ✅ Cron/n8n-Trigger des Sync mit Secret-Header (`SYNC_CRON_SECRET`).
+
+## Noch offen (optional, nach Go-Live)
+- „Projekte (HubSpot)"-Read-only-Listenansicht als eigene Seite.
+- Feinere Match-Gewichtung / Seniority-Berücksichtigung.
