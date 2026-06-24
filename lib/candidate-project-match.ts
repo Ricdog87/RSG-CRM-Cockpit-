@@ -64,25 +64,35 @@ export async function rankCandidatesForProject(
     const reasons: string[] = [];
     let score = 0;
 
-    // 1) Skill-Overlap (max 60)
+    // 1) Skill-Overlap (max 60). Fallback ohne strukturierte Projekt-Skills:
+    //    Kandidaten-Skills im Projekttext (Deal-Name/Anforderungen) suchen.
     const candSkills = asSkills(c.skills);
-    const overlap = projSkills.filter((s) => candSkills.includes(s));
-    // Zusätzlich: Projekt-Skills, die im Anforderungstext/Skill-Set auftauchen.
-    const textHits = projSkills.filter(
-      (s) => !overlap.includes(s) && projText && candSkills.some((cs) => cs.includes(s))
-    );
     if (projSkills.length > 0) {
+      const overlap = projSkills.filter((s) => candSkills.includes(s));
+      const textHits = projSkills.filter(
+        (s) => !overlap.includes(s) && projText && candSkills.some((cs) => cs.includes(s))
+      );
       const ratio = (overlap.length + textHits.length * 0.5) / projSkills.length;
-      const sk = Math.round(Math.min(1, ratio) * 60);
-      score += sk;
+      score += Math.round(Math.min(1, ratio) * 60);
       if (overlap.length > 0) reasons.push(`${overlap.length}/${projSkills.length} Skills passen`);
+    } else if (projText && candSkills.length > 0) {
+      const inText = candSkills.filter((cs) => cs.length >= 3 && projText.includes(cs));
+      if (inText.length > 0) {
+        score += Math.round(Math.min(1, inText.length / 4) * 50);
+        reasons.push(`${inText.length} Skill-Treffer im Projekttext`);
+      }
     }
 
-    // 2) Standort (max 20)
+    // 2) Standort (max 20). Fallback: Ort im Projekttext (Deal-Name).
     const candOrt = fold(c.location);
-    if (projOrt && candOrt && (candOrt.includes(projOrt) || projOrt.includes(candOrt))) {
-      score += 20;
-      reasons.push("Standort passt");
+    if (candOrt && candOrt.length >= 3) {
+      if (projOrt && (candOrt.includes(projOrt) || projOrt.includes(candOrt))) {
+        score += 20;
+        reasons.push("Standort passt");
+      } else if (!projOrt && projText.includes(candOrt)) {
+        score += 15;
+        reasons.push("Ort im Projekttext");
+      }
     }
 
     // 3) Verfügbarkeit/Status (max 20)

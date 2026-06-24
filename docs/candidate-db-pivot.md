@@ -64,6 +64,17 @@ der Sync über die Partner-Session (Cockpit-Button).
 `crm.objects.deals.read`, `crm.schemas.deals.read`
 (optional: `crm.objects.companies.read`, `crm.objects.contacts.read`)
 
+### HubSpot-Schema (inspiziert) → empfohlene Config
+- Pipeline `default` = **„Recruiting-Pipeline"** → **`HUBSPOT_RECRUITING_PIPELINE=default`**
+  (Pipeline `3535347914` „KI Projekte" bleibt außen vor). Closed-Stages
+  „Placement"/„Nicht besetzt" werden von `isOpen()` ausgefiltert.
+- **Achtung:** Die Deals haben KEINE strukturierten Properties für Skills/Standort –
+  alles steckt im `dealname` (z.B. „Asklepios- Standortleiter (m/w/d) Wiesbaden").
+  Das Ranking matcht daher gegen den Projekttext (Deal-Name/`description`).
+  Für besseres Matching empfohlen: eigene Deal-Properties „Skills" und „Standort"
+  in HubSpot anlegen und als `HUBSPOT_PROP_SKILLS` / `HUBSPOT_PROP_STANDORT` setzen
+  (+ `HUBSPOT_PROP_ANFORDERUNGEN=description`, falls genutzt).
+
 ## 5. Navigation (D1)
 Kunden/Deals/Projekte aus dem Menü ausgeblendet (`lib/nav.ts`); Fokus „Kandidaten +
 Einwilligungen". Seiten/Daten bleiben per URL erreichbar – **nichts gelöscht**.
