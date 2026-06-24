@@ -24,6 +24,11 @@ export function candidateInitial(c: Candidate): Record<string, string> {
     travel_willingness: c.travel_willingness ?? "",
     salary_expectation: c.salary_expectation != null ? String(c.salary_expectation) : "",
     availability: c.availability ?? "",
+    availability_status: c.availability_status ?? "NEU",
+    seniority: c.seniority ?? "",
+    linkedin_url: c.linkedin_url ?? "",
+    verfuegbar_ab: c.verfuegbar_ab ?? "",
+    wechselmotivation: c.wechselmotivation ?? "",
     birth_date: c.birth_date ?? "",
     current_employer: c.current_employer ?? "",
     languages: c.languages ?? "",
@@ -124,8 +129,25 @@ export const CANDIDATE_FIELDS: FormField[] = [
   { name: "travel_willingness", label: "Reisebereitschaft", placeholder: "z.B. bis 50 %" },
   { name: "salary_expectation", label: "Gehaltsvorstellung (€/Jahr)", type: "number", placeholder: "z.B. 65000" },
   { name: "availability", label: "Verfügbarkeit", placeholder: "z.B. ab sofort / in 3 Monaten" },
+  {
+    name: "availability_status",
+    label: "Verfügbarkeits-Status",
+    type: "select",
+    options: [
+      { value: "NEU", label: "Neu" },
+      { value: "AKTIV_VERFUEGBAR", label: "Aktiv verfügbar" },
+      { value: "IN_VERMITTLUNG", label: "In Vermittlung" },
+      { value: "PLATZIERT", label: "Platziert" },
+      { value: "INAKTIV", label: "Inaktiv" },
+      { value: "GESPERRT", label: "Gesperrt" },
+    ],
+  },
+  { name: "seniority", label: "Seniorität", placeholder: "z.B. Senior, Lead" },
+  { name: "verfuegbar_ab", label: "Verfügbar ab", type: "date" },
+  { name: "linkedin_url", label: "LinkedIn-URL", full: true, placeholder: "https://linkedin.com/in/…" },
   { name: "experience_years", label: "Berufserfahrung (Jahre)", type: "number", placeholder: "z.B. 8" },
   { name: "languages", label: "Sprachen", full: true, placeholder: "z.B. DE muttersprachlich, EN fließend" },
+  { name: "wechselmotivation", label: "Wechselmotivation", type: "textarea", full: true, placeholder: "Warum offen für Neues?" },
 ];
 
 export const SEGMENT_FIELDS: FormField[] = [

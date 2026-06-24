@@ -388,6 +388,13 @@ export interface Candidate {
   travel_willingness?: string;
   salary_expectation?: number;
   availability?: string;
+  /** Pivot Kandidaten-DB: Verfügbarkeits-/Lifecycle-Status. */
+  availability_status?: string;
+  seniority?: string;
+  linkedin_url?: string;
+  /** Verfügbar ab (Datum, ISO). */
+  verfuegbar_ab?: string;
+  wechselmotivation?: string;
   /** Geburtsdatum (fuer Alter; im Recruiting teils relevant) */
   birth_date?: string;
   /** Aktueller Arbeitgeber */

@@ -35,6 +35,8 @@ import { ReferencesCard } from "@/components/cockpit/ReferencesCard";
 import { CandidateSkills } from "@/components/cockpit/CandidateSkills";
 import { CandidateActivity } from "@/components/cockpit/CandidateActivity";
 import { CandidateConsent } from "@/components/cockpit/CandidateConsent";
+import { CandidateDsgvo } from "@/components/cockpit/CandidateDsgvo";
+import { candidateConsentSummary } from "@/lib/dsgvo/consent";
 import {
   IconChevronRight,
   IconMail,
@@ -90,6 +92,8 @@ export default async function KandidatDetailPage({
       getOffersForCandidate(c.id),
       getReferencesForCandidate(c.id),
     ]);
+
+  const consentSummary = await candidateConsentSummary(c.id);
 
   // Mandat-Auswahl im Bearbeiten-Dialog (Kandidat:in einem Suchprojekt zuordnen).
   const editFields = withSelectOptions(CANDIDATE_FIELDS, "mandate_id", [
@@ -339,6 +343,13 @@ export default async function KandidatDetailPage({
                   sentAt={consent?.sent_at}
                   grantedAt={consent?.granted_at}
                 />
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardBody>
+                <SectionHeader title="Datenschutz · Betroffenenrechte" hint="Zweck-Status · Art. 15/17" />
+                <CandidateDsgvo candidateId={c.id} consentSummary={consentSummary} />
               </CardBody>
             </Card>
 
