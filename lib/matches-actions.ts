@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import { assertCanPresent } from "@/lib/dsgvo/consent";
+import { rankCandidatesForProject, type CandidateMatchHit } from "@/lib/candidate-project-match";
 import type { ActionResult } from "@/lib/crm-actions";
 
 /**
@@ -122,4 +123,13 @@ export async function updateMatchStatus(
 
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
   return { ok: true };
+}
+
+/** Server-Action für die UI: rankt Kandidaten gegen ein gewähltes Projekt. */
+export async function rankForProjectAction(
+  projectRefId: string
+): Promise<{ ok: boolean; error?: string; titel?: string | null; hits: CandidateMatchHit[] }> {
+  if (!projectRefId) return { ok: false, error: "Kein Projekt gewählt.", hits: [] };
+  const res = await rankCandidatesForProject(projectRefId, 30);
+  return { ok: res.ok, error: res.error, titel: res.project?.titel ?? null, hits: res.hits };
 }

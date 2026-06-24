@@ -80,6 +80,12 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Datenschutz-konforme Kandidaten-Datenbank",
       },
       {
+        href: "/cockpit/match",
+        label: "Search & Match",
+        icon: IconSpark,
+        description: "HubSpot-Projekt → passende, einwilligungsgeprüfte Kandidaten",
+      },
+      {
         href: "/cockpit/einwilligungen",
         label: "Einwilligungen",
         icon: IconCheck,
