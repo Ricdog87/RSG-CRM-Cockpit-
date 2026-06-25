@@ -5,8 +5,6 @@ import {
   IconCalendar,
   IconTasks,
   IconUserCheck,
-  IconEuro,
-  IconTrophy,
   IconSettings,
   IconFolder,
   IconCheck,
@@ -95,18 +93,6 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Partner",
     items: [
-      {
-        href: "/cockpit/provisionen",
-        label: "Provisionen",
-        icon: IconEuro,
-        description: "Auszahlungen, Reserve und Override",
-      },
-      {
-        href: "/cockpit/karriere",
-        label: "Karriere",
-        icon: IconTrophy,
-        description: "Stufenplan, Override-Ebenen und Leaderboard",
-      },
       {
         href: "/cockpit/einstellungen",
         label: "Einstellungen",
