@@ -79,6 +79,7 @@ const KIND_AVATAR: Record<SearchGroup["kind"], string> = {
   mandat: "bg-warning/15 text-warning",
   chance: "bg-success/15 text-success",
   ki: "bg-violet-500/15 text-violet-600",
+  projekt: "bg-brand/15 text-brand-deep",
 };
 
 function initials(s: string): string {

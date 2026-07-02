@@ -19,8 +19,19 @@ interface ProjectOption {
 }
 
 /** Search & Match: Projekt wählen → gerankte Kandidaten mit Score + Consent-Status. */
-export function MatchWorkbench({ projects }: { projects: ProjectOption[] }) {
-  const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
+export function MatchWorkbench({
+  projects,
+  initialProjectId,
+}: {
+  projects: ProjectOption[];
+  /** Vorauswahl per Deep-Link (?projekt=… aus Suche/Verlinkung). */
+  initialProjectId?: string;
+}) {
+  const preselect =
+    initialProjectId && projects.some((p) => p.id === initialProjectId)
+      ? initialProjectId
+      : projects[0]?.id ?? "";
+  const [projectId, setProjectId] = useState(preselect);
   const [hits, setHits] = useState<CandidateMatchHit[]>([]);
   const [ran, setRan] = useState(false);
   const [pending, start] = useTransition();

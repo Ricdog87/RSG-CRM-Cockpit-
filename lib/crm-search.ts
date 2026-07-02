@@ -5,6 +5,7 @@ import {
   getMandates,
   getKiProjects,
 } from "@/lib/crm-data";
+import { getProjectRefs } from "@/lib/project-refs-data";
 
 export interface SearchHit {
   href: string;
@@ -20,7 +21,7 @@ export interface SearchHit {
 
 export interface SearchGroup {
   label: string;
-  kind: "kunde" | "chance" | "kandidat" | "mandat" | "ki";
+  kind: "kunde" | "chance" | "kandidat" | "mandat" | "ki" | "projekt";
   hits: SearchHit[];
 }
 
@@ -82,12 +83,13 @@ export async function runCrmSearch(
   const tokens = fold(rawQuery).split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return { groups: [], total: 0 };
 
-  const [accounts, opportunities, candidates, mandates, kiProjects] = await Promise.all([
+  const [accounts, opportunities, candidates, mandates, kiProjects, projectRefs] = await Promise.all([
     getAccounts(),
     getOpportunities(),
     getCandidates(),
     getMandates(),
     getKiProjects(),
+    getProjectRefs(),
   ]);
 
   const accountHits: SearchHit[] = [];
@@ -189,7 +191,26 @@ export async function runCrmSearch(
       });
   }
 
+  const projektHits: SearchHit[] = [];
+  for (const p of projectRefs) {
+    const score = scoreRecord(tokens, [
+      { value: p.titel ?? undefined, weight: 3 },
+      { value: p.kunde ?? undefined, weight: 2 },
+      { value: p.standort ?? undefined, weight: 1 },
+      { value: p.anforderungen ?? undefined, weight: 1 },
+    ]);
+    if (score > 0)
+      projektHits.push({
+        href: `/cockpit/match?projekt=${p.id}`,
+        title: p.titel ?? "Projekt",
+        subtitle: joinDot(p.kunde, p.standort) || "HubSpot-Projekt",
+        badge: p.hubspot_stage ?? undefined,
+        score,
+      });
+  }
+
   const groups: SearchGroup[] = [
+    { label: "Projekte (HubSpot)", kind: "projekt", hits: projektHits },
     { label: "Unternehmen", kind: "kunde", hits: accountHits },
     { label: "Kandidaten", kind: "kandidat", hits: candHits },
     { label: "Recruiting-Mandate", kind: "mandat", hits: mandateHits },

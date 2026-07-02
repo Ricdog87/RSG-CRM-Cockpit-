@@ -8,7 +8,11 @@ import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default async function MatchPage() {
+export default async function MatchPage({
+  searchParams,
+}: {
+  searchParams?: { projekt?: string };
+}) {
   const [projects, matchGroups] = await Promise.all([getProjectRefs(), getMatchesOverview()]);
   const options = projects.map((p) => ({
     id: p.id,
@@ -32,7 +36,7 @@ export default async function MatchPage() {
         }`}
         action={<SyncProjectsButton />}
       />
-      <MatchWorkbench projects={options} />
+      <MatchWorkbench projects={options} initialProjectId={searchParams?.projekt} />
 
       <PageHeader
         eyebrow="Pipeline"

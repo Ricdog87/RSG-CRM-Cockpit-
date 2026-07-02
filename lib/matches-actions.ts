@@ -124,6 +124,23 @@ export async function updateMatchStatus(
     .eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
 
+  // Workflow-Automatik: Match-Status zieht den Kandidaten-Status nach
+  // (best effort – der Match-Wechsel ist bereits persistiert).
+  if (status === "PLATZIERT") {
+    await supabase
+      .from("candidates")
+      .update({ availability_status: "PLATZIERT" })
+      .eq("id", candidateId)
+      .eq("partner_id", pid);
+  } else if (status === "VORGESTELLT") {
+    await supabase
+      .from("candidates")
+      .update({ availability_status: "IN_VERMITTLUNG" })
+      .eq("id", candidateId)
+      .eq("partner_id", pid)
+      .in("availability_status", ["NEU", "AKTIV_VERFUEGBAR"]);
+  }
+
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
   revalidatePath("/cockpit/match");
   return { ok: true };
