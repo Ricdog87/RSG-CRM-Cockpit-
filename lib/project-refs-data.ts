@@ -41,6 +41,12 @@ function mapRow(r: Row): ProjectRef {
 }
 
 /** Alle gespiegelten Projekte (RLS: eigene + Downline). */
+/** Offen = nicht geschlossen (closedwon/closedlost) – nur offene Projekte sind matchbar. */
+function isOpenStage(stage: string | null): boolean {
+  const s = (stage ?? "").toLowerCase();
+  return !s.includes("closedwon") && !s.includes("closedlost");
+}
+
 export async function getProjectRefs(): Promise<ProjectRef[]> {
   if (useMockData) return [];
   try {
@@ -51,7 +57,8 @@ export async function getProjectRefs(): Promise<ProjectRef[]> {
       .order("last_synced_at", { ascending: false })
       .limit(500);
     if (error || !data) return [];
-    return (data as Row[]).map(mapRow);
+    // Geschlossene Deals werden gespiegelt (Status aktuell), aber nicht mehr gematcht.
+    return (data as Row[]).map(mapRow).filter((p) => isOpenStage(p.hubspot_stage ?? p.status));
   } catch {
     return [];
   }

@@ -92,11 +92,6 @@ async function fetchDeals(token: string): Promise<HsDeal[]> {
   return out;
 }
 
-function isOpen(stage: string | null): boolean {
-  const s = (stage ?? "").toLowerCase();
-  return !s.includes("closedwon") && !s.includes("closedlost");
-}
-
 function splitSkills(v: string | null): string[] {
   if (!v) return [];
   return v
@@ -150,8 +145,10 @@ function buildRows(deals: HsDeal[], partnerId: string, now: string) {
   const propAnf = process.env.HUBSPOT_PROP_ANFORDERUNGEN;
   const propSkills = process.env.HUBSPOT_PROP_SKILLS;
   const propKunde = process.env.HUBSPOT_PROP_KUNDE;
+  // Auch geschlossene Deals upserten, damit ihr Status in project_refs aktuell
+  // bleibt (closedwon/closedlost). Die „offen"-Filterung passiert beim Lesen
+  // (getProjectRefs) – sonst blieben einmal gespiegelte Deals dauerhaft „offen".
   return deals
-    .filter((d) => isOpen(d.properties.dealstage))
     .filter((d) => !onlyPipeline || d.properties.pipeline === onlyPipeline)
     .map((d) => ({
       partner_id: partnerId,

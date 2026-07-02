@@ -185,6 +185,43 @@ async function referencedAccountNames(): Promise<Map<string, { name: string; lin
   return map;
 }
 
+/**
+ * Gezielter Account-Lookup per Name (akzent-/ß-tolerant) — statt alle 4k+
+ * Accounts zu laden, nur um einen Namen aufzulösen. Grob per ilike vorfiltern,
+ * dann exakt per accountKey matchen.
+ */
+export async function findAccountByName(
+  name: string
+): Promise<{ id: string; name: string; branche?: string } | null> {
+  const q = (name ?? "").trim();
+  if (!q || useMockData) {
+    return mockAccounts.find((a) => accountKey(a.name) === accountKey(q))
+      ? (() => {
+          const a = mockAccounts.find((x) => accountKey(x.name) === accountKey(q))!;
+          return { id: a.id, name: a.name, branche: a.branche };
+        })()
+      : null;
+  }
+  try {
+    const supabase = createClient();
+    // Ersten „Wort"-Kern für ein tolerantes ilike verwenden.
+    const core = q.replace(/[%_]/g, " ").split(/\s+/)[0] || q;
+    const { data } = await supabase
+      .from("accounts")
+      .select("id, name, branche")
+      .ilike("name", `%${core}%`)
+      .limit(50);
+    const rows = (data as Row[] | null) ?? [];
+    const target = accountKey(q);
+    const hit = rows.find((r) => accountKey(String(r.name ?? "")) === target);
+    return hit
+      ? { id: String(hit.id), name: String(hit.name ?? ""), branche: hit.branche ? String(hit.branche) : undefined }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getAccounts(): Promise<Account[]> {
   if (useMockData) return mockAccounts;
 

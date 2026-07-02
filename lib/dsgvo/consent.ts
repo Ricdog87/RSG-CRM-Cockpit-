@@ -26,6 +26,57 @@ interface ConsentRowLite {
   created_at: string;
 }
 
+/**
+ * Reine Statuslogik (ohne DB): jüngsten entscheidenden Record je Zweck werten.
+ * `records` müssen nach created_at absteigend sortiert sein.
+ */
+function effectiveState(records: ConsentRowLite[], purpose: ConsentPurpose, now: number): ConsentState {
+  const relevant = records.filter(
+    (r) => r.zweck === purpose || (r.zweck == null && purpose === "PROFIL_SPEICHERN")
+  );
+  const rec = relevant.find(
+    (r) => r.status === "granted" || r.status === "revoked" || r.granted_at || r.revoked_at
+  );
+  if (!rec) return "KEINE";
+  if (rec.status === "revoked" || rec.revoked_at) return "WIDERRUFEN";
+  if (rec.status !== "granted") return "KEINE";
+  if (rec.expires_at && new Date(rec.expires_at).getTime() < now) return "ABGELAUFEN";
+  return "ERTEILT";
+}
+
+/**
+ * Batch-Consent-Gate: liefert die Menge der Kandidat-IDs, die einem Kunden
+ * vorgestellt werden dürfen (gültige VERMITTLUNG- oder WEITERGABE_AN_KUNDE-
+ * Einwilligung). Eine einzige Query statt N×assertCanPresent.
+ */
+export async function batchCanPresent(candidateIds: string[]): Promise<Set<string>> {
+  const ok = new Set<string>();
+  if (candidateIds.length === 0) return ok;
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("candidate_consents")
+    .select("candidate_id, status, zweck, granted_at, revoked_at, expires_at, created_at")
+    .in("candidate_id", candidateIds)
+    .order("created_at", { ascending: false });
+  if (error || !data) return ok;
+  const byCand = new Map<string, ConsentRowLite[]>();
+  for (const r of data as (ConsentRowLite & { candidate_id: string })[]) {
+    const arr = byCand.get(r.candidate_id) ?? [];
+    arr.push(r);
+    byCand.set(r.candidate_id, arr);
+  }
+  const now = Date.now();
+  for (const [cid, recs] of byCand) {
+    if (
+      effectiveState(recs, "VERMITTLUNG", now) === "ERTEILT" ||
+      effectiveState(recs, "WEITERGABE_AN_KUNDE", now) === "ERTEILT"
+    ) {
+      ok.add(cid);
+    }
+  }
+  return ok;
+}
+
 /** Ermittelt den aktuellen Einwilligungs-Status für einen konkreten Zweck. */
 export async function consentStateFor(
   candidateId: string,
@@ -40,17 +91,8 @@ export async function consentStateFor(
     .limit(100);
   if (error || !data || data.length === 0) return "KEINE";
 
-  // Jüngsten Record für diesen Zweck wählen (Append-only: created_at desc).
-  // Bestandsdaten ohne zweck zählen nur für PROFIL_SPEICHERN.
-  const rec = (data as ConsentRowLite[]).find(
-    (r) => r.zweck === purpose || (r.zweck == null && purpose === "PROFIL_SPEICHERN")
-  );
-  if (!rec) return "KEINE";
-
-  if (rec.status === "revoked" || rec.revoked_at) return "WIDERRUFEN";
-  if (rec.status !== "granted") return "KEINE"; // pending o.ä.
-  if (rec.expires_at && new Date(rec.expires_at).getTime() < Date.now()) return "ABGELAUFEN";
-  return "ERTEILT";
+  // Jüngsten entscheidenden Record je Zweck werten (pending überspringen).
+  return effectiveState(data as ConsentRowLite[], purpose, Date.now());
 }
 
 function blockMessage(state: ConsentState): string {

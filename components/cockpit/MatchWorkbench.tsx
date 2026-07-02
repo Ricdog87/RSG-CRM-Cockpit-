@@ -70,7 +70,13 @@ export function MatchWorkbench({ projects }: { projects: ProjectOption[] }) {
           <div className="flex flex-wrap items-center gap-2">
             <select
               value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
+              onChange={(e) => {
+                setProjectId(e.target.value);
+                // Trefferliste des alten Projekts verwerfen – sonst würde
+                // "Vorschlagen" den Kandidaten dem neu gewählten Projekt zuordnen.
+                setHits([]);
+                setRan(false);
+              }}
               className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 py-2 text-sm text-ink focus-visible:ring-2 focus-visible:ring-brand"
             >
               {projects.map((p) => (

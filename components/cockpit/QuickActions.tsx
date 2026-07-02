@@ -3,19 +3,19 @@ import { Card, CardBody } from "@/components/ui/Card";
 import {
   IconTasks,
   IconUsers,
-  IconBriefcase,
-  IconTrophy,
-  IconChart,
+  IconTarget,
+  IconCheck,
+  IconCalendar,
   IconSpark,
 } from "@/components/ui/icons";
 
 const QUICK_ACTIONS = [
-  { label: "Aufgaben", href: "/cockpit/aufgaben", icon: IconTasks },
   { label: "Kandidaten", href: "/cockpit/kandidaten", icon: IconUsers },
-  { label: "Kunden", href: "/cockpit/kunden", icon: IconBriefcase },
+  { label: "Match", href: "/cockpit/match", icon: IconTarget },
+  { label: "Einwilligungen", href: "/cockpit/einwilligungen", icon: IconCheck },
+  { label: "Aufgaben", href: "/cockpit/aufgaben", icon: IconTasks },
+  { label: "Kalender", href: "/cockpit/kalender", icon: IconCalendar },
   { label: "Leads", href: "/cockpit/leads", icon: IconSpark },
-  { label: "Chancen", href: "/cockpit/sales", icon: IconTrophy },
-  { label: "Berichte", href: "/cockpit/berichte", icon: IconChart },
 ] as const;
 
 /** Schnellzugriff-Leiste – oben im Dashboard als HubSpot-Ersatz. */

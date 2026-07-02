@@ -17,6 +17,7 @@ export interface FonioWebhookResult {
   error?: string;
   candidateId?: string;
   summarized?: boolean;
+  warning?: string;
 }
 
 function digits(s: unknown): string {
@@ -53,10 +54,14 @@ export async function processFonioCallResult(
     row = (data as Row | null) ?? null;
   }
   if (!row && toNumber) {
+    // Fallback über die Nummer, aber nur innerhalb eines Zeitfensters (Anrufe
+    // enden binnen Minuten) – begrenzt Fehlzuordnung zu alten Anrufen.
+    const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
     const { data } = await svc
       .from("fonio_calls")
       .select("id, partner_id, candidate_id")
       .eq("to_number", toNumber)
+      .gte("created_at", since)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -85,19 +90,29 @@ export async function processFonioCallResult(
   if (summary) patch.summary = summary;
   if (duration != null) patch.duration_seconds = duration;
   if (outcome) patch.outcome = outcome;
-  await svc.from("fonio_calls").update(patch).eq("id", row.id);
+  // Speichern ist fatal: bei Fehler ok:false → Route antwortet 4xx, Fonio retryt
+  // (Update ist idempotent über row.id; die Notiz wird erst danach angelegt).
+  const { error: updErr } = await svc.from("fonio_calls").update(patch).eq("id", row.id);
+  if (updErr) return { ok: false, error: `Speichern fehlgeschlagen: ${updErr.message}` };
 
   // Automatische Kandidaten-Notiz (erscheint in der Aktivitäts-Timeline).
+  let noteWarning: string | undefined;
   if (row.candidate_id) {
     const body = summary
       ? `Anruf-Zusammenfassung:\n${summary.trim()}`
       : `Anruf abgeschlossen${duration != null ? ` (${duration}s)` : ""}${outcome ? ` · ${outcome}` : ""}.`;
     const note = { partner_id: row.partner_id, candidate_id: row.candidate_id, body };
     const { error } = await svc.from("candidate_notes").insert({ ...note, kind: "call" });
-    if (error && /column .*kind.* does not exist/i.test(error.message)) {
-      await svc.from("candidate_notes").insert(note);
+    if (error) {
+      if (/column .*kind.* does not exist/i.test(error.message)) {
+        const { error: e2 } = await svc.from("candidate_notes").insert(note);
+        if (e2) noteWarning = e2.message;
+      } else {
+        noteWarning = error.message;
+      }
     }
   }
 
-  return { ok: true, candidateId: row.candidate_id ?? undefined, summarized };
+  // Notiz-Fehler NICHT fatal (Rohdaten sind gespeichert) – sonst Doppel-Notiz bei Retry.
+  return { ok: true, candidateId: row.candidate_id ?? undefined, summarized, warning: noteWarning };
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCandidate, getAccounts, getMandates, accountKey } from "@/lib/crm-data";
+import { getCandidate, getMandates, findAccountByName } from "@/lib/crm-data";
 import { getNotesForCandidate } from "@/lib/notes-data";
 import { getConsentForCandidate } from "@/lib/consent-data";
 import { getSubmissionsForCandidate } from "@/lib/submissions-data";
@@ -79,12 +79,11 @@ export default async function KandidatDetailPage({
   const c = await getCandidate(params.id);
   if (!c) return <RecordUnavailable backHref="/cockpit/kandidaten" backLabel="Zurück zu Kandidaten" />;
 
-  const [notes, tasks, emails, accounts, consent, submissions, mandates, interviews, offers, references] =
+  const [notes, tasks, emails, consent, submissions, mandates, interviews, offers, references] =
     await Promise.all([
       getNotesForCandidate(c.id),
       getTasksForRelated("candidate", c.id),
       getEmailActivitiesForCandidate(c.email),
-      getAccounts(),
       getConsentForCandidate(c.id).catch(() => null),
       getSubmissionsForCandidate(c.id),
       getMandates(),
@@ -110,7 +109,7 @@ export default async function KandidatDetailPage({
     : undefined;
   const mandateAccountName = assignedMandate?.account_name || c.mandate_account;
   const mandateAccount = mandateAccountName
-    ? accounts.find((a) => accountKey(a.name) === accountKey(mandateAccountName))
+    ? (await findAccountByName(mandateAccountName)) ?? undefined
     : undefined;
 
   const stage = STAGE[c.stage] ?? STAGE.neu;

@@ -6,6 +6,7 @@ import { useMockData } from "@/lib/env";
 import { aiConfigured } from "@/lib/ai/config";
 import { llmComplete, extractJson } from "@/lib/ai/llm";
 import { getCandidates, getCandidate, getAccounts, getMandates } from "@/lib/crm-data";
+import { assertCanPresent } from "@/lib/dsgvo/consent";
 import { resolveCoords, distanceKm } from "@/lib/geo";
 import type { Candidate, RecruitingMandate } from "@/lib/crm-types";
 
@@ -325,6 +326,10 @@ export async function submitCandidateToMandate(
     .eq("partner_id", pid)
     .maybeSingle();
   if (existing) return { ok: true, already: true };
+
+  // Consent-Gate: keine Vorstellung/Weitergabe ohne gültige Einwilligung.
+  const gate = await assertCanPresent(candidateId);
+  if (!gate.ok) return { ok: false, error: gate.error };
 
   const { error: insErr } = await supabase.from("candidate_submissions").insert({
     partner_id: pid,

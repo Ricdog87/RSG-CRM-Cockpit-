@@ -16,6 +16,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import { AI } from "@/lib/ai/config";
+import { assertCanPresent } from "@/lib/dsgvo/consent";
 
 const BUCKET = "candidate-cvs";
 const BRAND = "1D4ED8";
@@ -285,6 +286,9 @@ export async function anonymizeCandidate(
   if (useMockData) return { ok: false, demo: true, error: "Demo-Modus – mit echter Supabase + KI verfügbar." };
   const { id: pid, error } = await currentPartnerId();
   if (!pid) return { ok: false, error };
+  // Consent-Gate: Das Blindprofil ist das Weitergabe-Vehikel an Kunden – nur mit Einwilligung.
+  const gate = await assertCanPresent(candidateId);
+  if (!gate.ok) return { ok: false, error: gate.error };
   if (AI.provider !== "anthropic" || !AI.anthropicKey)
     return { ok: false, error: "KI nicht verbunden (ANTHROPIC_API_KEY fehlt)." };
 
