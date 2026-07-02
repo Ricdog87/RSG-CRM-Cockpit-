@@ -53,6 +53,7 @@ gegen **HubSpot-Recruiting-Projekte**. Kunden/Deals/Projekte bleiben Source-of-T
 | `HUBSPOT_RECRUITING_PIPELINE` | optional | nur diese Pipeline syncen |
 | `HUBSPOT_PROP_STANDORT` / `_ANFORDERUNGEN` / `_SKILLS` / `_KUNDE` | optional | Custom-Property-Namen eures Deal-Schemas |
 | `SYNC_CRON_SECRET` | optional | aktiviert den Cron/n8n-Pfad (Header `x-sync-secret`) |
+| `HUBSPOT_PORTAL_ID` | optional | aktiviert „In HubSpot öffnen"-Deeplinks zu den Deals (euer Portal laut Deal-URLs: `147306094`) |
 
 ### Cron/n8n-Trigger
 `SYNC_CRON_SECRET` setzen, dann z.B. stündlich:

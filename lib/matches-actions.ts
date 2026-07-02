@@ -11,6 +11,7 @@ import {
   type ProjectMatchHit,
 } from "@/lib/candidate-project-match";
 import type { ActionResult } from "@/lib/crm-actions";
+import type { MatchStatus } from "@/lib/match-status";
 
 /**
  * Match-Actions (Kandidat ↔ HubSpot-Projekt / project_refs).
@@ -20,12 +21,6 @@ import type { ActionResult } from "@/lib/crm-actions";
  * kann ein Kandidat weder vorgeschlagen noch vorgestellt werden.
  */
 
-export type MatchStatus =
-  | "VORGESCHLAGEN"
-  | "GEPRUEFT"
-  | "VORGESTELLT"
-  | "ABGELEHNT"
-  | "PLATZIERT";
 
 /** Status, die eine echte Weitergabe an den Kunden bedeuten → Consent zwingend. */
 const PRESENTING: MatchStatus[] = ["VORGESCHLAGEN", "GEPRUEFT", "VORGESTELLT", "PLATZIERT"];
@@ -82,6 +77,7 @@ export async function proposeMatch(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
+  revalidatePath("/cockpit/match");
   return { ok: true };
 }
 
@@ -129,6 +125,7 @@ export async function updateMatchStatus(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
+  revalidatePath("/cockpit/match");
   return { ok: true };
 }
 
@@ -147,4 +144,37 @@ export async function rankProjectsForCandidateAction(
 ): Promise<{ ok: boolean; error?: string; hits: ProjectMatchHit[]; vorstellbar: boolean }> {
   if (!candidateId) return { ok: false, error: "Kein Kandidat.", hits: [], vorstellbar: false };
   return rankProjectsForCandidate(candidateId, 8);
+}
+
+/** Match entfernen (z.B. versehentlicher Vorschlag). Partner-scoped. */
+export async function deleteMatch(matchId: string): Promise<ActionResult> {
+  if (useMockData) return { ok: true, demo: true };
+  if (!matchId) return { ok: false, error: "Match nicht gefunden." };
+  const { id: pid, error: pErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pErr ?? "Kein Partner." };
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("matches")
+    .delete()
+    .eq("id", matchId)
+    .eq("partner_id", pid)
+    .select("candidate_id");
+  if (error) return { ok: false, error: error.message };
+  if (!data || data.length === 0) return { ok: false, error: "Match nicht gefunden." };
+  revalidatePath(`/cockpit/kandidaten/${String((data[0] as { candidate_id: string }).candidate_id)}`);
+  revalidatePath("/cockpit/match");
+  return { ok: true };
+}
+
+/** HubSpot-Projekt-Sync aus der UI anstoßen (Partner-Session). */
+export async function syncProjectsAction(): Promise<{
+  ok: boolean;
+  error?: string;
+  synced?: number;
+  setup?: string[];
+}> {
+  const { syncHubspotProjects } = await import("@/lib/hubspot/sync");
+  const res = await syncHubspotProjects();
+  if (res.ok) revalidatePath("/cockpit/match");
+  return res;
 }
