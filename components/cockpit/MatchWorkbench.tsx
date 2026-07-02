@@ -39,10 +39,13 @@ export function MatchWorkbench({ projects }: { projects: ProjectOption[] }) {
     });
   }
 
-  function propose(candidateId: string) {
-    setProposing(candidateId);
+  function propose(hit: CandidateMatchHit) {
+    setProposing(hit.candidateId);
     start(async () => {
-      const res = await proposeMatch(candidateId, projectId);
+      const res = await proposeMatch(hit.candidateId, projectId, {
+        score: hit.score,
+        gruende: hit.reasons,
+      });
       setProposing(null);
       if (res.ok) toast.success("Kandidat vorgeschlagen.");
       else toast.error(res.error ?? "Vorschlagen nicht möglich.");
@@ -138,7 +141,7 @@ export function MatchWorkbench({ projects }: { projects: ProjectOption[] }) {
                     )}
                     <button
                       type="button"
-                      onClick={() => propose(h.candidateId)}
+                      onClick={() => propose(h)}
                       disabled={pending || !h.vorstellbar}
                       title={h.vorstellbar ? "Diesem Projekt vorschlagen" : "Erst Einwilligung einholen"}
                       className="inline-flex flex-none items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-semibold text-ink hover:bg-elevated disabled:opacity-50"

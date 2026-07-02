@@ -7,6 +7,7 @@ import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MoveSelect } from "@/components/cockpit/MoveSelect";
+import { BlindProfileButton } from "@/components/cockpit/BlindProfileButton";
 import { IconTrash, IconChevronRight } from "@/components/ui/icons";
 import { toast } from "@/lib/toast";
 import { updateMatchStatus, deleteMatch } from "@/lib/matches-actions";
@@ -120,6 +121,7 @@ export function MatchPipeline({ groups }: { groups: ProjectMatchGroup[] }) {
                         onMove={(next) => onMove(m.id, m.status, next)}
                       />
                     </div>
+                    <BlindProfileButton candidateId={m.candidateId} />
                     {confirmDelete === m.id ? (
                       <span className="flex flex-none items-center gap-1.5">
                         <button
