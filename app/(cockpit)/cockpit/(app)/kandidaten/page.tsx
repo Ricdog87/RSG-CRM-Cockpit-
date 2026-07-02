@@ -1,4 +1,5 @@
 import { getCandidates, getAccounts, getMandates } from "@/lib/crm-data";
+import { getPresentableCandidateIds } from "@/lib/dsgvo/consent";
 import { createCandidate } from "@/lib/crm-actions";
 import { PageHeader } from "@/components/cockpit/PageHeader";
 import { StatCard } from "@/components/cockpit/StatCard";
@@ -15,10 +16,11 @@ import { formatNumber } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function KandidatenPage() {
-  const [candidates, accounts, mandates] = await Promise.all([
+  const [candidates, accounts, mandates, presentableIds] = await Promise.all([
     getCandidates(),
     getAccounts(),
     getMandates(),
+    getPresentableCandidateIds(),
   ]);
   const accountNames = accounts.map((a) => a.name);
   const mandateOptions = mandates.map((m) => ({
@@ -41,9 +43,9 @@ export default async function KandidatenPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Recruiting"
+        eyebrow="Kandidaten-Datenbank"
         title="Kandidaten"
-        description="Die Recruiting-Pipeline – von der Ansprache bis zur Platzierung."
+        description="Deine Kandidaten-Datenbank – datenschutz-sauber, matchbar gegen HubSpot-Projekte."
         action={
           <div className="flex flex-wrap items-center gap-2">
             <CvAnalyzerDialog />
@@ -90,6 +92,7 @@ export default async function KandidatenPage() {
         candidates={candidates}
         accountNames={accountNames}
         mandateOptions={mandateOptions}
+        presentableIds={presentableIds}
       />
     </div>
   );

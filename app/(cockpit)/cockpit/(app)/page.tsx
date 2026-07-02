@@ -16,21 +16,13 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconUsers, IconUserCheck, IconTarget, IconTrendingUp, IconChevronRight } from "@/components/ui/icons";
 import { formatNumber, formatDate } from "@/lib/format";
+import { availabilityMeta } from "@/lib/candidate-status";
 
 // Immer frisch rendern – Daten sind nutzer- und sessionspezifisch.
 export const dynamic = "force-dynamic";
 
 const dKey = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-const AVAIL_LABEL: Record<string, string> = {
-  NEU: "Neu",
-  AKTIV_VERFUEGBAR: "Aktiv verfügbar",
-  IN_VERMITTLUNG: "In Vermittlung",
-  PLATZIERT: "Platziert",
-  INAKTIV: "Inaktiv",
-  GESPERRT: "Gesperrt",
-};
 
 export default async function CockpitPage() {
   const nowD = new Date();
@@ -201,8 +193,8 @@ export default async function CockpitPage() {
                         </p>
                       </div>
                       <div className="flex flex-none items-center gap-2">
-                        <Badge tone={c.availability_status === "AKTIV_VERFUEGBAR" ? "success" : "neutral"} size="sm">
-                          {AVAIL_LABEL[c.availability_status ?? "NEU"] ?? "Neu"}
+                        <Badge tone={availabilityMeta(c.availability_status).tone} size="sm">
+                          {availabilityMeta(c.availability_status).label}
                         </Badge>
                         <IconChevronRight size={16} className="text-faint" />
                       </div>

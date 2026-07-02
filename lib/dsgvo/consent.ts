@@ -45,6 +45,47 @@ function effectiveState(records: ConsentRowLite[], purpose: ConsentPurpose, now:
 }
 
 /**
+ * Alle vorstellbaren Kandidat-IDs des Partners (gültige VERMITTLUNG- oder
+ * WEITERGABE_AN_KUNDE-Einwilligung) – für Listen-Filter/Badges. Lädt alle
+ * Consents paginiert (global created_at desc ⇒ auch je Kandidat desc).
+ */
+export async function getPresentableCandidateIds(): Promise<string[]> {
+  try {
+    const supabase = createClient();
+    const rows: (ConsentRowLite & { candidate_id: string })[] = [];
+    for (let page = 0; page < 10; page++) {
+      const { data, error } = await supabase
+        .from("candidate_consents")
+        .select("candidate_id, status, zweck, granted_at, revoked_at, expires_at, created_at")
+        .order("created_at", { ascending: false })
+        .range(page * 1000, page * 1000 + 999);
+      if (error || !data || data.length === 0) break;
+      rows.push(...(data as (ConsentRowLite & { candidate_id: string })[]));
+      if (data.length < 1000) break;
+    }
+    const byCand = new Map<string, ConsentRowLite[]>();
+    for (const r of rows) {
+      const arr = byCand.get(r.candidate_id) ?? [];
+      arr.push(r);
+      byCand.set(r.candidate_id, arr);
+    }
+    const now = Date.now();
+    const ids: string[] = [];
+    for (const [cid, recs] of byCand) {
+      if (
+        effectiveState(recs, "VERMITTLUNG", now) === "ERTEILT" ||
+        effectiveState(recs, "WEITERGABE_AN_KUNDE", now) === "ERTEILT"
+      ) {
+        ids.push(cid);
+      }
+    }
+    return ids;
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Batch-Consent-Gate: liefert die Menge der Kandidat-IDs, die einem Kunden
  * vorgestellt werden dürfen (gültige VERMITTLUNG- oder WEITERGABE_AN_KUNDE-
  * Einwilligung). Eine einzige Query statt N×assertCanPresent.
