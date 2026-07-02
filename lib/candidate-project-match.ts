@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
-import { getProjectRef } from "@/lib/project-refs-data";
+import { getProjectRef, getProjectRefs } from "@/lib/project-refs-data";
 import { batchCanPresent } from "@/lib/dsgvo/consent";
 
 /**
@@ -132,4 +132,79 @@ export async function rankCandidatesForProject(
   const hits: CandidateMatchHit[] = top.map((t) => ({ ...t, vorstellbar: presentable.has(t.candidateId) }));
 
   return { ok: true, project: { titel: project.titel }, hits };
+}
+
+export interface ProjectMatchHit {
+  projectRefId: string;
+  titel: string;
+  kunde: string | null;
+  score: number; // 0–100
+  reasons: string[];
+}
+
+/**
+ * Reverse-Match: rankt die offenen HubSpot-Projekte (project_refs) für eine:n
+ * konkrete:n Kandidat:in. Gleiche Score-Dimensionen wie rankCandidatesForProject.
+ */
+export async function rankProjectsForCandidate(
+  candidateId: string,
+  limit = 8
+): Promise<{ ok: boolean; error?: string; hits: ProjectMatchHit[]; vorstellbar: boolean }> {
+  if (useMockData) return { ok: true, hits: [], vorstellbar: false };
+
+  const supabase = createClient();
+  const { data: cand, error } = await supabase
+    .from("candidates")
+    .select("skills, location")
+    .eq("id", candidateId)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message, hits: [], vorstellbar: false };
+  if (!cand) return { ok: false, error: "Kandidat nicht gefunden.", hits: [], vorstellbar: false };
+
+  const candSkills = asSkills((cand as Row).skills);
+  const candOrt = fold((cand as Row).location);
+
+  const projects = await getProjectRefs(); // nur offene Projekte
+  const scored: ProjectMatchHit[] = projects.map((p) => {
+    const projSkills = p.skills.map(fold).filter(Boolean);
+    const projOrt = fold(p.standort);
+    const projText = fold([p.titel, p.anforderungen].filter(Boolean).join(" "));
+    const reasons: string[] = [];
+    let score = 0;
+
+    if (projSkills.length > 0) {
+      const overlap = projSkills.filter((s) => candSkills.includes(s));
+      if (overlap.length > 0) {
+        score += Math.round(Math.min(1, overlap.length / projSkills.length) * 60);
+        reasons.push(`${overlap.length}/${projSkills.length} Skills passen`);
+      }
+    } else if (projText && candSkills.length > 0) {
+      const inText = candSkills.filter((cs) => cs.length >= 3 && projText.includes(cs));
+      if (inText.length > 0) {
+        score += Math.round(Math.min(1, inText.length / 4) * 50);
+        reasons.push(`${inText.length} Skill-Treffer im Projekttext`);
+      }
+    }
+    if (candOrt && candOrt.length >= 3) {
+      if (projOrt && (candOrt.includes(projOrt) || projOrt.includes(candOrt))) {
+        score += 20;
+        reasons.push("Standort passt");
+      } else if (!projOrt && projText.includes(candOrt)) {
+        score += 15;
+        reasons.push("Ort im Projekttext");
+      }
+    }
+    return {
+      projectRefId: p.id,
+      titel: p.titel ?? "Projekt",
+      kunde: p.kunde,
+      score: Math.max(0, Math.min(100, score)),
+      reasons,
+    };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const hits = scored.filter((h) => h.score > 0).slice(0, limit);
+  const presentable = await batchCanPresent([candidateId]);
+  return { ok: true, hits, vorstellbar: presentable.has(candidateId) };
 }

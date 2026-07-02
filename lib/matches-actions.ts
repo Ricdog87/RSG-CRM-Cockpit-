@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import { assertCanPresent } from "@/lib/dsgvo/consent";
-import { rankCandidatesForProject, type CandidateMatchHit } from "@/lib/candidate-project-match";
+import {
+  rankCandidatesForProject,
+  rankProjectsForCandidate,
+  type CandidateMatchHit,
+  type ProjectMatchHit,
+} from "@/lib/candidate-project-match";
 import type { ActionResult } from "@/lib/crm-actions";
 
 /**
@@ -134,4 +139,12 @@ export async function rankForProjectAction(
   if (!projectRefId) return { ok: false, error: "Kein Projekt gewählt.", hits: [] };
   const res = await rankCandidatesForProject(projectRefId, 30);
   return { ok: res.ok, error: res.error, titel: res.project?.titel ?? null, hits: res.hits };
+}
+
+/** Server-Action: rankt offene HubSpot-Projekte für eine:n Kandidat:in (Reverse-Match). */
+export async function rankProjectsForCandidateAction(
+  candidateId: string
+): Promise<{ ok: boolean; error?: string; hits: ProjectMatchHit[]; vorstellbar: boolean }> {
+  if (!candidateId) return { ok: false, error: "Kein Kandidat.", hits: [], vorstellbar: false };
+  return rankProjectsForCandidate(candidateId, 8);
 }

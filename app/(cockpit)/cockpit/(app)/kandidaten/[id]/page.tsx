@@ -25,8 +25,7 @@ import { AnonymizeButton } from "@/components/cockpit/AnonymizeButton";
 import { AiCallButton } from "@/components/cockpit/AiCallButton";
 import { CvPreview } from "@/components/cockpit/CvPreview";
 import { CandidateRatingTags } from "@/components/cockpit/CandidateRatingTags";
-import { CandidateMatch } from "@/components/cockpit/CandidateMatch";
-import { CandidateMandateMatch } from "@/components/cockpit/CandidateMandateMatch";
+import { CandidateProjectMatch } from "@/components/cockpit/CandidateProjectMatch";
 import { CandidateIntelHint } from "@/components/cockpit/CandidateIntelHint";
 import { computeCandidateIntel } from "@/lib/candidate-intel";
 import { InterviewsCard, OffersCard } from "@/components/cockpit/HiringCards";
@@ -308,22 +307,12 @@ export default async function KandidatDetailPage({
             />
           </SafeBoundary>
 
-          {/* KI-Matching zum aktuell verknüpften Mandat */}
-          <SafeBoundary label="KI-Matching">
-            <Card>
-              <CardBody>
-                <SectionHeader title="KI-Matching" hint="Passung zum Mandat" />
-                <CandidateMatch id={c.id} />
-              </CardBody>
-            </Card>
-          </SafeBoundary>
-
-          {/* Reverse-Match: passende offene Mandate */}
-          <SafeBoundary label="Passende Mandate">
+          {/* Reverse-Match: passende offene HubSpot-Projekte */}
+          <SafeBoundary label="Passende Projekte">
             <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.05] to-sky/[0.04]">
               <CardBody>
-                <SectionHeader title="Passende Mandate" hint="offene Suchprojekte für diese Person" />
-                <CandidateMandateMatch candidateId={c.id} />
+                <SectionHeader title="Passende Projekte" hint="offene HubSpot-Projekte für diese Person" />
+                <CandidateProjectMatch candidateId={c.id} />
               </CardBody>
             </Card>
           </SafeBoundary>
