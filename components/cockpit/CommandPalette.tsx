@@ -23,11 +23,9 @@ const NAV_ITEMS: FlatItem[] = NAV_GROUPS.flatMap((g) =>
 
 /** Schnell-Aktionen: öffnen direkt den jeweiligen Anlegen-Dialog (?new=1). */
 const ACTION_ITEMS: FlatItem[] = [
-  { href: "/cockpit/kunden?new=1", title: "Neuer Kunde", subtitle: "Account anlegen", group: "Aktionen" },
-  { href: "/cockpit/sales?new=1", title: "Neue Verkaufschance", subtitle: "Opportunity erfassen", group: "Aktionen" },
-  { href: "/cockpit/projekte/recruiting?new=1", title: "Neues Mandat", subtitle: "Recruiting-Auftrag anlegen", group: "Aktionen" },
-  { href: "/cockpit/kandidaten?new=1", title: "Neue:r Kandidat:in", subtitle: "Person zur Pipeline", group: "Aktionen" },
-  { href: "/cockpit/projekte/ki?new=1", title: "Neues KI-Projekt", subtitle: "KI-Mandat anlegen", group: "Aktionen" },
+  { href: "/cockpit/kandidaten?new=1", title: "Neue:r Kandidat:in", subtitle: "Person zur Datenbank", group: "Aktionen" },
+  { href: "/cockpit/match", title: "Search & Match", subtitle: "Projekt → passende Kandidaten", group: "Aktionen" },
+  { href: "/cockpit/einwilligungen", title: "Einwilligungen", subtitle: "DSGVO-Status & Anfragen", group: "Aktionen" },
   { href: "/cockpit/kalender?new=1", title: "Neuer Termin", subtitle: "Kalender-Eintrag", group: "Aktionen" },
 ];
 

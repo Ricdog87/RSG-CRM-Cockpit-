@@ -9,8 +9,6 @@ import {
   IconTarget,
   IconCalendar,
   IconSpark,
-  IconBriefcase,
-  IconPhone,
 } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
 
@@ -23,12 +21,10 @@ interface Action {
 
 // Deeplinks: ?new=1 öffnet auf der Zielseite automatisch den passenden Dialog.
 const ACTIONS: Action[] = [
-  { label: "Recruiting-Auftrag", href: "/cockpit/projekte/recruiting?new=1", icon: IconBriefcase, accent: "bg-brand-deep" },
-  { label: "KI-Auftrag", href: "/cockpit/projekte/ki?new=1", icon: IconPhone, accent: "bg-sky-deep" },
-  { label: "Kunde", href: "/cockpit/kunden?new=1", icon: IconUsers, accent: "bg-brand" },
-  { label: "Verkaufschance", href: "/cockpit/sales?new=1", icon: IconTarget, accent: "bg-sky" },
+  { label: "Neue:r Kandidat:in", href: "/cockpit/kandidaten?new=1", icon: IconUsers, accent: "bg-brand-deep" },
+  { label: "Search & Match", href: "/cockpit/match", icon: IconTarget, accent: "bg-sky-deep" },
+  { label: "Einwilligungen", href: "/cockpit/einwilligungen", icon: IconSpark, accent: "bg-brand" },
   { label: "Termin / Aufgabe", href: "/cockpit/kalender?new=1", icon: IconCalendar, accent: "bg-success" },
-  { label: "Lead-Analyse", href: "/cockpit/leads", icon: IconSpark, accent: "bg-ink" },
 ];
 
 /**
