@@ -60,6 +60,8 @@ export async function proposeMatch(
   if (!pid) return { ok: false, error: pErr ?? "Kein Partner." };
 
   const supabase = createClient();
+  // ignoreDuplicates: einen bereits bestehenden Match NICHT auf VORGESCHLAGEN
+  // zurücksetzen oder dessen Score/Begründung überschreiben.
   const { error } = await supabase.from("matches").upsert(
     {
       partner_id: pid,
@@ -70,7 +72,7 @@ export async function proposeMatch(
       status: "VORGESCHLAGEN",
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "partner_id,candidate_id,project_ref_id" }
+    { onConflict: "partner_id,candidate_id,project_ref_id", ignoreDuplicates: true }
   );
   if (error) return { ok: false, error: error.message };
 

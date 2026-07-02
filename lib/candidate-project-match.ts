@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import { getProjectRef } from "@/lib/project-refs-data";
-import { assertCanPresent } from "@/lib/dsgvo/consent";
+import { batchCanPresent } from "@/lib/dsgvo/consent";
 
 /**
  * Search & Match: rankt Kandidaten gegen ein gespiegeltes HubSpot-Projekt
@@ -54,13 +54,21 @@ export async function rankCandidatesForProject(
   const projText = fold([project.titel, project.anforderungen].filter(Boolean).join(" "));
 
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("candidates")
-    .select("id, name, skills, location, availability, availability_status, seniority, verfuegbar_ab")
-    .limit(2000);
-  if (error || !data) return { ok: false, error: error?.message ?? "Keine Kandidaten.", hits: [] };
+  // Alle Kandidaten paginiert laden (.limit wird von PostgREST auf 1000 gekappt).
+  const rows: Row[] = [];
+  for (let page = 0; page < 20; page++) {
+    const { data, error } = await supabase
+      .from("candidates")
+      .select("id, name, skills, location, availability, availability_status, seniority, verfuegbar_ab")
+      .order("id", { ascending: true })
+      .range(page * 1000, page * 1000 + 999);
+    if (error) return { ok: false, error: error.message, hits: [] };
+    if (!data || data.length === 0) break;
+    rows.push(...(data as Row[]));
+    if (data.length < 1000) break;
+  }
 
-  const scored = (data as Row[]).map((c) => {
+  const scored = rows.map((c) => {
     const reasons: string[] = [];
     let score = 0;
 
@@ -119,13 +127,9 @@ export async function rankCandidatesForProject(
   scored.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, "de"));
   const top = scored.slice(0, limit);
 
-  // Consent-Gate nur für die Top-Treffer prüfen.
-  const hits: CandidateMatchHit[] = await Promise.all(
-    top.map(async (t) => {
-      const gate = await assertCanPresent(t.candidateId);
-      return { ...t, vorstellbar: gate.ok };
-    })
-  );
+  // Consent-Gate für die Top-Treffer – EINE Query statt N Einzelabfragen.
+  const presentable = await batchCanPresent(top.map((t) => t.candidateId));
+  const hits: CandidateMatchHit[] = top.map((t) => ({ ...t, vorstellbar: presentable.has(t.candidateId) }));
 
   return { ok: true, project: { titel: project.titel }, hits };
 }
