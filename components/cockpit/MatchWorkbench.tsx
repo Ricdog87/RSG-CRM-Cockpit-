@@ -9,6 +9,7 @@ import { IconChevronRight, IconCheck, IconAlertTriangle } from "@/components/ui/
 import { cn } from "@/components/ui/cn";
 import { toast } from "@/lib/toast";
 import { rankForProjectAction, proposeMatch } from "@/lib/matches-actions";
+import { RequestConsentButton } from "@/components/cockpit/RequestConsentButton";
 import type { CandidateMatchHit } from "@/lib/candidate-project-match";
 
 interface ProjectOption {
@@ -146,9 +147,7 @@ export function MatchWorkbench({
                         <IconCheck size={12} /> vorstellbar
                       </Badge>
                     ) : (
-                      <Badge tone="warning" size="sm" title="Keine gültige Einwilligung">
-                        <IconAlertTriangle size={12} /> Einwilligung fehlt
-                      </Badge>
+                      <RequestConsentButton candidateId={h.candidateId} />
                     )}
                     <button
                       type="button"

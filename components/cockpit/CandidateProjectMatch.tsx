@@ -7,6 +7,7 @@ import { IconTarget, IconCheck, IconAlertTriangle } from "@/components/ui/icons"
 import { cn } from "@/components/ui/cn";
 import { toast } from "@/lib/toast";
 import { rankProjectsForCandidateAction, proposeMatch } from "@/lib/matches-actions";
+import { RequestConsentButton } from "@/components/cockpit/RequestConsentButton";
 import type { ProjectMatchHit } from "@/lib/candidate-project-match";
 
 /** Reverse-Match: passende offene HubSpot-Projekte für diese:n Kandidat:in. */
@@ -64,9 +65,12 @@ export function CandidateProjectMatch({ candidateId }: { candidateId: string }) 
   return (
     <div className="space-y-3">
       {!vorstellbar ? (
-        <p className="flex items-center gap-1.5 rounded-lg border border-warning/30 bg-warning/[0.06] px-2.5 py-1.5 text-xs text-warning">
-          <IconAlertTriangle size={13} className="flex-none" /> Ohne gültige Einwilligung nicht vorstellbar – erst einholen.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/30 bg-warning/[0.06] px-2.5 py-1.5">
+          <p className="flex items-center gap-1.5 text-xs text-warning">
+            <IconAlertTriangle size={13} className="flex-none" /> Ohne gültige Einwilligung nicht vorstellbar.
+          </p>
+          <RequestConsentButton candidateId={candidateId} />
+        </div>
       ) : null}
       <ul className="divide-y divide-border">
         {hits.map((h) => (
