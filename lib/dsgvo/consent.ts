@@ -40,15 +40,20 @@ export async function consentStateFor(
     .limit(100);
   if (error || !data || data.length === 0) return "KEINE";
 
-  // Jüngsten Record für diesen Zweck wählen (Append-only: created_at desc).
-  // Bestandsdaten ohne zweck zählen nur für PROFIL_SPEICHERN.
-  const rec = (data as ConsentRowLite[]).find(
+  // Records für diesen Zweck (Bestandsdaten ohne zweck zählen nur für PROFIL_SPEICHERN).
+  const relevant = (data as ConsentRowLite[]).filter(
     (r) => r.zweck === purpose || (r.zweck == null && purpose === "PROFIL_SPEICHERN")
+  );
+  // Jüngsten ENTSCHEIDENDEN Record werten (granted/revoked); pending-Anfragen
+  // überspringen – eine offene Erneuerungs-Anfrage annulliert keine gültige
+  // Einwilligung (Append-only: created_at desc).
+  const rec = relevant.find(
+    (r) => r.status === "granted" || r.status === "revoked" || r.granted_at || r.revoked_at
   );
   if (!rec) return "KEINE";
 
   if (rec.status === "revoked" || rec.revoked_at) return "WIDERRUFEN";
-  if (rec.status !== "granted") return "KEINE"; // pending o.ä.
+  if (rec.status !== "granted") return "KEINE";
   if (rec.expires_at && new Date(rec.expires_at).getTime() < Date.now()) return "ABGELAUFEN";
   return "ERTEILT";
 }

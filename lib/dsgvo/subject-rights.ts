@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient, hasServiceRole } from "@/lib/supabase/service";
 import { useMockData } from "@/lib/env";
 import type { ActionResult } from "@/lib/crm-actions";
 
@@ -56,6 +57,8 @@ export interface CandidateExport {
   interviews: unknown[];
   offers: unknown[];
   references: unknown[];
+  fonioCalls: unknown[];
+  placements: unknown[];
 }
 
 /** Art. 15 – vollständige Auskunft über alle gespeicherten Daten. */
@@ -73,15 +76,18 @@ export async function exportCandidateData(
   if (error) return { ok: false, error: error.message };
   if (!cand) return { ok: false, error: "Kandidat nicht gefunden." };
 
-  const [consents, notes, submissions, matches, interviews, offers, references] = await Promise.all([
-    safeSelect("candidate_consents", "candidate_id", candidateId),
-    safeSelect("candidate_notes", "candidate_id", candidateId),
-    safeSelect("candidate_submissions", "candidate_id", candidateId),
-    safeSelect("matches", "candidate_id", candidateId),
-    safeSelect("candidate_interviews", "candidate_id", candidateId),
-    safeSelect("candidate_offers", "candidate_id", candidateId),
-    safeSelect("candidate_references", "candidate_id", candidateId),
-  ]);
+  const [consents, notes, submissions, matches, interviews, offers, references, fonioCalls, placements] =
+    await Promise.all([
+      safeSelect("candidate_consents", "candidate_id", candidateId),
+      safeSelect("candidate_notes", "candidate_id", candidateId),
+      safeSelect("candidate_submissions", "candidate_id", candidateId),
+      safeSelect("matches", "candidate_id", candidateId),
+      safeSelect("candidate_interviews", "candidate_id", candidateId),
+      safeSelect("candidate_offers", "candidate_id", candidateId),
+      safeSelect("candidate_references", "candidate_id", candidateId),
+      safeSelect("fonio_calls", "candidate_id", candidateId),
+      safeSelect("placements", "candidate_id", candidateId),
+    ]);
 
   return {
     ok: true,
@@ -95,6 +101,8 @@ export async function exportCandidateData(
       interviews,
       offers,
       references,
+      fonioCalls,
+      placements,
     },
   };
 }
@@ -134,29 +142,80 @@ export async function eraseCandidate(
 
   const { id: pid, error: pErr } = await currentPartnerId();
   if (!pid) return { ok: false, error: pErr ?? "Kein Partner." };
-  const supabase = createClient();
+  const session = createClient();
+
+  // Eigentümerschaft prüfen + Datei-Pfade holen (RLS-scoped). Kein Treffer ⇒
+  // kein Zugriffsrecht/existiert nicht → NICHT stillschweigend „ok" melden.
+  const { data: owned, error: ownErr } = await session
+    .from("candidates")
+    .select("cv_path, photo_path")
+    .eq("id", candidateId)
+    .eq("partner_id", pid)
+    .maybeSingle();
+  if (ownErr) return { ok: false, error: ownErr.message };
+  if (!owned) return { ok: false, error: "Kandidat nicht gefunden oder gehört einem anderen Partner." };
+  const cvPath = (owned as { cv_path?: string | null }).cv_path ?? null;
+  const photoPath = (owned as { photo_path?: string | null }).photo_path ?? null;
+
+  // Für die eigentliche Löschung Service-Role bevorzugen (umgeht RLS-Lücken bei
+  // Kind-Tabellen). Streng auf diesen Kandidaten scoped – Ownership ist oben
+  // verifiziert, candidate_id ist eindeutig einem Partner zugeordnet.
+  const db = hasServiceRole() ? createServiceClient() : session;
+
+  // 1) Dateien im Storage entfernen (sonst verwaiste, nicht auffindbare PII).
+  if (cvPath) {
+    try { await db.storage.from("candidate-cvs").remove([cvPath]); } catch { /* best effort */ }
+  }
+  if (photoPath) {
+    try { await db.storage.from("candidate-photos").remove([photoPath]); } catch { /* best effort */ }
+  }
+
+  // 2) Anruf-Rohdaten (Nummer, Transkript, KI-Summary) – FK ist „set null",
+  //    also explizit löschen, sonst bleiben sie als verwaiste PII stehen.
+  await db.from("fonio_calls").delete().eq("candidate_id", candidateId);
+  // 3) Weitergabe-/Vorstellungs-Verknüpfungen (keine Re-Vorstellung möglich).
+  await db.from("matches").delete().eq("candidate_id", candidateId);
+  await db.from("candidate_submissions").delete().eq("candidate_id", candidateId);
+  // 4) Klartext-Name in Platzierungen neutralisieren (überlebt sonst beide Modi).
+  await db.from("placements").update({ candidate_name: "Anonymisiert (DSGVO)" }).eq("candidate_id", candidateId);
 
   if (mode === "delete") {
-    const { error } = await supabase
+    // Harte Löschung: Kind-Daten explizit weg, dann Kandidat.
+    await db.from("candidate_notes").delete().eq("candidate_id", candidateId);
+    await db.from("candidate_interviews").delete().eq("candidate_id", candidateId);
+    await db.from("candidate_offers").delete().eq("candidate_id", candidateId);
+    await db.from("candidate_references").delete().eq("candidate_id", candidateId);
+    await db.from("candidate_consents").delete().eq("candidate_id", candidateId);
+    const { data: del, error } = await db
       .from("candidates")
       .delete()
       .eq("id", candidateId)
-      .eq("partner_id", pid);
+      .eq("partner_id", pid)
+      .select("id");
     if (error) return { ok: false, error: error.message };
+    if (!del || del.length === 0) return { ok: false, error: "Löschung nicht ausgeführt." };
     return { ok: true };
   }
 
-  // Anonymisieren: PII überschreiben …
-  const { error } = await supabase
+  // Anonymisieren: PII in der Kandidatenzeile überschreiben …
+  const { data: upd, error } = await db
     .from("candidates")
     .update(PII_RESET)
     .eq("id", candidateId)
-    .eq("partner_id", pid);
+    .eq("partner_id", pid)
+    .select("id");
   if (error) return { ok: false, error: error.message };
+  if (!upd || upd.length === 0) return { ok: false, error: "Anonymisierung nicht ausgeführt." };
 
-  // … und alle Weitergabe-/Vorstellungs-Verknüpfungen entfernen (best effort).
-  await supabase.from("matches").delete().eq("candidate_id", candidateId).eq("partner_id", pid);
-  await supabase.from("candidate_submissions").delete().eq("candidate_id", candidateId).eq("partner_id", pid);
+  // … Consent-Nachweis (email_to/ip/ua) neutralisieren – sonst trivial re-identifizierbar.
+  await db.from("candidate_consents")
+    .update({ email_to: null, ip_address: null, user_agent: null })
+    .eq("candidate_id", candidateId);
+  // … Freitext-behaftete Kind-Tabellen entfernen.
+  await db.from("candidate_notes").delete().eq("candidate_id", candidateId);
+  await db.from("candidate_interviews").delete().eq("candidate_id", candidateId);
+  await db.from("candidate_offers").delete().eq("candidate_id", candidateId);
+  await db.from("candidate_references").delete().eq("candidate_id", candidateId);
 
   return { ok: true, warning: "Kandidat anonymisiert & für Vermittlung gesperrt." };
 }
