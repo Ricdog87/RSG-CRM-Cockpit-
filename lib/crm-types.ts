@@ -360,6 +360,7 @@ export interface Candidate {
   stage: CandidateStage;
   source: string;
   updated_at: string;
+  created_at?: string;
   /** Fortlaufende Kandidaten-Nummer (DB-Sequence). */
   candidate_no?: number;
   /** Profilfoto im Bucket candidate-photos. */

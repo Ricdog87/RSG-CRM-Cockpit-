@@ -60,7 +60,7 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/cockpit/import",
         label: "Import",
         icon: IconFolder,
-        description: "CSV-Direktimport für Kunden, Kandidaten & mehr",
+        description: "CSV-Import für Kandidat:innen & Aktivitäten",
       },
     ],
   },

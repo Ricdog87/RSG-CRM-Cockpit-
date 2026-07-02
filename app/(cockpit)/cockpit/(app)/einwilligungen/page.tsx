@@ -18,6 +18,12 @@ const STATUS: Record<string, { label: string; tone: "success" | "sky" | "danger"
   revoked: { label: "Widerrufen", tone: "danger" },
 };
 
+const PURPOSE_LABEL: Record<string, string> = {
+  PROFIL_SPEICHERN: "Profil speichern",
+  VERMITTLUNG: "Vermittlung",
+  WEITERGABE_AN_KUNDE: "Weitergabe an Kunden",
+};
+
 function isExpired(c: ConsentRow): boolean {
   return c.status === "pending" && !!c.expires_at && new Date(c.expires_at) < new Date();
 }
@@ -81,6 +87,9 @@ export default async function EinwilligungenPage() {
                         {date ? (
                           <span className="hidden text-xs text-faint sm:inline">{formatDate(date)}</span>
                         ) : null}
+                        <Badge tone="neutral" size="sm" className="hidden md:inline-flex">
+                          {PURPOSE_LABEL[c.zweck ?? ""] ?? "Profil (Alt)"}
+                        </Badge>
                         <Badge tone={expired ? "warning" : st.tone}>
                           {expired ? "Abgelaufen" : st.label}
                         </Badge>

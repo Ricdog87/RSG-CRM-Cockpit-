@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { IconFolder } from "@/components/ui/icons";
 import { anonymizeCandidate } from "@/lib/anonymize";
+import { downloadBase64Docx } from "@/lib/download";
 
 /** Erzeugt ein anonymisiertes RSG-Kurzprofil (.docx) aus dem CV und lädt es herunter. */
 export function AnonymizeButton({ candidateId }: { candidateId: string }) {
@@ -18,16 +19,7 @@ export function AnonymizeButton({ candidateId }: { candidateId: string }) {
         setError(res.error ?? "Erstellung fehlgeschlagen.");
         return;
       }
-      const bytes = Uint8Array.from(atob(res.base64), (c) => c.charCodeAt(0));
-      const blob = new Blob([bytes], {
-        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = res.filename ?? "RSG-Kurzprofil.docx";
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBase64Docx(res.filename ?? "RSG-Kurzprofil.docx", res.base64);
     });
   }
 

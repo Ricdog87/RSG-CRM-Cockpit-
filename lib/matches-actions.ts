@@ -4,8 +4,14 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { useMockData } from "@/lib/env";
 import { assertCanPresent } from "@/lib/dsgvo/consent";
-import { rankCandidatesForProject, type CandidateMatchHit } from "@/lib/candidate-project-match";
+import {
+  rankCandidatesForProject,
+  rankProjectsForCandidate,
+  type CandidateMatchHit,
+  type ProjectMatchHit,
+} from "@/lib/candidate-project-match";
 import type { ActionResult } from "@/lib/crm-actions";
+import type { MatchStatus } from "@/lib/match-status";
 
 /**
  * Match-Actions (Kandidat ↔ HubSpot-Projekt / project_refs).
@@ -15,12 +21,6 @@ import type { ActionResult } from "@/lib/crm-actions";
  * kann ein Kandidat weder vorgeschlagen noch vorgestellt werden.
  */
 
-export type MatchStatus =
-  | "VORGESCHLAGEN"
-  | "GEPRUEFT"
-  | "VORGESTELLT"
-  | "ABGELEHNT"
-  | "PLATZIERT";
 
 /** Status, die eine echte Weitergabe an den Kunden bedeuten → Consent zwingend. */
 const PRESENTING: MatchStatus[] = ["VORGESCHLAGEN", "GEPRUEFT", "VORGESTELLT", "PLATZIERT"];
@@ -77,6 +77,7 @@ export async function proposeMatch(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
+  revalidatePath("/cockpit/match");
   return { ok: true };
 }
 
@@ -123,7 +124,25 @@ export async function updateMatchStatus(
     .eq("partner_id", pid);
   if (error) return { ok: false, error: error.message };
 
+  // Workflow-Automatik: Match-Status zieht den Kandidaten-Status nach
+  // (best effort – der Match-Wechsel ist bereits persistiert).
+  if (status === "PLATZIERT") {
+    await supabase
+      .from("candidates")
+      .update({ availability_status: "PLATZIERT" })
+      .eq("id", candidateId)
+      .eq("partner_id", pid);
+  } else if (status === "VORGESTELLT") {
+    await supabase
+      .from("candidates")
+      .update({ availability_status: "IN_VERMITTLUNG" })
+      .eq("id", candidateId)
+      .eq("partner_id", pid)
+      .in("availability_status", ["NEU", "AKTIV_VERFUEGBAR"]);
+  }
+
   revalidatePath(`/cockpit/kandidaten/${candidateId}`);
+  revalidatePath("/cockpit/match");
   return { ok: true };
 }
 
@@ -134,4 +153,45 @@ export async function rankForProjectAction(
   if (!projectRefId) return { ok: false, error: "Kein Projekt gewählt.", hits: [] };
   const res = await rankCandidatesForProject(projectRefId, 30);
   return { ok: res.ok, error: res.error, titel: res.project?.titel ?? null, hits: res.hits };
+}
+
+/** Server-Action: rankt offene HubSpot-Projekte für eine:n Kandidat:in (Reverse-Match). */
+export async function rankProjectsForCandidateAction(
+  candidateId: string
+): Promise<{ ok: boolean; error?: string; hits: ProjectMatchHit[]; vorstellbar: boolean }> {
+  if (!candidateId) return { ok: false, error: "Kein Kandidat.", hits: [], vorstellbar: false };
+  return rankProjectsForCandidate(candidateId, 8);
+}
+
+/** Match entfernen (z.B. versehentlicher Vorschlag). Partner-scoped. */
+export async function deleteMatch(matchId: string): Promise<ActionResult> {
+  if (useMockData) return { ok: true, demo: true };
+  if (!matchId) return { ok: false, error: "Match nicht gefunden." };
+  const { id: pid, error: pErr } = await currentPartnerId();
+  if (!pid) return { ok: false, error: pErr ?? "Kein Partner." };
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("matches")
+    .delete()
+    .eq("id", matchId)
+    .eq("partner_id", pid)
+    .select("candidate_id");
+  if (error) return { ok: false, error: error.message };
+  if (!data || data.length === 0) return { ok: false, error: "Match nicht gefunden." };
+  revalidatePath(`/cockpit/kandidaten/${String((data[0] as { candidate_id: string }).candidate_id)}`);
+  revalidatePath("/cockpit/match");
+  return { ok: true };
+}
+
+/** HubSpot-Projekt-Sync aus der UI anstoßen (Partner-Session). */
+export async function syncProjectsAction(): Promise<{
+  ok: boolean;
+  error?: string;
+  synced?: number;
+  setup?: string[];
+}> {
+  const { syncHubspotProjects } = await import("@/lib/hubspot/sync");
+  const res = await syncHubspotProjects();
+  if (res.ok) revalidatePath("/cockpit/match");
+  return res;
 }

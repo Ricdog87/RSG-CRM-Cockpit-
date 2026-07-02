@@ -9,6 +9,7 @@ import { MoveSelect } from "@/components/cockpit/MoveSelect";
 import { EditDialog } from "@/components/cockpit/EditDialog";
 import { RowActions } from "@/components/cockpit/RowActions";
 import { FilterTabs } from "@/components/ui/FilterTabs";
+import { availabilityMeta, AVAILABILITY_META, type AvailabilityStatus } from "@/lib/candidate-status";
 import { ViewToggle } from "@/components/ui/ViewToggle";
 import { Badge } from "@/components/ui/Badge";
 import { IconMail, IconPhone, IconFolder, IconSearch, IconDashboard, IconLayers } from "@/components/ui/icons";
@@ -207,7 +208,8 @@ function CandidateCard({
   );
 }
 
-function CandidateRow({ c }: { c: Candidate }) {
+function CandidateRow({ c, vorstellbar }: { c: Candidate; vorstellbar?: boolean }) {
+  const am = availabilityMeta(c.availability_status);
   return (
     <Link
       href={`/cockpit/kandidaten/${c.id}`}
@@ -230,6 +232,11 @@ function CandidateRow({ c }: { c: Candidate }) {
       </div>
       <div className="flex flex-none items-center gap-2">
         {c.cv_path ? <IconFolder size={13} className="text-faint" /> : null}
+        <span
+          className={vorstellbar ? "h-2 w-2 flex-none rounded-full bg-success" : "h-2 w-2 flex-none rounded-full bg-warning/70"}
+          title={vorstellbar ? "Vorstellbar – Einwilligung erteilt" : "Keine gültige Vermittlungs-Einwilligung"}
+        />
+        <Badge tone={am.tone} size="sm" className="hidden sm:inline-flex">{am.label}</Badge>
         <Badge tone={STAGE_TONE[c.stage]}>{STAGE_LABEL[c.stage]}</Badge>
       </div>
     </Link>
@@ -241,10 +248,13 @@ export function CandidatesView({
   candidates,
   accountNames = [],
   mandateOptions = [],
+  presentableIds = [],
 }: {
   candidates: Candidate[];
   accountNames?: string[];
   mandateOptions?: { value: string; label: string }[];
+  /** Kandidat-IDs mit gültiger Vermittlungs-Einwilligung (vorstellbar). */
+  presentableIds?: string[];
 }) {
   const router = useRouter();
   const [items, setItems] = useState(candidates);
@@ -254,6 +264,9 @@ export function CandidatesView({
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"updated" | "rating" | "name">("updated");
   const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [avail, setAvail] = useState<"all" | AvailabilityStatus>("all");
+  const [consent, setConsent] = useState<"all" | "vorstellbar" | "ohne">("all");
+  const presentable = useMemo(() => new Set(presentableIds), [presentableIds]);
   const editFields = withSelectOptions(
     withDatalist(CANDIDATE_FIELDS, "mandate_account", accountNames),
     "mandate_id",
@@ -315,6 +328,12 @@ export function CandidatesView({
     if (activeTags.length) {
       pool = pool.filter((c) => (c.tags ?? []).some((t) => activeTags.includes(t)));
     }
+    if (avail !== "all") {
+      pool = pool.filter((c) => (c.availability_status ?? "NEU") === avail);
+    }
+    if (consent !== "all") {
+      pool = pool.filter((c) => (consent === "vorstellbar" ? presentable.has(c.id) : !presentable.has(c.id)));
+    }
     if (q) {
       pool = pool.filter((c) =>
         [c.name, c.role, c.email, c.mandate_account, ...(c.tags ?? [])]
@@ -323,7 +342,7 @@ export function CandidatesView({
       );
     }
     return pool;
-  }, [filter, q, base, rejected, talentPool, activeTags]);
+  }, [filter, q, base, rejected, talentPool, activeTags, avail, consent, presentable]);
 
   const displayed = useMemo(() => {
     const arr = [...filtered];
@@ -339,7 +358,7 @@ export function CandidatesView({
   // Paginierung der Listenansicht (Performance bei vielen Kandidat:innen).
   const PAGE = 50;
   const [visible, setVisible] = useState(PAGE);
-  useEffect(() => setVisible(PAGE), [filter, query, sort, activeTags, view]);
+  useEffect(() => setVisible(PAGE), [filter, query, sort, activeTags, view, avail, consent]);
   const pageList = displayed.slice(0, visible);
 
   return (
@@ -381,6 +400,8 @@ export function CandidatesView({
               { key: "experience_years", label: "Erfahrung (J.)" },
               { key: "salary_expectation", label: "Gehaltswunsch" },
               { key: "availability", label: "Verfügbarkeit" },
+              { key: "availability_status", label: "Status" },
+              { key: "id", label: "Vorstellbar (Einwilligung)", get: (c) => (presentable.has(c.id) ? "ja" : "nein") },
               { key: "rating", label: "Bewertung" },
             ])
           }
@@ -452,6 +473,47 @@ export function CandidatesView({
         ]}
       />
 
+      {/* Verfügbarkeits-Status (Kandidaten-DB) */}
+      <FilterTabs<"all" | AvailabilityStatus>
+        value={avail}
+        onChange={setAvail}
+        options={[
+          { value: "all", label: "Status: alle", count: base.length },
+          ...(Object.keys(AVAILABILITY_META) as AvailabilityStatus[]).map((st) => ({
+            value: st,
+            label: AVAILABILITY_META[st].label,
+            count: base.filter((c) => (c.availability_status ?? "NEU") === st).length,
+          })),
+        ]}
+      />
+
+      {/* DSGVO: vorstellbar (gültige Vermittlungs-Einwilligung) */}
+      <FilterTabs<"all" | "vorstellbar" | "ohne">
+        value={consent}
+        onChange={setConsent}
+        options={[
+          { value: "all", label: "Einwilligung: alle", count: base.length },
+          {
+            value: "vorstellbar",
+            label: (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 flex-none rounded-full bg-success" />Vorstellbar
+              </span>
+            ),
+            count: base.filter((c) => presentable.has(c.id)).length,
+          },
+          {
+            value: "ohne",
+            label: (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 flex-none rounded-full bg-warning" />Ohne Einwilligung
+              </span>
+            ),
+            count: base.filter((c) => !presentable.has(c.id)).length,
+          },
+        ]}
+      />
+
       {view === "board" ? (
         <KanbanBoard
           columns={COLUMNS}
@@ -476,7 +538,7 @@ export function CandidatesView({
             <ul className="divide-y divide-border/70">
               {pageList.map((c) => (
                 <li key={c.id}>
-                  <CandidateRow c={c} />
+                  <CandidateRow c={c} vorstellbar={presentable.has(c.id)} />
                 </li>
               ))}
             </ul>

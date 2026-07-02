@@ -77,7 +77,7 @@ const ACTIVITY_DATE: ImportField = {
   sample: "2026-06-14 10:30",
 };
 
-export const IMPORT_OBJECTS: ImportObject[] = [
+const ALL_IMPORT_OBJECTS: ImportObject[] = [
   // ───────────────────────── Datensätze ─────────────────────────
   {
     key: "accounts",
@@ -247,6 +247,20 @@ export const IMPORT_OBJECTS: ImportObject[] = [
     dedupe: [NO_DEDUPE, ID_DEDUPE],
   },
 ];
+
+// Pivot: Kunden/Ansprechpartner/Projekte leben in HubSpot – nur kandidaten-
+// bezogene Objekte sind importierbar (dient zugleich als Objekt-Guard, da
+// findImportObject nur diese Liste durchsucht).
+const CANDIDATE_IMPORT_KEYS = new Set([
+  "candidates",
+  "candidate_notes",
+  "candidate_calls",
+  "candidate_meetings",
+  "candidate_tasks",
+]);
+export const IMPORT_OBJECTS: ImportObject[] = ALL_IMPORT_OBJECTS.filter((o) =>
+  CANDIDATE_IMPORT_KEYS.has(o.key)
+);
 
 export function findImportObject(key: string): ImportObject | undefined {
   return IMPORT_OBJECTS.find((o) => o.key === key);

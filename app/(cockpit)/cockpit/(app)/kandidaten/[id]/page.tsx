@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getCandidate, getMandates, findAccountByName } from "@/lib/crm-data";
+import { getMatchesForCandidate } from "@/lib/matches-data";
+import { MATCH_STATUS_META } from "@/lib/match-status";
 import { getNotesForCandidate } from "@/lib/notes-data";
 import { getConsentForCandidate } from "@/lib/consent-data";
 import { getSubmissionsForCandidate } from "@/lib/submissions-data";
@@ -25,8 +27,7 @@ import { AnonymizeButton } from "@/components/cockpit/AnonymizeButton";
 import { AiCallButton } from "@/components/cockpit/AiCallButton";
 import { CvPreview } from "@/components/cockpit/CvPreview";
 import { CandidateRatingTags } from "@/components/cockpit/CandidateRatingTags";
-import { CandidateMatch } from "@/components/cockpit/CandidateMatch";
-import { CandidateMandateMatch } from "@/components/cockpit/CandidateMandateMatch";
+import { CandidateProjectMatch } from "@/components/cockpit/CandidateProjectMatch";
 import { CandidateIntelHint } from "@/components/cockpit/CandidateIntelHint";
 import { computeCandidateIntel } from "@/lib/candidate-intel";
 import { InterviewsCard, OffersCard } from "@/components/cockpit/HiringCards";
@@ -92,7 +93,10 @@ export default async function KandidatDetailPage({
       getReferencesForCandidate(c.id),
     ]);
 
-  const consentSummary = await candidateConsentSummary(c.id);
+  const [consentSummary, candidateMatches] = await Promise.all([
+    candidateConsentSummary(c.id),
+    getMatchesForCandidate(c.id),
+  ]);
 
   // Mandat-Auswahl im Bearbeiten-Dialog (Kandidat:in einem Suchprojekt zuordnen).
   const editFields = withSelectOptions(CANDIDATE_FIELDS, "mandate_id", [
@@ -308,25 +312,60 @@ export default async function KandidatDetailPage({
             />
           </SafeBoundary>
 
-          {/* KI-Matching zum aktuell verknüpften Mandat */}
-          <SafeBoundary label="KI-Matching">
-            <Card>
+          {/* Reverse-Match: passende offene HubSpot-Projekte */}
+          <SafeBoundary label="Passende Projekte">
+            <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.05] to-sky/[0.04]">
               <CardBody>
-                <SectionHeader title="KI-Matching" hint="Passung zum Mandat" />
-                <CandidateMatch id={c.id} />
+                <SectionHeader title="Passende Projekte" hint="offene HubSpot-Projekte für diese Person" />
+                <CandidateProjectMatch candidateId={c.id} />
               </CardBody>
             </Card>
           </SafeBoundary>
 
-          {/* Reverse-Match: passende offene Mandate */}
-          <SafeBoundary label="Passende Mandate">
-            <Card className="border-brand/30 bg-gradient-to-br from-brand/[0.05] to-sky/[0.04]">
-              <CardBody>
-                <SectionHeader title="Passende Mandate" hint="offene Suchprojekte für diese Person" />
-                <CandidateMandateMatch candidateId={c.id} />
-              </CardBody>
-            </Card>
-          </SafeBoundary>
+          {/* Laufende Matches dieser Person */}
+          {candidateMatches.length > 0 ? (
+            <SafeBoundary label="Matches">
+              <Card>
+                <CardBody>
+                  <SectionHeader
+                    title={`Matches (${candidateMatches.length})`}
+                    hint="im Prozess bei HubSpot-Projekten"
+                    action={
+                      <Link href="/cockpit/match" className="text-xs font-semibold text-brand-deep hover:underline">
+                        Pipeline öffnen
+                      </Link>
+                    }
+                  />
+                  <ul className="divide-y divide-border">
+                    {candidateMatches.map((m) => {
+                      const meta = MATCH_STATUS_META[m.status];
+                      return (
+                        <li key={m.id} className="flex items-center justify-between gap-3 py-2.5">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-ink">{m.titel}</p>
+                            <p className="truncate text-xs text-faint">{m.kunde ?? "—"}</p>
+                          </div>
+                          <div className="flex flex-none items-center gap-2">
+                            <Badge tone={meta.tone} size="sm">{meta.label}</Badge>
+                            {m.hubspotUrl ? (
+                              <a
+                                href={m.hubspotUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-medium text-sky-deep hover:underline"
+                              >
+                                HubSpot
+                              </a>
+                            ) : null}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </CardBody>
+              </Card>
+            </SafeBoundary>
+          ) : null}
         </div>
 
         {/* ─────────── RECHTS: Verknüpfungen & Dokumente ─────────── */}

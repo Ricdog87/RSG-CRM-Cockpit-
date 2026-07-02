@@ -9,6 +9,7 @@ import { IconChevronRight, IconCheck, IconAlertTriangle } from "@/components/ui/
 import { cn } from "@/components/ui/cn";
 import { toast } from "@/lib/toast";
 import { rankForProjectAction, proposeMatch } from "@/lib/matches-actions";
+import { RequestConsentButton } from "@/components/cockpit/RequestConsentButton";
 import type { CandidateMatchHit } from "@/lib/candidate-project-match";
 
 interface ProjectOption {
@@ -19,8 +20,19 @@ interface ProjectOption {
 }
 
 /** Search & Match: Projekt wählen → gerankte Kandidaten mit Score + Consent-Status. */
-export function MatchWorkbench({ projects }: { projects: ProjectOption[] }) {
-  const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
+export function MatchWorkbench({
+  projects,
+  initialProjectId,
+}: {
+  projects: ProjectOption[];
+  /** Vorauswahl per Deep-Link (?projekt=… aus Suche/Verlinkung). */
+  initialProjectId?: string;
+}) {
+  const preselect =
+    initialProjectId && projects.some((p) => p.id === initialProjectId)
+      ? initialProjectId
+      : projects[0]?.id ?? "";
+  const [projectId, setProjectId] = useState(preselect);
   const [hits, setHits] = useState<CandidateMatchHit[]>([]);
   const [ran, setRan] = useState(false);
   const [pending, start] = useTransition();
@@ -39,10 +51,13 @@ export function MatchWorkbench({ projects }: { projects: ProjectOption[] }) {
     });
   }
 
-  function propose(candidateId: string) {
-    setProposing(candidateId);
+  function propose(hit: CandidateMatchHit) {
+    setProposing(hit.candidateId);
     start(async () => {
-      const res = await proposeMatch(candidateId, projectId);
+      const res = await proposeMatch(hit.candidateId, projectId, {
+        score: hit.score,
+        gruende: hit.reasons,
+      });
       setProposing(null);
       if (res.ok) toast.success("Kandidat vorgeschlagen.");
       else toast.error(res.error ?? "Vorschlagen nicht möglich.");
@@ -132,13 +147,11 @@ export function MatchWorkbench({ projects }: { projects: ProjectOption[] }) {
                         <IconCheck size={12} /> vorstellbar
                       </Badge>
                     ) : (
-                      <Badge tone="warning" size="sm" title="Keine gültige Einwilligung">
-                        <IconAlertTriangle size={12} /> Einwilligung fehlt
-                      </Badge>
+                      <RequestConsentButton candidateId={h.candidateId} />
                     )}
                     <button
                       type="button"
-                      onClick={() => propose(h.candidateId)}
+                      onClick={() => propose(h)}
                       disabled={pending || !h.vorstellbar}
                       title={h.vorstellbar ? "Diesem Projekt vorschlagen" : "Erst Einwilligung einholen"}
                       className="inline-flex flex-none items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-semibold text-ink hover:bg-elevated disabled:opacity-50"

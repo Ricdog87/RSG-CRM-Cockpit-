@@ -53,12 +53,34 @@ gegen **HubSpot-Recruiting-Projekte**. Kunden/Deals/Projekte bleiben Source-of-T
 | `HUBSPOT_RECRUITING_PIPELINE` | optional | nur diese Pipeline syncen |
 | `HUBSPOT_PROP_STANDORT` / `_ANFORDERUNGEN` / `_SKILLS` / `_KUNDE` | optional | Custom-Property-Namen eures Deal-Schemas |
 | `SYNC_CRON_SECRET` | optional | aktiviert den Cron/n8n-Pfad (Header `x-sync-secret`) |
+| `HUBSPOT_PORTAL_ID` | optional | aktiviert „In HubSpot öffnen"-Deeplinks zu den Deals (euer Portal laut Deal-URLs: `147306094`) |
 
 ### Cron/n8n-Trigger
 `SYNC_CRON_SECRET` setzen, dann z.B. stündlich:
 `POST /api/hubspot/sync-projects` mit Header `x-sync-secret: <SYNC_CRON_SECRET>`
 → Sync für alle Partner via Service-Role (ohne Login). Ohne Secret-Header läuft
-der Sync über die Partner-Session (Cockpit-Button).
+der Sync über die Partner-Session (Cockpit-Button auf /cockpit/match).
+
+### n8n-Playbook (Stunden-Sync, 3 Nodes)
+1. **Schedule Trigger** – Cron `0 * * * *` (stündlich, Mo–Fr reicht: `0 6-20 * * 1-5`).
+2. **HTTP Request** – `POST https://<domain>/api/hubspot/sync-projects`,
+   Header `x-sync-secret: {{ $env.SYNC_CRON_SECRET }}`, Timeout 30 s.
+3. **IF** – `{{ $json.ok }}` ist `false` → Telegram/E-Mail-Alarm mit `{{ $json.error }}`.
+   (Erfolgsfall braucht keine Benachrichtigung; `synced` steht im Response.)
+
+### Fonio-Webhook (Anruf → Auto-Notiz)
+1. Migration `32_fonio_call_result.sql` ausführen (Pflicht, sonst kein Speichern).
+2. Vercel-ENV `FONIO_WEBHOOK_SECRET=<zufälliges Secret>` → Redeploy.
+3. In Fonio den Call-Completed-Webhook setzen:
+   `POST https://<domain>/api/fonio/webhook` · Header `x-fonio-secret: <Secret>`.
+4. Ergebnis: Transkript/Outcome am Anruf gespeichert + automatische
+   Kandidaten-Notiz mit KI-3-Satz-Zusammenfassung (0 Klicks nach dem Call).
+
+### Täglicher Arbeits-Loop (Soll-Zustand)
+Kandidaten-Liste (Filter „Aktiv verfügbar" + „Vorstellbar") → /cockpit/match
+(Projekt ranken → Vorschlagen, Score/Begründung werden am Match gespeichert) →
+„Laufende Matches" (Status bis Platziert steuern, Blindprofil per Klick,
+„In HubSpot öffnen") → Kandidatenprofil (Matches, DSGVO, Einwilligung anfragen).
 
 ### HubSpot Private App – Read-Scopes
 `crm.objects.deals.read`, `crm.schemas.deals.read`

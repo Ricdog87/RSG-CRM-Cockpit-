@@ -388,6 +388,7 @@ function mapCandidate(r: Row): Candidate {
     stage: (str(r.stage, "neu") as CandidateStage),
     source: str(r.source),
     updated_at: str(r.updated_at),
+    created_at: str(r.created_at) || undefined,
     candidate_no: r.candidate_no != null ? Number(r.candidate_no) : undefined,
     photo_path: str(r.photo_path) || undefined,
     salutation: str(r.salutation) || undefined,
