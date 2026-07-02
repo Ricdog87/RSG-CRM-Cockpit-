@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
-import { IconPhone, IconMail, IconCheck, IconBriefcase, IconBolt, IconFlame } from "@/components/ui/icons";
+import { IconPhone, IconMail, IconCheck, IconUserCheck, IconFlame } from "@/components/ui/icons";
 import { cn } from "@/components/ui/cn";
 import { ActivityLogger } from "@/components/cockpit/ActivityLogger";
 import type { ActivityStats } from "@/lib/activity-data";
@@ -29,8 +29,8 @@ function Bar({ value, goal, tone }: { value: number; goal: number; tone: string 
 
 export function DailyGoals({
   stats,
-  newRecruitingToday,
-  newKiToday,
+  newCandidateToday,
+  consentRequestedToday,
   streak,
   weekDays,
   dayMode,
@@ -39,8 +39,10 @@ export function DailyGoals({
   accounts = [],
 }: {
   stats: ActivityStats;
-  newRecruitingToday: boolean;
-  newKiToday: boolean;
+  /** Heute eine:n neue:n Kandidat:in erfasst? */
+  newCandidateToday: boolean;
+  /** Heute eine DSGVO-Einwilligung angefragt? */
+  consentRequestedToday: boolean;
   streak: number;
   weekDays: WeekDay[];
   dayMode: "work" | "review" | "off";
@@ -69,8 +71,8 @@ export function DailyGoals({
   const goalsDone =
     (calls >= CALL_GOAL ? 1 : 0) +
     (emails >= EMAIL_GOAL ? 1 : 0) +
-    (newRecruitingToday ? 1 : 0) +
-    (newKiToday ? 1 : 0);
+    (newCandidateToday ? 1 : 0) +
+    (consentRequestedToday ? 1 : 0);
   const allDone = goalsDone === 4;
 
   const kiTotal = week.ki.call + week.ki.email;
@@ -125,8 +127,8 @@ export function DailyGoals({
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2">
-              <GoalFlag done={newRecruitingToday} icon={<IconBriefcase size={14} />} label="Neues Recruiting-Projekt" />
-              <GoalFlag done={newKiToday} icon={<IconBolt size={14} />} label="Neues KI-/Tel.-Projekt" />
+              <GoalFlag done={newCandidateToday} icon={<IconUserCheck size={14} />} label="Neue:r Kandidat:in erfasst" />
+              <GoalFlag done={consentRequestedToday} icon={<IconMail size={14} />} label="Einwilligung angefragt" />
             </div>
           </>
         ) : (

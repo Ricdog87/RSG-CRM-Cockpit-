@@ -93,6 +93,33 @@ export async function getConsents(): Promise<ConsentRow[]> {
 }
 
 /**
+ * Rohe Consent-Aktivität ab `sinceIso` (für Dashboard-Kennzahlen/Tagesziele).
+ * Keine Dedupe – jede Anfrage/Erteilung zählt.
+ */
+export async function getRecentConsents(
+  sinceIso: string
+): Promise<{ created_at: string | null; status: string; granted_at: string | null }[]> {
+  if (useMockData) return [];
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("candidate_consents")
+      .select("created_at, status, granted_at")
+      .gte("created_at", sinceIso)
+      .order("created_at", { ascending: false })
+      .limit(2000);
+    if (error || !data) return [];
+    return (data as Row[]).map((r) => ({
+      created_at: str(r.created_at),
+      status: String(r.status ?? "pending"),
+      granted_at: str(r.granted_at),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Einwilligung per öffentlichem Token laden (für die /einwilligung-Seite).
  * Läuft über den Service-Role-Client, da der/die Kandidat:in nicht eingeloggt ist.
  */

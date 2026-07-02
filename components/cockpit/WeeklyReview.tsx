@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Card, CardBody, SectionHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { IconSpark, IconPhone, IconMail, IconBriefcase, IconBolt, IconUserCheck } from "@/components/ui/icons";
+import { IconSpark, IconPhone, IconMail, IconCheck, IconTarget, IconUserCheck } from "@/components/ui/icons";
 import { narrateWeeklyReviewAction } from "@/lib/ai-actions";
 
 export interface WeeklyReviewInput {
@@ -11,9 +11,12 @@ export interface WeeklyReviewInput {
   emails: number;
   kiActivities: number;
   recruitingActivities: number;
-  newMandates: number;
-  newKi: number;
-  placements: number;
+  /** Neu erfasste Kandidat:innen diese Woche. */
+  newCandidates: number;
+  /** Erteilte DSGVO-Einwilligungen diese Woche. */
+  consentsGranted: number;
+  /** Neue Matches/Vorstellungen diese Woche. */
+  presentations: number;
   atRisk: number;
   kritisch: number;
   wichtig: number;
@@ -57,9 +60,9 @@ export function WeeklyReview({ input }: { input: WeeklyReviewInput }) {
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           <Stat icon={<IconPhone size={13} />} label="Calls" value={input.calls} />
           <Stat icon={<IconMail size={13} />} label="E-Mails" value={input.emails} />
-          <Stat icon={<IconBriefcase size={13} />} label="Mandate" value={input.newMandates} />
-          <Stat icon={<IconBolt size={13} />} label="KI-Projekte" value={input.newKi} />
-          <Stat icon={<IconUserCheck size={13} />} label="Platzierungen" value={input.placements} />
+          <Stat icon={<IconUserCheck size={13} />} label="Kandidat:innen" value={input.newCandidates} />
+          <Stat icon={<IconCheck size={13} />} label="Einwilligungen" value={input.consentsGranted} />
+          <Stat icon={<IconTarget size={13} />} label="Vorstellungen" value={input.presentations} />
           <Stat icon={<IconSpark size={13} />} label="kritisch" value={input.kritisch} />
         </div>
 
